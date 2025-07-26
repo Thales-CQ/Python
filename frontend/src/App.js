@@ -4077,8 +4077,8 @@ const MyReportsPage = ({ user, token }) => {
     }
   };
 
-  const totalSales = reports.length;
-  const totalValue = reports.reduce((sum, report) => sum + report.total_value, 0);
+  const totalSales = Array.isArray(reports) ? reports.length : 0;
+  const totalValue = Array.isArray(reports) ? reports.reduce((sum, report) => sum + report.total_value, 0) : 0;
 
   const months = [
     { value: 1, label: 'Janeiro' },
