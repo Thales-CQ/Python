@@ -753,15 +753,39 @@ class CaixaAPITester:
         self.test_user_permissions()
         self.test_user_activation_deactivation()
 
+        # NEW: Uppercase Conversion Tests
+        print("\n🔤 Uppercase Conversion Tests")
+        self.test_uppercase_conversion()
+
+        # NEW: CPF Validation Tests
+        print("\n🆔 CPF Validation Tests")
+        self.test_cpf_validation()
+
+        # NEW: Product System Tests
+        print("\n📦 Product System Tests")
+        self.test_product_system()
+
         # Transaction Tests
         print("\n💰 Transaction Tests")
         self.test_transaction_payment_restrictions()
         self.test_transaction_history()
 
+        # NEW: Transaction Filter Tests
+        print("\n🔍 Transaction Filter Tests")
+        self.test_transaction_filters()
+
+        # NEW: PDF Generation Tests
+        print("\n📄 PDF Generation Tests")
+        self.test_pdf_generation()
+
         # Client and Billing Tests
         print("\n🧾 Client and Billing Tests")
         self.test_client_management()
         self.test_billing_system()
+
+        # NEW: Cancellation Feature Tests
+        print("\n❌ Cancellation Feature Tests")
+        self.test_cancellation_features()
 
         # Activity Logging Tests
         print("\n📊 Activity Logging Tests")
