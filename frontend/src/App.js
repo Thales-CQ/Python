@@ -610,6 +610,7 @@ function App() {
 
     useEffect(() => {
       fetchProducts();
+      fetchClientsWithBills();
     }, []);
 
     const fetchProducts = async () => {
@@ -626,6 +627,40 @@ function App() {
         }
       } catch (err) {
         console.error('Erro ao buscar produtos:', err);
+      }
+    };
+
+    const fetchClientsWithBills = async () => {
+      try {
+        const response = await fetch(`${API_URL}/api/clients/with-bills`, {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+          },
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          setClientsWithBills(data);
+        }
+      } catch (err) {
+        console.error('Erro ao buscar clientes com boletos:', err);
+      }
+    };
+
+    const fetchClientProducts = async (clientId) => {
+      try {
+        const response = await fetch(`${API_URL}/api/clients/${clientId}/pending-bills`, {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+          },
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          setClientProducts(data.products_with_bills || []);
+        }
+      } catch (err) {
+        console.error('Erro ao buscar produtos do cliente:', err);
       }
     };
 
