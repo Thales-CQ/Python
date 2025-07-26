@@ -189,6 +189,78 @@ backend:
           agent: "testing" 
           comment: "Activity logs filtering by date, time, and user name fully functional with proper parameter handling"
 
+  - task: "Role Change: Salesperson to Reception"
+    implemented: true
+    working: "NA"
+    file: "server.py, App.js"
+    stuck_count: 0
+    priority: "medium"
+    needs_retesting: true
+    status_history:
+        - working: "NA"
+          agent: "main"
+          comment: "Changed SALESPERSON enum to RECEPTION, updated all references in backend and frontend, users now displayed as 'Recepção' instead of 'Vendedor'"
+
+  - task: "Product Quantity System (finite/infinite)"
+    implemented: true
+    working: "NA"
+    file: "server.py, App.js"
+    stuck_count: 0
+    priority: "medium"
+    needs_retesting: true
+    status_history:
+        - working: "NA"
+          agent: "main"
+          comment: "Added quantity field to Product model, updated create/update forms, null=infinite quantity, integer=finite quantity"
+
+  - task: "Advanced Specific Permissions System"
+    implemented: true
+    working: "NA"
+    file: "server.py, App.js"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+        - working: "NA"
+          agent: "main"
+          comment: "Implemented specific permissions for reception users (bills, reports, products), updated hasPermission function, admin can grant specific access, menu items now show/hide based on specific permissions"
+
+  - task: "Force Password Change System"
+    implemented: true
+    working: "NA"
+    file: "server.py, App.js"
+    stuck_count: 0
+    priority: "medium"
+    needs_retesting: true
+    status_history:
+        - working: "NA"
+          agent: "main"
+          comment: "Added require_password_change field to User model, implemented login check, admin/manager can force password change, users must change password before continuing"
+
+  - task: "Enhanced User Management Functions"
+    implemented: true
+    working: "NA"
+    file: "server.py, App.js"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+        - working: "NA"
+          agent: "main"
+          comment: "Added reset password, force password change, manage specific permissions functions. Managers can only manage reception users. Admin has full control. Added permission management UI"
+
+  - task: "Manager Permission Restrictions"
+    implemented: true
+    working: "NA"
+    file: "server.py, App.js"
+    stuck_count: 0
+    priority: "medium"
+    needs_retesting: true
+    status_history:
+        - working: "NA"
+          agent: "main"
+          comment: "Managers can only create reception users, cannot create other managers/admins, cannot edit other managers or admins, can only manage reception user passwords"
+
 frontend:
   - task: "Error Messages Display"
     implemented: true
