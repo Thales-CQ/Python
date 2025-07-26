@@ -2247,6 +2247,9 @@ function App() {
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                       {bill.client_cpf}
                     </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                      {bill.product_name ? `${bill.product_code} - ${bill.product_name}` : '-'}
+                    </td>
                     <td className="px-6 py-4 text-sm text-gray-900">
                       {bill.description}
                     </td>
