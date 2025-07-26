@@ -98,11 +98,11 @@ function App() {
         {currentPage === 'cash-operation' && <CashOperationPage user={user} token={token} toUpperCase={toUpperCase} />}
         {currentPage === 'history' && <HistoryPage user={user} token={token} toUpperCase={toUpperCase} />}
         {currentPage === 'users' && hasPermission(['admin', 'manager']) && <UsersPage user={user} token={token} toUpperCase={toUpperCase} />}
-        {currentPage === 'products' && hasPermission(['admin', 'manager']) && <ProductsPage user={user} token={token} toUpperCase={toUpperCase} />}
-        {currentPage === 'clients' && hasPermission(['admin', 'manager']) && <ClientsPage user={user} token={token} toUpperCase={toUpperCase} />}
-        {currentPage === 'billing' && hasPermission(['admin', 'manager']) && <BillingPage user={user} token={token} toUpperCase={toUpperCase} />}
-        {currentPage === 'pending-charges' && <PendingChargesPage user={user} token={token} />}
-        {currentPage === 'activity-logs' && hasPermission(['admin']) && <ActivityLogsPage user={user} token={token} toUpperCase={toUpperCase} />}
+        {currentPage === 'products' && (hasPermission(['admin', 'manager']) || hasPermission(['reception'], 'products')) && <ProductsPage user={user} token={token} toUpperCase={toUpperCase} />}
+        {currentPage === 'clients' && <ClientsPage user={user} token={token} toUpperCase={toUpperCase} />}
+        {currentPage === 'billing' && (hasPermission(['admin', 'manager']) || hasPermission(['reception'], 'bills')) && <BillingPage user={user} token={token} toUpperCase={toUpperCase} />}
+        {currentPage === 'pending-charges' && (hasPermission(['admin', 'manager']) || hasPermission(['reception'], 'bills')) && <PendingChargesPage user={user} token={token} />}
+        {currentPage === 'activity-logs' && (hasPermission(['admin']) || hasPermission(['reception'], 'reports')) && <ActivityLogsPage user={user} token={token} toUpperCase={toUpperCase} />}
       </main>
     </div>
   );
