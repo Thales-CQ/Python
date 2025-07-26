@@ -839,6 +839,10 @@ class CaixaAPITester:
         self.test_user_deletion_comprehensive()  # Additional comprehensive deletion test
         self.test_manager_permission_restrictions()
 
+        # PERFORMANCE ENDPOINTS TESTS - Priority from Review Request
+        print("\n📊 Performance Endpoints Tests (Priority)")
+        self.test_performance_endpoints()
+
         return True
 
     def test_dashboard_stats(self):
