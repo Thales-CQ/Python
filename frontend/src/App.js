@@ -3773,4 +3773,453 @@ const ActivityLogsPage = ({ user, token, toUpperCase }) => {
   );
 };
 
+// Sales Page Component (for vendas users)
+const SalesPage = ({ user, token, toUpperCase }) => {
+  const [clients, setClients] = useState([]);
+  const [products, setProducts] = useState([]);
+  const [saleData, setSaleData] = useState({
+    client_id: '',
+    product_id: '',
+    quantity: 1,
+    payment_method: 'dinheiro'
+  });
+  const [loading, setLoading] = useState(false);
+  const [message, setMessage] = useState('');
+
+  useEffect(() => {
+    fetchClients();
+    fetchProducts();
+  }, []);
+
+  const fetchClients = async () => {
+    try {
+      const response = await fetch(`${API_URL}/api/clients`, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      if (response.ok) {
+        const data = await response.json();
+        setClients(data);
+      }
+    } catch (err) {
+      console.error('Error fetching clients:', err);
+    }
+  };
+
+  const fetchProducts = async () => {
+    try {
+      const response = await fetch(`${API_URL}/api/products`, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      if (response.ok) {
+        const data = await response.json();
+        setProducts(data.filter(p => p.active)); // Only active products
+      }
+    } catch (err) {
+      console.error('Error fetching products:', err);
+    }
+  };
+
+  const handleSale = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    setMessage('');
+
+    try {
+      const response = await fetch(`${API_URL}/api/sales`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify(saleData)
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        setMessage(`Venda realizada com sucesso! Valor total: R$ ${data.total_value.toFixed(2)}`);
+        setSaleData({
+          client_id: '',
+          product_id: '',
+          quantity: 1,
+          payment_method: 'dinheiro'
+        });
+        fetchProducts(); // Refresh to update quantities
+      } else {
+        setMessage(`Erro: ${data.detail}`);
+      }
+    } catch (err) {
+      setMessage('Erro de conexão');
+    } finally {
+      setLoading(false);
+      setTimeout(() => setMessage(''), 5000);
+    }
+  };
+
+  const selectedProduct = products.find(p => p.id === saleData.product_id);
+  const selectedClient = clients.find(c => c.id === saleData.client_id);
+  const totalValue = selectedProduct ? selectedProduct.price * saleData.quantity : 0;
+
+  return (
+    <div className="space-y-6">
+      <div className="flex justify-between items-center">
+        <h1 className="text-2xl font-bold text-gray-900">Realizar Venda</h1>
+        <div className="text-sm text-gray-500">
+          Vendedor: {user?.username}
+        </div>
+      </div>
+
+      {message && (
+        <div className={`p-4 rounded-md ${
+          message.includes('sucesso') ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+        }`}>
+          {message}
+        </div>
+      )}
+
+      <div className="bg-white shadow rounded-lg p-6">
+        <form onSubmit={handleSale} className="space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Cliente *
+              </label>
+              <select
+                value={saleData.client_id}
+                onChange={(e) => setSaleData({...saleData, client_id: e.target.value})}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                required
+              >
+                <option value="">Selecione um cliente</option>
+                {clients.map(client => (
+                  <option key={client.id} value={client.id}>
+                    {client.name} - {client.cpf}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Produto *
+              </label>
+              <select
+                value={saleData.product_id}
+                onChange={(e) => setSaleData({...saleData, product_id: e.target.value})}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                required
+              >
+                <option value="">Selecione um produto</option>
+                {products.map(product => (
+                  <option key={product.id} value={product.id}>
+                    {product.name} - R$ {product.price.toFixed(2)}
+                    {product.quantity !== null && ` (Estoque: ${product.quantity})`}
+                  </option>
+                ))}
+              </select>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Quantidade *
+              </label>
+              <input
+                type="number"
+                min="1"
+                max={selectedProduct?.quantity || 999}
+                value={saleData.quantity}
+                onChange={(e) => setSaleData({...saleData, quantity: parseInt(e.target.value) || 1})}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                required
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Forma de Pagamento *
+              </label>
+              <select
+                value={saleData.payment_method}
+                onChange={(e) => setSaleData({...saleData, payment_method: e.target.value})}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                required
+              >
+                <option value="dinheiro">Dinheiro</option>
+                <option value="pix">PIX</option>
+                <option value="cartao">Cartão</option>
+                <option value="boleto">Boleto</option>
+              </select>
+            </div>
+          </div>
+
+          {/* Sale Summary */}
+          {selectedClient && selectedProduct && (
+            <div className="bg-gray-50 p-4 rounded-md">
+              <h3 className="font-medium text-gray-900 mb-2">Resumo da Venda</h3>
+              <div className="space-y-1 text-sm">
+                <div><span className="font-medium">Cliente:</span> {selectedClient.name}</div>
+                <div><span className="font-medium">Produto:</span> {selectedProduct.name}</div>
+                <div><span className="font-medium">Quantidade:</span> {saleData.quantity}</div>
+                <div><span className="font-medium">Valor Unitário:</span> R$ {selectedProduct.price.toFixed(2)}</div>
+                <div><span className="font-medium">Valor Total:</span> R$ {totalValue.toFixed(2)}</div>
+                <div><span className="font-medium">Pagamento:</span> {saleData.payment_method.toUpperCase()}</div>
+                {saleData.payment_method === 'boleto' && (
+                  <div className="text-orange-600 font-medium">* Boleto será gerado automaticamente</div>
+                )}
+              </div>
+            </div>
+          )}
+
+          <div className="flex justify-end">
+            <button
+              type="submit"
+              disabled={loading || !saleData.client_id || !saleData.product_id}
+              className="bg-blue-600 text-white px-6 py-2 rounded-md hover:bg-blue-700 disabled:opacity-50"
+            >
+              {loading ? 'Processando...' : 'Confirmar Venda'}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+};
+
+// My Reports Page Component (for vendas users)
+const MyReportsPage = ({ user, token }) => {
+  const [reports, setReports] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [filters, setFilters] = useState({
+    month: new Date().getMonth() + 1,
+    year: new Date().getFullYear()
+  });
+
+  useEffect(() => {
+    fetchMyReports();
+  }, [filters]);
+
+  const fetchMyReports = async () => {
+    setLoading(true);
+    try {
+      const params = new URLSearchParams({
+        month: filters.month,
+        year: filters.year
+      });
+
+      const response = await fetch(`${API_URL}/api/sales/my-reports?${params}`, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setReports(data);
+      } else {
+        setReports([]);
+      }
+    } catch (err) {
+      console.error('Error fetching reports:', err);
+      setReports([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const totalSales = reports.length;
+  const totalValue = reports.reduce((sum, report) => sum + report.total_value, 0);
+
+  const months = [
+    { value: 1, label: 'Janeiro' },
+    { value: 2, label: 'Fevereiro' },
+    { value: 3, label: 'Março' },
+    { value: 4, label: 'Abril' },
+    { value: 5, label: 'Maio' },
+    { value: 6, label: 'Junho' },
+    { value: 7, label: 'Julho' },
+    { value: 8, label: 'Agosto' },
+    { value: 9, label: 'Setembro' },
+    { value: 10, label: 'Outubro' },
+    { value: 11, label: 'Novembro' },
+    { value: 12, label: 'Dezembro' }
+  ];
+
+  return (
+    <div className="space-y-6">
+      <div className="flex justify-between items-center">
+        <h1 className="text-2xl font-bold text-gray-900">Meus Relatórios de Vendas</h1>
+        <div className="text-sm text-gray-500">
+          Vendedor: {user?.username}
+        </div>
+      </div>
+
+      {/* Filters */}
+      <div className="bg-white shadow rounded-lg p-4">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Mês
+            </label>
+            <select
+              value={filters.month}
+              onChange={(e) => setFilters({...filters, month: parseInt(e.target.value)})}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            >
+              {months.map(month => (
+                <option key={month.value} value={month.value}>
+                  {month.label}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Ano
+            </label>
+            <select
+              value={filters.year}
+              onChange={(e) => setFilters({...filters, year: parseInt(e.target.value)})}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            >
+              {[2024, 2025, 2026].map(year => (
+                <option key={year} value={year}>
+                  {year}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div>
+            <button
+              onClick={fetchMyReports}
+              className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700"
+            >
+              Atualizar
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* Summary Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="bg-white shadow rounded-lg p-6">
+          <div className="flex items-center">
+            <div className="flex-shrink-0">
+              <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center">
+                <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
+                </svg>
+              </div>
+            </div>
+            <div className="ml-4">
+              <p className="text-sm font-medium text-gray-500">Total de Vendas</p>
+              <p className="text-2xl font-bold text-gray-900">{totalSales}</p>
+            </div>
+          </div>
+        </div>
+
+        <div className="bg-white shadow rounded-lg p-6">
+          <div className="flex items-center">
+            <div className="flex-shrink-0">
+              <div className="w-8 h-8 bg-green-500 rounded-full flex items-center justify-center">
+                <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1" />
+                </svg>
+              </div>
+            </div>
+            <div className="ml-4">
+              <p className="text-sm font-medium text-gray-500">Valor Total</p>
+              <p className="text-2xl font-bold text-gray-900">R$ {totalValue.toFixed(2)}</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Reports Table */}
+      <div className="bg-white shadow rounded-lg overflow-hidden">
+        <div className="px-6 py-4 border-b border-gray-200">
+          <h2 className="text-lg font-medium text-gray-900">
+            Vendas Realizadas - {months.find(m => m.value === filters.month)?.label} {filters.year}
+          </h2>
+        </div>
+
+        {loading ? (
+          <div className="p-6 text-center">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
+          </div>
+        ) : reports.length > 0 ? (
+          <div className="overflow-x-auto">
+            <table className="min-w-full divide-y divide-gray-200">
+              <thead className="bg-gray-50">
+                <tr>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Data
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Cliente
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Produto
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Qtd
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Pagamento
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Valor
+                  </th>
+                </tr>
+              </thead>
+              <tbody className="bg-white divide-y divide-gray-200">
+                {reports.map((report) => (
+                  <tr key={report.sale_id}>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                      {new Date(report.sale_date).toLocaleDateString('pt-BR')}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                      {report.client_name}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                      {report.product_name}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                      {report.quantity}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <span className={`px-2 py-1 text-xs font-medium rounded-full ${
+                        report.payment_method === 'dinheiro' ? 'bg-green-100 text-green-800' :
+                        report.payment_method === 'pix' ? 'bg-blue-100 text-blue-800' :
+                        report.payment_method === 'cartao' ? 'bg-purple-100 text-purple-800' :
+                        'bg-yellow-100 text-yellow-800'
+                      }`}>
+                        {report.payment_method.toUpperCase()}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm font-bold text-gray-900">
+                      R$ {report.total_value.toFixed(2)}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        ) : (
+          <div className="p-6 text-center text-gray-500">
+            Nenhuma venda encontrada para o período selecionado.
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
+
 export default App;
