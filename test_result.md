@@ -296,15 +296,18 @@ backend:
 
   - task: "Sales Menu Visibility for Vendas Role"
     implemented: true
-    working: false
+    working: true
     file: "App.js"
     stuck_count: 0
     priority: "medium"
-    needs_retesting: true
+    needs_retesting: false
     status_history:
         - working: "NA"
           agent: "main"
           comment: "Sales menu items (Realizar Venda, Meus Relatórios) not visually appearing for vendas role users despite being coded correctly in lines 426-460 of App.js"
+        - working: true
+          agent: "testing"
+          comment: "✅ ISSUE IDENTIFIED AND FIXED: The VENDAS menu section was nested inside a conditional block that required admin/manager/reception permissions, preventing vendas users from seeing it. Fixed by moving the VENDAS section outside the restrictive conditional. COMPREHENSIVE TESTING COMPLETED: ✅ TESTE_VENDAS user login successful ✅ Correctly redirected to Clients page ✅ Sidebar visible on hover ✅ VENDAS section header found ✅ 'Realizar Venda' button visible and enabled ✅ 'Meus Relatórios' button visible and enabled ✅ Button navigation working correctly. Problem completely resolved."
 
 frontend:
   - task: "Error Messages Display"
