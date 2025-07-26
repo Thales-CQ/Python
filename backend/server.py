@@ -1332,7 +1332,15 @@ async def create_client(client: ClientCreate, current_user: User = Depends(get_c
 @api_router.get("/clients")
 async def get_clients(current_user: User = Depends(get_current_user)):
     clients = await db.clients.find().to_list(1000)
-    return [Client(**client) for client in clients]
+    # Filter out clients with missing required fields
+    valid_clients = []
+    for client in clients:
+        try:
+            valid_clients.append(Client(**client))
+        except Exception as e:
+            # Skip clients with invalid data (missing required fields)
+            continue
+    return valid_clients
 
 @api_router.get("/clients/search")
 async def search_clients(
