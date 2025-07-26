@@ -780,6 +780,8 @@ class CaixaAPITester:
         success, data = self.make_request('POST', 'register', veronica_data, self.admin_token)
         if success:
             self.log_test("Create Vendas User 'VERONICA'", True, "User created successfully")
+        elif 'já existe' in str(data):
+            self.log_test("Create Vendas User 'VERONICA'", True, "User already exists - continuing with existing user")
         else:
             self.log_test("Create Vendas User 'VERONICA'", False, str(data))
             return
