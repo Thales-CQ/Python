@@ -389,10 +389,16 @@ metadata:
   run_ui: false
 
 test_plan:
-  current_focus: []
+  current_focus:
+    - "Role Change: Salesperson to Reception"
+    - "Product Quantity System (finite/infinite)"
+    - "Advanced Specific Permissions System"
+    - "Force Password Change System"
+    - "Enhanced User Management Functions"
+    - "Manager Permission Restrictions"
   stuck_tasks: []
-  test_all: true
-  test_priority: "completed"
+  test_all: false
+  test_priority: "high_first"
 
 agent_communication:
     - agent: "main"
