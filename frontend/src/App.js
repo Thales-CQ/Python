@@ -3257,6 +3257,184 @@ const UsersPage = ({ user, token, toUpperCase }) => {
           </tbody>
         </table>
       </div>
+
+      {/* Modal de Edição Completo */}
+      {showEditModal && (
+        <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+          <div className="relative top-20 mx-auto p-5 border w-11/12 max-w-2xl shadow-lg rounded-md bg-white">
+            <div className="mt-3">
+              <div className="flex justify-between items-center mb-4">
+                <h3 className="text-lg font-bold text-gray-900">
+                  Editar Usuário: {editingUser?.username}
+                </h3>
+                <button
+                  onClick={closeEditModal}
+                  className="text-gray-400 hover:text-gray-600"
+                >
+                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+
+              <form onSubmit={handleSaveUser} className="space-y-4">
+                {/* Dados Básicos */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Nome de Usuário *
+                    </label>
+                    <input
+                      type="text"
+                      value={editFormData.username}
+                      onChange={(e) => setEditFormData({...editFormData, username: e.target.value})}
+                      onInput={toUpperCase}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      required
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Email *
+                    </label>
+                    <input
+                      type="email"
+                      value={editFormData.email}
+                      onChange={(e) => setEditFormData({...editFormData, email: e.target.value})}
+                      onInput={toUpperCase}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      required
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Função *
+                    </label>
+                    <select
+                      value={editFormData.role}
+                      onChange={(e) => setEditFormData({...editFormData, role: e.target.value})}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    >
+                      <option value="reception">Recepção</option>
+                      {user.role === 'admin' && <option value="manager">Gerente</option>}
+                      {user.role === 'admin' && <option value="admin">Administrador</option>}
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Status
+                    </label>
+                    <select
+                      value={editFormData.active}
+                      onChange={(e) => setEditFormData({...editFormData, active: e.target.value === 'true'})}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    >
+                      <option value="true">Ativo</option>
+                      <option value="false">Inativo</option>
+                    </select>
+                  </div>
+                </div>
+
+                {/* Alterar Senha */}
+                <div className="border-t pt-4">
+                  <h4 className="text-md font-medium text-gray-900 mb-3">Alterar Senha (Opcional)</h4>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Nova Senha
+                      </label>
+                      <input
+                        type="password"
+                        value={editFormData.newPassword}
+                        onChange={(e) => setEditFormData({...editFormData, newPassword: e.target.value})}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        placeholder="Mínimo 6 caracteres"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Confirmar Nova Senha
+                      </label>
+                      <input
+                        type="password"
+                        value={editFormData.confirmPassword}
+                        onChange={(e) => setEditFormData({...editFormData, confirmPassword: e.target.value})}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        placeholder="Confirme a nova senha"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Permissões Especiais */}
+                {user.role === 'admin' && editFormData.role === 'reception' && (
+                  <div className="border-t pt-4">
+                    <h4 className="text-md font-medium text-gray-900 mb-3">Permissões Especiais</h4>
+                    <div className="grid grid-cols-3 gap-4">
+                      <label className="flex items-center">
+                        <input
+                          type="checkbox"
+                          checked={editFormData.permissions.bills || false}
+                          onChange={(e) => setEditFormData({
+                            ...editFormData, 
+                            permissions: {...editFormData.permissions, bills: e.target.checked}
+                          })}
+                          className="mr-2"
+                        />
+                        Cobranças
+                      </label>
+                      <label className="flex items-center">
+                        <input
+                          type="checkbox"
+                          checked={editFormData.permissions.reports || false}
+                          onChange={(e) => setEditFormData({
+                            ...editFormData, 
+                            permissions: {...editFormData.permissions, reports: e.target.checked}
+                          })}
+                          className="mr-2"
+                        />
+                        Relatórios
+                      </label>
+                      <label className="flex items-center">
+                        <input
+                          type="checkbox"
+                          checked={editFormData.permissions.products || false}
+                          onChange={(e) => setEditFormData({
+                            ...editFormData, 
+                            permissions: {...editFormData.permissions, products: e.target.checked}
+                          })}
+                          className="mr-2"
+                        />
+                        Produtos
+                      </label>
+                    </div>
+                  </div>
+                )}
+
+                {/* Botões */}
+                <div className="flex justify-end space-x-3 pt-4">
+                  <button
+                    type="button"
+                    onClick={closeEditModal}
+                    className="bg-gray-500 text-white px-4 py-2 rounded-md hover:bg-gray-600"
+                  >
+                    Cancelar
+                  </button>
+                  <button
+                    type="submit"
+                    className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700"
+                  >
+                    Salvar Alterações
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
