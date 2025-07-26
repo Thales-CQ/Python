@@ -476,22 +476,35 @@ async def log_activity(activity_type: ActivityType, description: str, user_id: s
 
 # Initialize admin user
 async def create_admin_user():
-    admin_exists = await db.users.find_one({"username": "ADMIN"})
-    if not admin_exists:
-        admin_user = {
-            "id": str(uuid.uuid4()),
-            "username": "ADMIN",
-            "email": "ADMIN@SISTEMA.COM",
-            "password": get_password_hash("admin123"),
-            "role": "admin",
-            "permissions": {},
-            "active": True,
-            "require_password_change": False,
-            "created_at": datetime.utcnow(),
-            "created_by": "system"
-        }
-        await db.users.insert_one(admin_user)
-        print("Usuário admin criado: ADMIN/admin123")
+    # Clear all existing data
+    print("🗑️ Limpando todos os dados do sistema...")
+    await db.users.delete_many({})
+    await db.products.delete_many({})
+    await db.clients.delete_many({})
+    await db.transactions.delete_many({})
+    await db.bills.delete_many({})
+    await db.bill_installments.delete_many({})
+    await db.activity_logs.delete_many({})
+    print("✅ Todos os dados foram removidos")
+    
+    # Create new admin user with specified credentials
+    admin_user = {
+        "id": str(uuid.uuid4()),
+        "username": "ADMIN",
+        "email": "ADMIN@SISTEMA.COM",
+        "password": get_password_hash("!$3man@d3c1%"),
+        "role": "admin",
+        "permissions": {},
+        "active": True,
+        "require_password_change": False,
+        "created_at": datetime.utcnow(),
+        "created_by": "system"
+    }
+    await db.users.insert_one(admin_user)
+    print("✅ Novo usuário administrador criado:")
+    print("   Username: ADMIN")
+    print("   Password: !$3man@d3c1%")
+    print("🚀 Sistema limpo e pronto para uso!")
 
 # Routes
 @api_router.post("/register")
