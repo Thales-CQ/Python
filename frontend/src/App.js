@@ -2966,6 +2966,20 @@ const UsersPage = ({ user, token, toUpperCase }) => {
                       >
                         {userItem.active ? 'Desativar' : 'Ativar'}
                       </button>
+                      <button
+                        onClick={() => handleResetPassword(userItem.id, userItem.username)}
+                        className="bg-blue-600 text-white px-3 py-1 rounded-md text-xs font-medium hover:bg-blue-700"
+                        title="Alterar Senha"
+                      >
+                        Senha
+                      </button>
+                      <button
+                        onClick={() => handleForcePasswordChange(userItem.id, userItem.username)}
+                        className="bg-purple-600 text-white px-3 py-1 rounded-md text-xs font-medium hover:bg-purple-700"
+                        title="Forçar nova senha no próximo login"
+                      >
+                        Nova Senha
+                      </button>
                       {user.role === 'admin' && (
                         <button
                           onClick={() => handleDeleteUser(userItem.id, userItem.username)}
