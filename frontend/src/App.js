@@ -77,11 +77,20 @@ function App() {
     }
   };
 
-  const logout = () => {
+  const handleSplashComplete = () => {
+    setShowSplash(false);
+  };
+
+  const handleLogout = () => {
     localStorage.removeItem('token');
     setIsAuthenticated(false);
     setUser(null);
     setCurrentPage('home');
+    setShowSplash(true); // Mostrar splash novamente no logout
+  };
+
+  const logout = () => {
+    handleLogout();
   };
 
   // Utility function for uppercase input
