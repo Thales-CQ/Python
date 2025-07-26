@@ -1804,7 +1804,7 @@ function App() {
 
         if (response.ok) {
           setShowCreateBill(false);
-          setBillData({ client_id: '', total_amount: '', description: '', installments: 1 });
+          setBillData({ client_id: '', product_id: '', total_amount: '', description: '', installments: 1 });
           fetchData();
         }
       } catch (err) {
