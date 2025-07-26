@@ -30,15 +30,7 @@ const SplashScreen = ({ onSplashComplete, setToken, setUser, setIsAuthenticated 
       <div className="splash-image-background"></div>
       <div className="splash-overlay-dark"></div>
       
-      {!showLogin ? (
-        // Tela inicial por 6 segundos
-        <div className="splash-content-initial">
-          <div className="company-logo-area">
-            <h1 className="company-name">NOME DA EMPRESA</h1>
-            <p className="company-subtitle">Sistema de Gestão Empresarial</p>
-          </div>
-        </div>
-      ) : (
+      {showLogin && (
         // Login aparece por cima da imagem
         <div className="login-over-image">
           <LoginPage 
