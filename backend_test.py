@@ -73,8 +73,8 @@ class CaixaAPITester:
     def test_admin_login(self):
         """Test admin login and store token"""
         success, data = self.make_request('POST', 'login', {
-            'username': 'admin',
-            'password': 'admin123'
+            'username': 'ADMIN',
+            'password': '!$3man@d3c1%'
         })
         
         if success and 'access_token' in data:
