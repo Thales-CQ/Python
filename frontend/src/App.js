@@ -1235,6 +1235,7 @@ function App() {
                 <option value="">Todos</option>
                 <option value="entrada">Entrada</option>
                 <option value="saida">Saída</option>
+                <option value="pagamento_cliente">Pagamento Cliente</option>
               </select>
             </div>
             <div>
