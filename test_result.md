@@ -236,15 +236,18 @@ backend:
 
   - task: "Force Password Change System"
     implemented: true
-    working: "NA"
+    working: true
     file: "server.py, App.js"
     stuck_count: 0
     priority: "medium"
-    needs_retesting: true
+    needs_retesting: false
     status_history:
         - working: "NA"
           agent: "main"
           comment: "Added require_password_change field to User model, implemented login check, admin/manager can force password change, users must change password before continuing"
+        - working: true
+          agent: "testing"
+          comment: "✅ TESTED: Force password change system working. Admin can set require_password_change=true. Login is correctly blocked with appropriate error message when password change is required. Password change endpoint resets the requirement flag."
 
   - task: "Enhanced User Management Functions"
     implemented: true
