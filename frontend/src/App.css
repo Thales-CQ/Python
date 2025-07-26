@@ -528,3 +528,44 @@
     display: none !important;
   }
 }
+
+/* Responsive Design for Splash Screen */
+@media (max-width: 768px) {
+  .system-title {
+    font-size: 2.5rem;
+  }
+  
+  .company-title {
+    font-size: 1.5rem;
+  }
+  
+  .splash-subtitle {
+    font-size: 1rem;
+  }
+  
+  .loading-bar {
+    width: 250px;
+  }
+  
+  .logo-icon {
+    padding: 1.5rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .system-title {
+    font-size: 2rem;
+  }
+  
+  .company-title {
+    font-size: 1.2rem;
+  }
+  
+  .loading-bar {
+    width: 200px;
+  }
+  
+  .splash-content {
+    padding: 1rem;
+  }
+}
