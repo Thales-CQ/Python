@@ -47,6 +47,9 @@ ACCESS_TOKEN_EXPIRE_MINUTES = 30
 # CPF validator
 cpf_validator = CPF()
 
+# Email validation regex
+EMAIL_REGEX = re.compile(r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$')
+
 # Utility functions
 def to_upper_case(value: str) -> str:
     """Convert string to uppercase"""
@@ -59,6 +62,12 @@ def validate_cpf(cpf: str) -> bool:
     # Remove formatting
     cpf_clean = re.sub(r'[^\d]', '', cpf)
     return cpf_validator.validate(cpf_clean)
+
+def validate_email(email: str) -> bool:
+    """Validate email format"""
+    if not email:
+        return False
+    return EMAIL_REGEX.match(email.lower()) is not None
 
 def format_cpf(cpf: str) -> str:
     """Format CPF with dots and dash"""
@@ -90,17 +99,24 @@ class ActivityType(str, Enum):
     USER_CREATED = "user_created"
     USER_DEACTIVATED = "user_deactivated"
     USER_ACTIVATED = "user_activated"
+    USER_DELETED = "user_deleted"
+    USER_PASSWORD_CHANGED = "user_password_changed"
+    USER_PERMISSIONS_CHANGED = "user_permissions_changed"
     TRANSACTION_CREATED = "transaction_created"
     TRANSACTION_MODIFIED = "transaction_modified"
     TRANSACTION_CANCELLED = "transaction_cancelled"
     PRODUCT_CREATED = "product_created"
     PRODUCT_MODIFIED = "product_modified"
+    PRODUCT_DELETED = "product_deleted"
     BILL_CREATED = "bill_created"
     BILL_PAID = "bill_paid"
     BILL_CANCELLED = "bill_cancelled"
     PAYMENT_CANCELLED = "payment_cancelled"
     CLIENT_PAYMENT_RECEIVED = "client_payment_received"
+    CLIENT_CREATED = "client_created"
+    CLIENT_MODIFIED = "client_modified"
     LOGIN = "login"
+    LOGIN_FAILED = "login_failed"
 
 class BillStatus(str, Enum):
     PENDING = "pending"
@@ -114,6 +130,7 @@ class User(BaseModel):
     username: str
     email: str
     role: UserRole
+    permissions: Optional[dict] = Field(default_factory=dict)
     active: bool = True
     created_at: datetime = Field(default_factory=datetime.utcnow)
     created_by: Optional[str] = None
@@ -121,19 +138,48 @@ class User(BaseModel):
     @validator('username', 'email', pre=True)
     def uppercase_fields(cls, v):
         return to_upper_case(v)
+    
+    @validator('email')
+    def validate_email_field(cls, v):
+        if not validate_email(v):
+            raise ValueError('Email inválido')
+        return v.upper()
 
 class UserCreate(BaseModel):
     username: str
     email: str
     password: str
     role: UserRole
+    permissions: Optional[dict] = Field(default_factory=dict)
     
     @validator('username', 'email', pre=True)
     def uppercase_fields(cls, v):
         return to_upper_case(v)
+    
+    @validator('email')
+    def validate_email_field(cls, v):
+        if not validate_email(v):
+            raise ValueError('Email inválido')
+        return v.upper()
+    
+    @validator('password')
+    def validate_password(cls, v):
+        if len(v) < 6:
+            raise ValueError('Senha deve ter pelo menos 6 caracteres')
+        return v
 
 class UserUpdate(BaseModel):
-    active: bool
+    active: Optional[bool] = None
+    permissions: Optional[dict] = None
+
+class UserPasswordChange(BaseModel):
+    new_password: str
+    
+    @validator('new_password')
+    def validate_password(cls, v):
+        if len(v) < 6:
+            raise ValueError('Senha deve ter pelo menos 6 caracteres')
+        return v
 
 class UserLogin(BaseModel):
     username: str
@@ -152,10 +198,18 @@ class Product(BaseModel):
     active: bool = True
     created_at: datetime = Field(default_factory=datetime.utcnow)
     created_by: str
+    modified_at: Optional[datetime] = None
+    modified_by: Optional[str] = None
     
     @validator('code', 'name', 'description', pre=True)
     def uppercase_fields(cls, v):
         return to_upper_case(v)
+    
+    @validator('price')
+    def validate_price(cls, v):
+        if v <= 0:
+            raise ValueError('Preço deve ser maior que zero')
+        return v
 
 class ProductCreate(BaseModel):
     code: str
@@ -166,6 +220,28 @@ class ProductCreate(BaseModel):
     @validator('code', 'name', 'description', pre=True)
     def uppercase_fields(cls, v):
         return to_upper_case(v)
+    
+    @validator('price')
+    def validate_price(cls, v):
+        if v <= 0:
+            raise ValueError('Preço deve ser maior que zero')
+        return v
+
+class ProductUpdate(BaseModel):
+    name: Optional[str] = None
+    price: Optional[float] = None
+    description: Optional[str] = None
+    active: Optional[bool] = None
+    
+    @validator('name', 'description', pre=True)
+    def uppercase_fields(cls, v):
+        return to_upper_case(v) if v else v
+    
+    @validator('price')
+    def validate_price(cls, v):
+        if v is not None and v <= 0:
+            raise ValueError('Preço deve ser maior que zero')
+        return v
 
 class Transaction(BaseModel):
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
@@ -201,6 +277,12 @@ class TransactionCreate(BaseModel):
     @validator('description', pre=True)
     def uppercase_description(cls, v):
         return to_upper_case(v)
+    
+    @validator('amount')
+    def validate_amount(cls, v):
+        if v <= 0:
+            raise ValueError('Valor deve ser maior que zero')
+        return v
 
 class ClientPaymentCreate(BaseModel):
     client_id: str
@@ -216,10 +298,18 @@ class Client(BaseModel):
     cpf: str
     created_at: datetime = Field(default_factory=datetime.utcnow)
     created_by: str
+    modified_at: Optional[datetime] = None
+    modified_by: Optional[str] = None
     
     @validator('name', 'email', 'address', pre=True)
     def uppercase_fields(cls, v):
         return to_upper_case(v)
+    
+    @validator('email')
+    def validate_email_field(cls, v):
+        if not validate_email(v):
+            raise ValueError('Email inválido')
+        return v.upper()
     
     @validator('cpf')
     def validate_cpf_field(cls, v):
@@ -238,11 +328,33 @@ class ClientCreate(BaseModel):
     def uppercase_fields(cls, v):
         return to_upper_case(v)
     
+    @validator('email')
+    def validate_email_field(cls, v):
+        if not validate_email(v):
+            raise ValueError('Email inválido')
+        return v.upper()
+    
     @validator('cpf')
     def validate_cpf_field(cls, v):
         if not validate_cpf(v):
             raise ValueError('CPF inválido')
         return format_cpf(v)
+
+class ClientUpdate(BaseModel):
+    name: Optional[str] = None
+    email: Optional[str] = None
+    phone: Optional[str] = None
+    address: Optional[str] = None
+    
+    @validator('name', 'email', 'address', pre=True)
+    def uppercase_fields(cls, v):
+        return to_upper_case(v) if v else v
+    
+    @validator('email')
+    def validate_email_field(cls, v):
+        if v and not validate_email(v):
+            raise ValueError('Email inválido')
+        return v.upper() if v else v
 
 class BillInstallment(BaseModel):
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
@@ -290,6 +402,12 @@ class BillCreate(BaseModel):
     @validator('description', pre=True)
     def uppercase_description(cls, v):
         return to_upper_case(v)
+    
+    @validator('installments')
+    def validate_installments(cls, v):
+        if v <= 0:
+            raise ValueError('Número de parcelas deve ser maior que zero')
+        return v
 
 class BillPayment(BaseModel):
     payment_method: PaymentMethod
@@ -361,6 +479,7 @@ async def create_admin_user():
             "email": "ADMIN@SISTEMA.COM",
             "password": get_password_hash("admin123"),
             "role": "admin",
+            "permissions": {},
             "active": True,
             "created_at": datetime.utcnow(),
             "created_by": "system"
@@ -378,6 +497,11 @@ async def register(user: UserCreate, current_user: User = Depends(get_current_us
     existing_user = await db.users.find_one({"username": user.username})
     if existing_user:
         raise HTTPException(status_code=400, detail="Usuário já existe")
+    
+    # Check if email exists
+    existing_email = await db.users.find_one({"email": user.email})
+    if existing_email:
+        raise HTTPException(status_code=400, detail="Email já cadastrado")
     
     # Create user
     user_dict = user.dict()
@@ -404,11 +528,30 @@ async def register(user: UserCreate, current_user: User = Depends(get_current_us
 async def login(user: UserLogin):
     # Find user
     db_user = await db.users.find_one({"username": user.username})
-    if not db_user or not verify_password(user.password, db_user["password"]):
-        raise HTTPException(status_code=401, detail="Credenciais inválidas")
+    if not db_user:
+        # Log failed login attempt
+        await log_activity(
+            ActivityType.LOGIN_FAILED,
+            f"Tentativa de login falhada para usuário '{user.username}'",
+            "system",
+            "system",
+            {"username": user.username, "reason": "user_not_found"}
+        )
+        raise HTTPException(status_code=401, detail="Usuário ou senha incorretos")
+    
+    if not verify_password(user.password, db_user["password"]):
+        # Log failed login attempt
+        await log_activity(
+            ActivityType.LOGIN_FAILED,
+            f"Tentativa de login falhada para usuário '{user.username}'",
+            db_user["id"],
+            db_user["username"],
+            {"username": user.username, "reason": "wrong_password"}
+        )
+        raise HTTPException(status_code=401, detail="Usuário ou senha incorretos")
     
     if not db_user["active"]:
-        raise HTTPException(status_code=401, detail="Usuário inativo")
+        raise HTTPException(status_code=401, detail="Usuário desativado")
     
     # Create token
     access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
@@ -416,10 +559,10 @@ async def login(user: UserLogin):
         data={"sub": db_user["username"]}, expires_delta=access_token_expires
     )
     
-    # Log activity
+    # Log successful login
     await log_activity(
         ActivityType.LOGIN,
-        f"Login realizado",
+        f"Login realizado com sucesso",
         db_user["id"],
         db_user["username"]
     )
@@ -431,7 +574,8 @@ async def login(user: UserLogin):
             "id": db_user["id"],
             "username": db_user["username"],
             "email": db_user["email"],
-            "role": db_user["role"]
+            "role": db_user["role"],
+            "permissions": db_user.get("permissions", {})
         }
     }
 
@@ -457,26 +601,108 @@ async def update_user(user_id: str, user_update: UserUpdate, current_user: User 
     if not user:
         raise HTTPException(status_code=404, detail="Usuário não encontrado")
     
+    # Check permissions for managers
+    if current_user.role == UserRole.MANAGER and user["role"] != "salesperson":
+        raise HTTPException(status_code=403, detail="Gerentes só podem modificar vendedores")
+    
     # Update user
+    update_data = {k: v for k, v in user_update.dict().items() if v is not None}
+    if update_data:
+        result = await db.users.update_one(
+            {"id": user_id},
+            {"$set": update_data}
+        )
+        
+        if result.matched_count == 0:
+            raise HTTPException(status_code=404, detail="Usuário não encontrado")
+        
+        # Log activity
+        actions = []
+        if user_update.active is not None:
+            actions.append("ativado" if user_update.active else "desativado")
+        if user_update.permissions is not None:
+            actions.append("permissões alteradas")
+        
+        await log_activity(
+            ActivityType.USER_PERMISSIONS_CHANGED if user_update.permissions else ActivityType.USER_ACTIVATED if user_update.active else ActivityType.USER_DEACTIVATED,
+            f"Usuário '{user['username']}' {', '.join(actions)}",
+            current_user.id,
+            current_user.username,
+            {"target_user": user['username'], "actions": actions}
+        )
+    
+    return {"message": "Usuário atualizado com sucesso"}
+
+@api_router.put("/users/{user_id}/password")
+async def change_user_password(user_id: str, password_change: UserPasswordChange, current_user: User = Depends(get_current_user)):
+    # Find user
+    user = await db.users.find_one({"id": user_id})
+    if not user:
+        raise HTTPException(status_code=404, detail="Usuário não encontrado")
+    
+    # Check permissions
+    if current_user.role == UserRole.ADMIN:
+        # Admin can change any password
+        pass
+    elif current_user.role == UserRole.MANAGER:
+        # Manager can only change salesperson passwords
+        if user["role"] != "salesperson":
+            raise HTTPException(status_code=403, detail="Gerentes só podem alterar senhas de vendedores")
+    else:
+        # Salesperson can only change their own password
+        if user_id != current_user.id:
+            raise HTTPException(status_code=403, detail="Sem permissão para alterar senha de outro usuário")
+    
+    # Update password
+    hashed_password = get_password_hash(password_change.new_password)
     result = await db.users.update_one(
         {"id": user_id},
-        {"$set": user_update.dict()}
+        {"$set": {"password": hashed_password}}
     )
     
     if result.matched_count == 0:
         raise HTTPException(status_code=404, detail="Usuário não encontrado")
     
     # Log activity
-    action = "ativado" if user_update.active else "desativado"
     await log_activity(
-        ActivityType.USER_ACTIVATED if user_update.active else ActivityType.USER_DEACTIVATED,
-        f"Usuário '{user['username']}' {action}",
+        ActivityType.USER_PASSWORD_CHANGED,
+        f"Senha alterada para usuário '{user['username']}'",
         current_user.id,
         current_user.username,
-        {"target_user": user['username'], "action": action}
+        {"target_user": user['username']}
     )
     
-    return {"message": f"Usuário {action} com sucesso"}
+    return {"message": "Senha alterada com sucesso"}
+
+@api_router.delete("/users/{user_id}")
+async def delete_user(user_id: str, current_user: User = Depends(get_current_user)):
+    if current_user.role != UserRole.ADMIN:
+        raise HTTPException(status_code=403, detail="Apenas administradores podem excluir usuários")
+    
+    # Find user
+    user = await db.users.find_one({"id": user_id})
+    if not user:
+        raise HTTPException(status_code=404, detail="Usuário não encontrado")
+    
+    if user["username"] == "ADMIN":
+        raise HTTPException(status_code=403, detail="Não é possível excluir o usuário administrador")
+    
+    # Delete user
+    result = await db.users.delete_one({"id": user_id})
+    
+    if result.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="Usuário não encontrado")
+    
+    # Log activity
+    await log_activity(
+        ActivityType.USER_DELETED,
+        f"Usuário '{user['username']}' excluído",
+        current_user.id,
+        current_user.username,
+        {"deleted_user": user['username'], "deleted_role": user['role']}
+    )
+    
+    return {"message": "Usuário excluído com sucesso"}
 
 # Products
 @api_router.post("/products")
@@ -485,9 +711,14 @@ async def create_product(product: ProductCreate, current_user: User = Depends(ge
         raise HTTPException(status_code=403, detail="Sem permissão para criar produtos")
     
     # Check if product code exists
-    existing_product = await db.products.find_one({"code": product.code})
+    existing_product = await db.products.find_one({"code": product.code, "active": True})
     if existing_product:
         raise HTTPException(status_code=400, detail="Código do produto já existe")
+    
+    # Check if product name exists
+    existing_name = await db.products.find_one({"name": product.name, "active": True})
+    if existing_name:
+        raise HTTPException(status_code=400, detail="Produto com este nome já existe")
     
     product_dict = product.dict()
     product_dict["id"] = str(uuid.uuid4())
@@ -525,6 +756,77 @@ async def search_products(q: str = Query(..., min_length=1), current_user: User 
     }
     products = await db.products.find(query).to_list(50)
     return [Product(**product) for product in products]
+
+@api_router.put("/products/{product_id}")
+async def update_product(product_id: str, product_update: ProductUpdate, current_user: User = Depends(get_current_user)):
+    if current_user.role not in [UserRole.ADMIN, UserRole.MANAGER]:
+        raise HTTPException(status_code=403, detail="Sem permissão para modificar produtos")
+    
+    # Find product
+    product = await db.products.find_one({"id": product_id})
+    if not product:
+        raise HTTPException(status_code=404, detail="Produto não encontrado")
+    
+    # Check for duplicate name if updating name
+    if product_update.name and product_update.name != product["name"]:
+        existing_name = await db.products.find_one({"name": product_update.name, "active": True, "id": {"$ne": product_id}})
+        if existing_name:
+            raise HTTPException(status_code=400, detail="Produto com este nome já existe")
+    
+    # Update product
+    update_data = {k: v for k, v in product_update.dict().items() if v is not None}
+    if update_data:
+        update_data["modified_at"] = datetime.utcnow()
+        update_data["modified_by"] = current_user.id
+        
+        result = await db.products.update_one(
+            {"id": product_id},
+            {"$set": update_data}
+        )
+        
+        if result.matched_count == 0:
+            raise HTTPException(status_code=404, detail="Produto não encontrado")
+        
+        # Log activity
+        await log_activity(
+            ActivityType.PRODUCT_MODIFIED,
+            f"Produto '{product['code']} - {product['name']}' modificado",
+            current_user.id,
+            current_user.username,
+            {"product_code": product['code'], "product_name": product['name'], "changes": update_data}
+        )
+    
+    return {"message": "Produto atualizado com sucesso"}
+
+@api_router.delete("/products/{product_id}")
+async def delete_product(product_id: str, current_user: User = Depends(get_current_user)):
+    if current_user.role not in [UserRole.ADMIN, UserRole.MANAGER]:
+        raise HTTPException(status_code=403, detail="Sem permissão para excluir produtos")
+    
+    # Find product
+    product = await db.products.find_one({"id": product_id})
+    if not product:
+        raise HTTPException(status_code=404, detail="Produto não encontrado")
+    
+    # Soft delete (deactivate)
+    result = await db.products.update_one(
+        {"id": product_id},
+        {"$set": {"active": False, "modified_at": datetime.utcnow(), "modified_by": current_user.id}}
+    )
+    
+    if result.matched_count == 0:
+        raise HTTPException(status_code=404, detail="Produto não encontrado")
+    
+    # Log activity
+    await log_activity(
+        ActivityType.PRODUCT_DELETED,
+        f"Produto '{product['code']} - {product['name']}' excluído",
+        current_user.id,
+        current_user.username,
+        {"product_code": product['code'], "product_name": product['name']}
+    )
+    
+    return {"message": "Produto excluído com sucesso"}
 
 # Transactions
 @api_router.post("/transactions")
@@ -736,7 +1038,9 @@ async def get_transactions(
     month: Optional[int] = Query(None),
     year: Optional[int] = Query(None),
     transaction_type: Optional[TransactionType] = Query(None),
-    payment_method: Optional[PaymentMethod] = Query(None)
+    payment_method: Optional[PaymentMethod] = Query(None),
+    date_from: Optional[str] = Query(None),
+    date_to: Optional[str] = Query(None)
 ):
     """Get transactions with filters"""
     query = {"cancelled": False}
@@ -757,6 +1061,13 @@ async def get_transactions(
         else:
             end_date = datetime(year, month + 1, 1)
         query["created_at"] = {"$gte": start_date, "$lt": end_date}
+    elif date_from or date_to:
+        date_query = {}
+        if date_from:
+            date_query["$gte"] = datetime.fromisoformat(date_from)
+        if date_to:
+            date_query["$lt"] = datetime.fromisoformat(date_to) + timedelta(days=1)
+        query["created_at"] = date_query
     
     if transaction_type:
         query["type"] = transaction_type
@@ -839,6 +1150,13 @@ async def get_transactions_summary(current_user: User = Depends(get_current_user
         "cancelled": False
     }).to_list(1000)
     
+    # Get today's transactions
+    start_of_day = now.replace(hour=0, minute=0, second=0, microsecond=0)
+    today_transactions = await db.transactions.find({
+        "created_at": {"$gte": start_of_day},
+        "cancelled": False
+    }).to_list(1000)
+    
     total_entrada = sum(t["amount"] for t in transactions if t["type"] in ["entrada", "pagamento_cliente"])
     total_saida = sum(t["amount"] for t in transactions if t["type"] == "saida")
     saldo = total_entrada - total_saida
@@ -847,7 +1165,9 @@ async def get_transactions_summary(current_user: User = Depends(get_current_user
         "total_entrada": total_entrada,
         "total_saida": total_saida,
         "saldo": saldo,
-        "total_transactions": len(transactions)
+        "total_transactions": len(transactions),
+        "today_transactions": len(today_transactions),
+        "current_datetime": now.isoformat()
     }
 
 # Clients
@@ -861,18 +1181,116 @@ async def create_client(client: ClientCreate, current_user: User = Depends(get_c
     if existing_client:
         raise HTTPException(status_code=400, detail="CPF já cadastrado")
     
+    # Check if email already exists
+    existing_email = await db.clients.find_one({"email": client.email})
+    if existing_email:
+        raise HTTPException(status_code=400, detail="Email já cadastrado")
+    
     client_dict = client.dict()
     client_dict["id"] = str(uuid.uuid4())
     client_dict["created_at"] = datetime.utcnow()
     client_dict["created_by"] = current_user.id
     
     await db.clients.insert_one(client_dict)
+    
+    # Log activity
+    await log_activity(
+        ActivityType.CLIENT_CREATED,
+        f"Cliente '{client.name}' criado - CPF: {client.cpf}",
+        current_user.id,
+        current_user.username,
+        {"client_name": client.name, "client_cpf": client.cpf}
+    )
+    
     return Client(**client_dict)
 
 @api_router.get("/clients")
 async def get_clients(current_user: User = Depends(get_current_user)):
     clients = await db.clients.find().to_list(1000)
     return [Client(**client) for client in clients]
+
+@api_router.get("/clients/search")
+async def search_clients(
+    q: str = Query(..., min_length=1),
+    current_user: User = Depends(get_current_user)
+):
+    """Search clients by name or CPF"""
+    # Clean CPF for search
+    cpf_clean = re.sub(r'[^\d]', '', q)
+    
+    query = {
+        "$or": [
+            {"name": {"$regex": q.upper(), "$options": "i"}},
+            {"cpf": {"$regex": cpf_clean, "$options": "i"}}
+        ]
+    }
+    
+    clients = await db.clients.find(query).to_list(50)
+    return [Client(**client) for client in clients]
+
+@api_router.get("/clients/{client_id}")
+async def get_client(client_id: str, current_user: User = Depends(get_current_user)):
+    """Get client details with products and payment history"""
+    client = await db.clients.find_one({"id": client_id})
+    if not client:
+        raise HTTPException(status_code=404, detail="Cliente não encontrado")
+    
+    # Get client's bills and products
+    bills = await db.bills.find({"client_id": client_id, "cancelled": False}).to_list(1000)
+    
+    # Get payment history
+    payment_history = await db.transactions.find({
+        "client_id": client_id,
+        "type": "pagamento_cliente",
+        "cancelled": False
+    }).sort("created_at", -1).to_list(1000)
+    
+    return {
+        "client": Client(**client),
+        "bills": [Bill(**bill) for bill in bills],
+        "payment_history": [Transaction(**payment) for payment in payment_history]
+    }
+
+@api_router.put("/clients/{client_id}")
+async def update_client(client_id: str, client_update: ClientUpdate, current_user: User = Depends(get_current_user)):
+    if current_user.role not in [UserRole.ADMIN, UserRole.MANAGER]:
+        raise HTTPException(status_code=403, detail="Sem permissão para modificar clientes")
+    
+    # Find client
+    client = await db.clients.find_one({"id": client_id})
+    if not client:
+        raise HTTPException(status_code=404, detail="Cliente não encontrado")
+    
+    # Check for duplicate email if updating email
+    if client_update.email and client_update.email != client["email"]:
+        existing_email = await db.clients.find_one({"email": client_update.email, "id": {"$ne": client_id}})
+        if existing_email:
+            raise HTTPException(status_code=400, detail="Email já cadastrado")
+    
+    # Update client
+    update_data = {k: v for k, v in client_update.dict().items() if v is not None}
+    if update_data:
+        update_data["modified_at"] = datetime.utcnow()
+        update_data["modified_by"] = current_user.id
+        
+        result = await db.clients.update_one(
+            {"id": client_id},
+            {"$set": update_data}
+        )
+        
+        if result.matched_count == 0:
+            raise HTTPException(status_code=404, detail="Cliente não encontrado")
+        
+        # Log activity
+        await log_activity(
+            ActivityType.CLIENT_MODIFIED,
+            f"Cliente '{client['name']}' modificado",
+            current_user.id,
+            current_user.username,
+            {"client_name": client['name'], "client_cpf": client['cpf'], "changes": update_data}
+        )
+    
+    return {"message": "Cliente atualizado com sucesso"}
 
 @api_router.get("/clients/with-bills")
 async def get_clients_with_bills(current_user: User = Depends(get_current_user)):
@@ -1157,10 +1575,32 @@ async def cancel_bill(bill_id: str, current_user: User = Depends(get_current_use
     return {"message": "Boleto cancelado com sucesso"}
 
 @api_router.get("/bills/pending")
-async def get_pending_bills(current_user: User = Depends(get_current_user)):
+async def get_pending_bills(
+    current_user: User = Depends(get_current_user),
+    month: Optional[int] = Query(None),
+    year: Optional[int] = Query(None),
+    client_name: Optional[str] = Query(None)
+):
+    """Get pending bills with filters"""
+    match_query = {"status": "pending", "cancelled": False}
+    
+    # Add month/year filter
+    if month and year:
+        start_date = datetime(year, month, 1)
+        if month == 12:
+            end_date = datetime(year + 1, 1, 1)
+        else:
+            end_date = datetime(year, month + 1, 1)
+        match_query["due_date"] = {"$gte": start_date, "$lt": end_date}
+    elif not month and not year:
+        # Default to current month if no filters
+        now = datetime.utcnow()
+        start_date = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+        match_query["due_date"] = {"$gte": start_date}
+    
     # Get pending installments with bill and client info
     pipeline = [
-        {"$match": {"status": "pending", "cancelled": False}},
+        {"$match": match_query},
         {"$lookup": {
             "from": "bills",
             "localField": "bill_id",
@@ -1176,6 +1616,10 @@ async def get_pending_bills(current_user: User = Depends(get_current_user)):
     
     result = []
     for installment in installments:
+        # Apply client name filter if provided
+        if client_name and client_name.upper() not in installment["bill"]["client_name"].upper():
+            continue
+            
         # Check if overdue
         status = "overdue" if installment["due_date"] < datetime.utcnow() else "pending"
         
@@ -1185,6 +1629,7 @@ async def get_pending_bills(current_user: User = Depends(get_current_user)):
             "client_name": installment["bill"]["client_name"],
             "client_cpf": installment["bill"]["client_cpf"],
             "product_name": installment["bill"].get("product_name"),
+            "product_code": installment["bill"].get("product_code"),
             "installment_number": installment["installment_number"],
             "amount": installment["amount"],
             "due_date": installment["due_date"],
@@ -1193,6 +1638,63 @@ async def get_pending_bills(current_user: User = Depends(get_current_user)):
         })
     
     return result
+
+@api_router.put("/bills/{bill_id}/pay-all")
+async def pay_all_bill_installments(bill_id: str, payment: BillPayment, current_user: User = Depends(get_current_user)):
+    """Pay all pending installments for a bill"""
+    # Find bill
+    bill = await db.bills.find_one({"id": bill_id})
+    if not bill:
+        raise HTTPException(status_code=404, detail="Boleto não encontrado")
+    
+    if bill.get("cancelled", False):
+        raise HTTPException(status_code=400, detail="Boleto cancelado")
+    
+    # Find all pending installments
+    installments = await db.bill_installments.find({
+        "bill_id": bill_id,
+        "status": "pending",
+        "cancelled": False
+    }).to_list(1000)
+    
+    if not installments:
+        raise HTTPException(status_code=400, detail="Nenhuma parcela pendente encontrada")
+    
+    # Update all installments as paid
+    total_amount = 0
+    for installment in installments:
+        await db.bill_installments.update_one(
+            {"id": installment["id"]},
+            {"$set": {
+                "status": "paid",
+                "paid_date": datetime.utcnow(),
+                "payment_method": payment.payment_method,
+                "paid_by": current_user.id
+            }}
+        )
+        total_amount += installment["amount"]
+    
+    # Log activity
+    await log_activity(
+        ActivityType.BILL_PAID,
+        f"Boleto quitado - {bill['client_name']} - {len(installments)} parcelas - R$ {total_amount:.2f}",
+        current_user.id,
+        current_user.username,
+        {
+            "client_name": bill["client_name"],
+            "client_cpf": bill["client_cpf"],
+            "product_name": bill.get("product_name"),
+            "installments_paid": len(installments),
+            "total_amount": total_amount,
+            "payment_method": payment.payment_method
+        }
+    )
+    
+    return {
+        "message": "Boleto quitado com sucesso",
+        "installments_paid": len(installments),
+        "total_amount": total_amount
+    }
 
 # Generate PDF Reports
 @api_router.get("/reports/transactions/pdf")
@@ -1314,11 +1816,34 @@ async def generate_transactions_pdf(
 
 # Activity Logs (Admin only)
 @api_router.get("/activity-logs")
-async def get_activity_logs(current_user: User = Depends(get_current_user)):
+async def get_activity_logs(
+    current_user: User = Depends(get_current_user),
+    date_from: Optional[str] = Query(None),
+    date_to: Optional[str] = Query(None),
+    user_name: Optional[str] = Query(None),
+    activity_type: Optional[str] = Query(None)
+):
     if current_user.role != UserRole.ADMIN:
         raise HTTPException(status_code=403, detail="Apenas administradores podem ver logs de atividade")
     
-    logs = await db.activity_logs.find().sort("timestamp", -1).to_list(1000)
+    # Build query
+    query = {}
+    
+    if date_from or date_to:
+        date_query = {}
+        if date_from:
+            date_query["$gte"] = datetime.fromisoformat(date_from)
+        if date_to:
+            date_query["$lt"] = datetime.fromisoformat(date_to) + timedelta(days=1)
+        query["timestamp"] = date_query
+    
+    if user_name:
+        query["user_name"] = {"$regex": user_name.upper(), "$options": "i"}
+    
+    if activity_type:
+        query["activity_type"] = activity_type
+    
+    logs = await db.activity_logs.find(query).sort("timestamp", -1).to_list(1000)
     return [ActivityLog(**log) for log in logs]
 
 # Include the router in the main app
