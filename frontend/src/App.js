@@ -2845,7 +2845,7 @@ const UsersPage = ({ user, token, toUpperCase }) => {
                 onChange={(e) => setCreateData({...createData, role: e.target.value})}
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
               >
-                <option value="salesperson">Vendedor</option>
+                <option value="reception">Recepção</option>
                 <option value="manager">Gerente</option>
                 {user.role === 'admin' && <option value="admin">Administrador</option>}
               </select>
