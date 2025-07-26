@@ -2098,9 +2098,9 @@ async def get_my_sales_reports(
 ):
     """Get sales reports for the current salesperson"""
     if current_user.role not in [UserRole.VENDAS]:
-        raise HTTPException(status_code=403, detail="Apenas vendedores podem acessar seus relatórios")
+        raise HTTPException(status_code=403, detail="Sem permissão para visualizar relatórios")
     
-    # Build query for the current salesperson
+    # Build query
     query = {"vendedor_id": current_user.id}
     
     if month and year:
@@ -2109,48 +2109,266 @@ async def get_my_sales_reports(
             end_date = datetime(year + 1, 1, 1)
         else:
             end_date = datetime(year, month + 1, 1)
-        query["sale_date"] = {"$gte": start_date, "$lt": end_date}
+        query["created_at"] = {"$gte": start_date, "$lt": end_date}
     
-    # Get sales with client and product info
+    # Get sales
+    sales = await db.sales.find(query).sort("created_at", -1).to_list(1000)
+    
+    # Calculate statistics
+    total_sales = len(sales)
+    total_revenue = sum(sale["total_value"] for sale in sales)
+    
+    # Group by product
+    product_stats = {}
+    for sale in sales:
+        product_id = sale["product_id"]
+        if product_id not in product_stats:
+            product_stats[product_id] = {
+                "quantity": 0,
+                "revenue": 0.0,
+                "sales_count": 0
+            }
+        product_stats[product_id]["quantity"] += sale["quantity"]
+        product_stats[product_id]["revenue"] += sale["total_value"]
+        product_stats[product_id]["sales_count"] += 1
+    
+    return {
+        "total_sales": total_sales,
+        "total_revenue": total_revenue,
+        "product_stats": product_stats,
+        "sales": sales
+    }
+
+# Performance Dashboard Endpoints
+@api_router.get("/performance/dashboard")
+async def get_performance_dashboard(
+    current_user: User = Depends(get_current_user),
+    month: Optional[int] = Query(None),
+    year: Optional[int] = Query(None)
+):
+    """Get comprehensive performance dashboard data for managers and admins"""
+    if current_user.role not in [UserRole.ADMIN, UserRole.MANAGER]:
+        raise HTTPException(status_code=403, detail="Sem permissão para visualizar dashboard de performance")
+    
+    # Build date query
+    date_query = {}
+    if month and year:
+        start_date = datetime(year, month, 1)
+        if month == 12:
+            end_date = datetime(year + 1, 1, 1)
+        else:
+            end_date = datetime(year, month + 1, 1)
+        date_query = {"created_at": {"$gte": start_date, "$lt": end_date}}
+    
+    # Get all sales data
+    sales_query = {**date_query}
+    sales = await db.sales.find(sales_query).to_list(10000)
+    
+    # Get all transactions data
+    transactions_query = {**date_query, "cancelled": False}
+    transactions = await db.transactions.find(transactions_query).to_list(10000)
+    
+    # Calculate overall statistics
+    total_sales = len(sales)
+    total_sales_revenue = sum(sale["total_value"] for sale in sales)
+    
+    total_transactions = len(transactions)
+    total_cash_in = sum(t["amount"] for t in transactions if t["type"] == "entrada")
+    total_cash_out = sum(t["amount"] for t in transactions if t["type"] == "saída")
+    cash_balance = total_cash_in - total_cash_out
+    
+    # Sales by salesperson
+    salesperson_stats = {}
+    for sale in sales:
+        vendedor_id = sale["vendedor_id"]
+        if vendedor_id not in salesperson_stats:
+            salesperson_stats[vendedor_id] = {
+                "sales_count": 0,
+                "revenue": 0.0,
+                "products_sold": 0
+            }
+        salesperson_stats[vendedor_id]["sales_count"] += 1
+        salesperson_stats[vendedor_id]["revenue"] += sale["total_value"]
+        salesperson_stats[vendedor_id]["products_sold"] += sale["quantity"]
+    
+    # Get salesperson names
+    vendedor_ids = list(salesperson_stats.keys())
+    vendedores = await db.users.find({"id": {"$in": vendedor_ids}}).to_list(100)
+    vendedor_names = {v["id"]: v["username"] for v in vendedores}
+    
+    # Add names to stats
+    for vendedor_id in salesperson_stats:
+        salesperson_stats[vendedor_id]["name"] = vendedor_names.get(vendedor_id, "Usuário Removido")
+    
+    # Sales by product
+    product_stats = {}
+    for sale in sales:
+        product_id = sale["product_id"]
+        if product_id not in product_stats:
+            product_stats[product_id] = {
+                "sales_count": 0,
+                "quantity_sold": 0,
+                "revenue": 0.0
+            }
+        product_stats[product_id]["sales_count"] += 1
+        product_stats[product_id]["quantity_sold"] += sale["quantity"]
+        product_stats[product_id]["revenue"] += sale["total_value"]
+    
+    # Get product names
+    product_ids = list(product_stats.keys())
+    products = await db.products.find({"id": {"$in": product_ids}}).to_list(1000)
+    product_names = {p["id"]: p["name"] for p in products}
+    
+    # Add names to stats
+    for product_id in product_stats:
+        product_stats[product_id]["name"] = product_names.get(product_id, "Produto Removido")
+    
+    # Sales by payment method
+    payment_method_stats = {}
+    for sale in sales:
+        method = sale["payment_method"]
+        if method not in payment_method_stats:
+            payment_method_stats[method] = {
+                "count": 0,
+                "revenue": 0.0
+            }
+        payment_method_stats[method]["count"] += 1
+        payment_method_stats[method]["revenue"] += sale["total_value"]
+    
+    # Daily sales trend (last 30 days)
+    from datetime import timedelta
+    end_date = datetime.utcnow()
+    start_date = end_date - timedelta(days=30)
+    
+    daily_sales = {}
+    for sale in sales:
+        if sale["created_at"] >= start_date:
+            day_key = sale["created_at"].strftime("%Y-%m-%d")
+            if day_key not in daily_sales:
+                daily_sales[day_key] = {
+                    "count": 0,
+                    "revenue": 0.0
+                }
+            daily_sales[day_key]["count"] += 1
+            daily_sales[day_key]["revenue"] += sale["total_value"]
+    
+    # Monthly comparison (current vs previous month)
+    current_month = datetime.utcnow().month
+    current_year = datetime.utcnow().year
+    
+    # Current month
+    current_month_start = datetime(current_year, current_month, 1)
+    if current_month == 12:
+        current_month_end = datetime(current_year + 1, 1, 1)
+    else:
+        current_month_end = datetime(current_year, current_month + 1, 1)
+    
+    # Previous month
+    if current_month == 1:
+        prev_month = 12
+        prev_year = current_year - 1
+    else:
+        prev_month = current_month - 1
+        prev_year = current_year
+    
+    prev_month_start = datetime(prev_year, prev_month, 1)
+    prev_month_end = datetime(prev_year, prev_month + 1, 1) if prev_month < 12 else datetime(prev_year + 1, 1, 1)
+    
+    current_month_sales = await db.sales.find({
+        "created_at": {"$gte": current_month_start, "$lt": current_month_end}
+    }).to_list(10000)
+    
+    prev_month_sales = await db.sales.find({
+        "created_at": {"$gte": prev_month_start, "$lt": prev_month_end}
+    }).to_list(10000)
+    
+    current_month_revenue = sum(sale["total_value"] for sale in current_month_sales)
+    prev_month_revenue = sum(sale["total_value"] for sale in prev_month_sales)
+    
+    revenue_growth = 0
+    if prev_month_revenue > 0:
+        revenue_growth = ((current_month_revenue - prev_month_revenue) / prev_month_revenue) * 100
+    
+    return {
+        "overview": {
+            "total_sales": total_sales,
+            "total_sales_revenue": total_sales_revenue,
+            "total_transactions": total_transactions,
+            "cash_balance": cash_balance,
+            "revenue_growth": revenue_growth
+        },
+        "salesperson_performance": salesperson_stats,
+        "product_performance": product_stats,
+        "payment_methods": payment_method_stats,
+        "daily_trend": daily_sales,
+        "monthly_comparison": {
+            "current_month": {
+                "revenue": current_month_revenue,
+                "sales_count": len(current_month_sales)
+            },
+            "previous_month": {
+                "revenue": prev_month_revenue,
+                "sales_count": len(prev_month_sales)
+            },
+            "growth_percentage": revenue_growth
+        }
+    }
+
+@api_router.get("/performance/top-performers")
+async def get_top_performers(
+    current_user: User = Depends(get_current_user),
+    month: Optional[int] = Query(None),
+    year: Optional[int] = Query(None),
+    limit: int = Query(10)
+):
+    """Get top performing salespeople"""
+    if current_user.role not in [UserRole.ADMIN, UserRole.MANAGER]:
+        raise HTTPException(status_code=403, detail="Sem permissão para visualizar relatórios de performance")
+    
+    # Build date query
+    date_query = {}
+    if month and year:
+        start_date = datetime(year, month, 1)
+        if month == 12:
+            end_date = datetime(year + 1, 1, 1)
+        else:
+            end_date = datetime(year, month + 1, 1)
+        date_query = {"created_at": {"$gte": start_date, "$lt": end_date}}
+    
+    # Aggregate sales by salesperson
     pipeline = [
-        {"$match": query},
-        {"$lookup": {
-            "from": "clients",
-            "localField": "client_id", 
-            "foreignField": "id",
-            "as": "client"
+        {"$match": date_query},
+        {"$group": {
+            "_id": "$vendedor_id",
+            "total_sales": {"$sum": 1},
+            "total_revenue": {"$sum": "$total_value"},
+            "total_quantity": {"$sum": "$quantity"}
         }},
-        {"$lookup": {
-            "from": "products",
-            "localField": "product_id",
-            "foreignField": "id", 
-            "as": "product"
-        }},
-        {"$unwind": "$client"},
-        {"$unwind": "$product"},
-        {"$sort": {"sale_date": -1}}
+        {"$sort": {"total_revenue": -1}},
+        {"$limit": limit}
     ]
     
-    sales = await db.sales.aggregate(pipeline).to_list(1000)
+    results = await db.sales.aggregate(pipeline).to_list(limit)
     
-    reports = []
-    for sale in sales:
-        reports.append({
-            "sale_id": sale["id"],
-            "client_name": sale["client"]["name"],
-            "client_cpf": sale["client"]["cpf"],
-            "product_name": sale["product"]["name"],
-            "quantity": sale["quantity"],
-            "unit_price": sale["unit_price"],
-            "total_value": sale["total_value"],
-            "payment_method": sale["payment_method"],
-            "sale_date": sale["sale_date"],
-            "day": sale["sale_date"].day,
-            "month": sale["sale_date"].month,
-            "year": sale["sale_date"].year
+    # Get user names
+    vendedor_ids = [r["_id"] for r in results]
+    vendedores = await db.users.find({"id": {"$in": vendedor_ids}}).to_list(100)
+    vendedor_names = {v["id"]: v["username"] for v in vendedores}
+    
+    # Format results
+    top_performers = []
+    for result in results:
+        vendedor_id = result["_id"]
+        top_performers.append({
+            "vendedor_id": vendedor_id,
+            "name": vendedor_names.get(vendedor_id, "Usuário Removido"),
+            "total_sales": result["total_sales"],
+            "total_revenue": result["total_revenue"],
+            "total_quantity": result["total_quantity"],
+            "average_sale_value": result["total_revenue"] / result["total_sales"] if result["total_sales"] > 0 else 0
         })
     
-    return reports
+    return top_performers
 
 @api_router.get("/sales/reports/all")
 async def get_all_sales_reports(
