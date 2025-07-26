@@ -265,8 +265,8 @@ backend:
           comment: "✅ TESTED: Enhanced user management functions working. Admin can reset passwords, manage permissions, activate/deactivate users, and delete users (except main admin). Password change endpoints work correctly. User update endpoints functional."
 
   - task: "Manager Permission Restrictions"
-    implemented: false
-    working: false
+    implemented: true
+    working: true
     file: "server.py, App.js"
     stuck_count: 1
     priority: "medium"
@@ -278,6 +278,9 @@ backend:
         - working: false
           agent: "testing"
           comment: "❌ CRITICAL ISSUE: Manager restrictions NOT implemented in register endpoint. Managers can currently create other managers and admins. The register function (lines 497-531 in server.py) is missing role-based creation restrictions for managers. Only basic permission check exists but no role hierarchy enforcement."
+        - working: true
+          agent: "testing"
+          comment: "✅ SECURITY VULNERABILITY FIXED: Manager permission restrictions now working correctly. Tested all 4 scenarios: 1) Manager creating reception ✅ WORKS 2) Manager creating manager ❌ CORRECTLY BLOCKED with 'Gerentes só podem criar usuários de recepção' 3) Manager creating admin ❌ CORRECTLY BLOCKED with same error 4) Admin creating any role ✅ WORKS. Security fix implemented in lines 503-505 of server.py with proper role hierarchy enforcement."
 
 frontend:
   - task: "Error Messages Display"
