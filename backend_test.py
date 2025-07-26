@@ -11,7 +11,7 @@ from datetime import datetime, timedelta
 from typing import Dict, Any, Optional
 
 class CaixaAPITester:
-    def __init__(self, base_url="https://cefc370c-9290-41bc-bb27-a556498755ba.preview.emergentagent.com"):
+    def __init__(self, base_url="https://496eea55-995e-4134-a00e-558ced9e7934.preview.emergentagent.com"):
         self.base_url = base_url.rstrip('/')
         self.admin_token = None
         self.manager_token = None
@@ -1018,7 +1018,7 @@ class CaixaAPITester:
 
 def main():
     # Get backend URL from environment
-    backend_url = "https://cefc370c-9290-41bc-bb27-a556498755ba.preview.emergentagent.com"
+    backend_url = "https://496eea55-995e-4134-a00e-558ced9e7934.preview.emergentagent.com"
     
     print(f"Testing backend at: {backend_url}")
     
