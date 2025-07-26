@@ -121,7 +121,7 @@ class VendasPermissionsTest:
             'email': f'cliente.vendas.{unique_id}@teste.com',
             'phone': '11999999999',
             'address': 'Rua Teste 123',
-            'cpf': '11144477735'  # Valid CPF
+            'cpf': '52998224725'  # Different valid CPF
         }
         
         success, client_result = self.make_request('POST', 'clients', client_data, self.vendas_token)
