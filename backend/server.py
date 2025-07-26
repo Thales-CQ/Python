@@ -656,11 +656,11 @@ async def change_user_password(user_id: str, password_change: UserPasswordChange
         # Admin can change any password
         pass
     elif current_user.role == UserRole.MANAGER:
-        # Manager can only change salesperson passwords
-        if user["role"] != "salesperson":
-            raise HTTPException(status_code=403, detail="Gerentes só podem alterar senhas de vendedores")
+        # Manager can only change reception passwords
+        if user["role"] not in ["reception", "salesperson"]:
+            raise HTTPException(status_code=403, detail="Gerentes só podem alterar senhas da recepção")
     else:
-        # Salesperson can only change their own password
+        # Reception can only change their own password
         if user_id != current_user.id:
             raise HTTPException(status_code=403, detail="Sem permissão para alterar senha de outro usuário")
     
