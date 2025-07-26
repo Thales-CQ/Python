@@ -172,6 +172,7 @@ class UserCreate(BaseModel):
 class UserUpdate(BaseModel):
     active: Optional[bool] = None
     permissions: Optional[dict] = None
+    require_password_change: Optional[bool] = None
 
 class UserPasswordChange(BaseModel):
     new_password: str
