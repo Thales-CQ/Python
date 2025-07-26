@@ -411,9 +411,8 @@ metadata:
 
 test_plan:
   current_focus:
-    - "Manager Permission Restrictions"
-  stuck_tasks:
-    - "Manager Permission Restrictions"
+    - "All critical security issues resolved"
+  stuck_tasks: []
   test_all: false
   test_priority: "high_first"
 
