@@ -775,6 +775,10 @@ class CaixaAPITester:
             print("❌ Cannot proceed without admin login")
             return False
 
+        # SALES REPORTING INVESTIGATION - PRIORITY FROM REVIEW REQUEST
+        print("\n🎯 SALES REPORTING INVESTIGATION (PRIORITY)")
+        self.test_sales_reporting_issue()
+
         # User Management Tests
         print("\n👥 User Management Tests")
         self.test_user_creation()
