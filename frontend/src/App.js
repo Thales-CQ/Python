@@ -52,7 +52,16 @@ const API_URL = process.env.REACT_APP_BACKEND_URL || 'http://localhost:8001';
 function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(!!localStorage.getItem('token'));
   const [user, setUser] = useState(null);
-  const [currentPage, setCurrentPage] = useState('home');
+  
+  // Define initial page based on user role
+  const getInitialPage = () => {
+    if (user?.role === 'vendas') {
+      return 'clients'; // Vendas starts at client registration
+    }
+    return 'home'; // Other users start at home
+  };
+
+  const [currentPage, setCurrentPage] = useState(getInitialPage());
   const [loading, setLoading] = useState(true);
   const [showSplash, setShowSplash] = useState(true);
 
