@@ -56,9 +56,20 @@ function App() {
   };
 
   // Check if user has permission for a specific action
-  const hasPermission = (requiredRoles) => {
+  const hasPermission = (requiredRoles, specificPermission = null) => {
     if (!user) return false;
-    return requiredRoles.includes(user.role);
+    
+    // Check role-based permissions
+    if (requiredRoles.includes(user.role)) {
+      return true;
+    }
+    
+    // Check specific permissions for reception users
+    if (user.role === 'reception' && specificPermission && user.permissions) {
+      return user.permissions[specificPermission] === true;
+    }
+    
+    return false;
   };
 
   if (loading) {
