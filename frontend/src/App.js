@@ -1005,4 +1005,682 @@ const CashOperationPage = ({ user, token, toUpperCase }) => {
   );
 };
 
+// History Component with enhanced filtering
+const HistoryPage = ({ user, token, toUpperCase }) => {
+  const [transactions, setTransactions] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [filters, setFilters] = useState({
+    search: '',
+    month: '',
+    year: new Date().getFullYear(),
+    type: '',
+    paymentMethod: ''
+  });
+
+  useEffect(() => {
+    fetchTransactions();
+  }, [filters]);
+
+  const fetchTransactions = async () => {
+    try {
+      const params = new URLSearchParams();
+      if (filters.search) params.append('search', filters.search);
+      if (filters.month) params.append('month', filters.month);
+      if (filters.year) params.append('year', filters.year);
+      if (filters.type) params.append('transaction_type', filters.type);
+      if (filters.paymentMethod) params.append('payment_method', filters.paymentMethod);
+
+      const response = await fetch(`${API_URL}/api/transactions?${params}`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setTransactions(data);
+      }
+    } catch (err) {
+      console.error('Erro ao buscar transações:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleCancelTransaction = async (transactionId) => {
+    if (!window.confirm('Tem certeza que deseja cancelar esta transação?')) {
+      return;
+    }
+
+    try {
+      const response = await fetch(`${API_URL}/api/transactions/${transactionId}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+
+      if (response.ok) {
+        fetchTransactions();
+      }
+    } catch (err) {
+      console.error('Erro ao cancelar transação:', err);
+    }
+  };
+
+  const generatePDF = async () => {
+    try {
+      const params = new URLSearchParams();
+      if (filters.month) params.append('month', filters.month);
+      if (filters.year) params.append('year', filters.year);
+
+      const response = await fetch(`${API_URL}/api/reports/transactions/pdf?${params}`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+
+      if (response.ok) {
+        const blob = await response.blob();
+        const url = window.URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `transacoes_${filters.month || 'todas'}_${filters.year}.pdf`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        window.URL.revokeObjectURL(url);
+      }
+    } catch (err) {
+      console.error('Erro ao gerar PDF:', err);
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center h-64">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="bg-white rounded-lg shadow">
+      <div className="px-6 py-4 border-b">
+        <div className="flex justify-between items-center">
+          <h2 className="text-xl font-bold text-gray-900">Histórico de Transações</h2>
+          <button
+            onClick={generatePDF}
+            className="bg-red-600 text-white px-4 py-2 rounded-md hover:bg-red-700 flex items-center space-x-2"
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+            </svg>
+            <span>Gerar PDF</span>
+          </button>
+        </div>
+      </div>
+
+      {/* Filters */}
+      <div className="px-6 py-4 border-b bg-gray-50">
+        <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Buscar
+            </label>
+            <input
+              type="text"
+              value={filters.search}
+              onChange={(e) => setFilters({...filters, search: e.target.value})}
+              onInput={toUpperCase}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              placeholder="NOME, DESCRIÇÃO..."
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Mês
+            </label>
+            <select
+              value={filters.month}
+              onChange={(e) => setFilters({...filters, month: e.target.value})}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            >
+              <option value="">Todos</option>
+              <option value="1">Janeiro</option>
+              <option value="2">Fevereiro</option>
+              <option value="3">Março</option>
+              <option value="4">Abril</option>
+              <option value="5">Maio</option>
+              <option value="6">Junho</option>
+              <option value="7">Julho</option>
+              <option value="8">Agosto</option>
+              <option value="9">Setembro</option>
+              <option value="10">Outubro</option>
+              <option value="11">Novembro</option>
+              <option value="12">Dezembro</option>
+            </select>
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Ano
+            </label>
+            <input
+              type="number"
+              value={filters.year}
+              onChange={(e) => setFilters({...filters, year: e.target.value})}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Tipo
+            </label>
+            <select
+              value={filters.type}
+              onChange={(e) => setFilters({...filters, type: e.target.value})}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            >
+              <option value="">Todos</option>
+              <option value="entrada">Entrada</option>
+              <option value="saida">Saída</option>
+              <option value="pagamento_cliente">Pagamento Cliente</option>
+            </select>
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Pagamento
+            </label>
+            <select
+              value={filters.paymentMethod}
+              onChange={(e) => setFilters({...filters, paymentMethod: e.target.value})}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            >
+              <option value="">Todos</option>
+              <option value="dinheiro">Dinheiro</option>
+              <option value="cartao">Cartão</option>
+              <option value="pix">PIX</option>
+              <option value="boleto">Boleto</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <div className="overflow-x-auto">
+        <table className="w-full">
+          <thead className="bg-gray-50">
+            <tr>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Data
+              </th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Tipo
+              </th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Valor
+              </th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Descrição
+              </th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Pagamento
+              </th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Produto
+              </th>
+              {(user.role === 'admin' || user.role === 'manager') && (
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Usuário
+                </th>
+              )}
+              {(user.role === 'admin' || user.role === 'manager') && (
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Ações
+                </th>
+              )}
+            </tr>
+          </thead>
+          <tbody className="bg-white divide-y divide-gray-200">
+            {transactions.map((transaction) => (
+              <tr key={transaction.id} className={transaction.cancelled ? 'bg-red-50' : ''}>
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                  {new Date(transaction.created_at).toLocaleDateString('pt-BR', {
+                    day: '2-digit',
+                    month: '2-digit',
+                    year: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit'
+                  })}
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap">
+                  <span className={`px-2 py-1 text-xs font-medium rounded-full ${
+                    transaction.cancelled ? 'bg-red-100 text-red-800' :
+                    transaction.type === 'entrada' ? 'bg-green-100 text-green-800' :
+                    transaction.type === 'pagamento_cliente' ? 'bg-blue-100 text-blue-800' :
+                    'bg-red-100 text-red-800'
+                  }`}>
+                    {transaction.cancelled ? 'CANCELADA' : 
+                     transaction.type === 'entrada' ? 'ENTRADA' :
+                     transaction.type === 'pagamento_cliente' ? 'PAG.CLIENTE' :
+                     'SAÍDA'}
+                  </span>
+                </td>
+                <td className={`px-6 py-4 whitespace-nowrap text-sm font-medium ${
+                  transaction.cancelled ? 'text-gray-500 line-through' :
+                  transaction.type === 'entrada' || transaction.type === 'pagamento_cliente' ? 'text-green-600' : 'text-red-600'
+                }`}>
+                  R$ {transaction.amount.toFixed(2)}
+                </td>
+                <td className="px-6 py-4 text-sm text-gray-900">
+                  {transaction.description}
+                  {transaction.client_name && (
+                    <div className="text-xs text-gray-500">
+                      Cliente: {transaction.client_name} - {transaction.client_cpf}
+                    </div>
+                  )}
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                  {transaction.payment_method.toUpperCase()}
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                  {transaction.product_code ? `${transaction.product_code} - ${transaction.product_name}` : '-'}
+                </td>
+                {(user.role === 'admin' || user.role === 'manager') && (
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                    {transaction.user_name}
+                  </td>
+                )}
+                {(user.role === 'admin' || user.role === 'manager') && (
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                    {!transaction.cancelled && (
+                      <button
+                        onClick={() => handleCancelTransaction(transaction.id)}
+                        className="text-red-600 hover:text-red-900 text-xs"
+                      >
+                        Cancelar
+                      </button>
+                    )}
+                  </td>
+                )}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+};
+
+// Products Page with CRUD operations
+const ProductsPage = ({ user, token, toUpperCase }) => {
+  const [products, setProducts] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [showCreateForm, setShowCreateForm] = useState(false);
+  const [editingProduct, setEditingProduct] = useState(null);
+  const [createData, setCreateData] = useState({
+    code: '',
+    name: '',
+    price: '',
+    description: ''
+  });
+  const [message, setMessage] = useState('');
+
+  useEffect(() => {
+    fetchProducts();
+  }, []);
+
+  const fetchProducts = async () => {
+    try {
+      const response = await fetch(`${API_URL}/api/products`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setProducts(data);
+      }
+    } catch (err) {
+      console.error('Erro ao buscar produtos:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleCreateProduct = async (e) => {
+    e.preventDefault();
+    setMessage('');
+    
+    try {
+      const response = await fetch(`${API_URL}/api/products`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          ...createData,
+          price: parseFloat(createData.price)
+        }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        setShowCreateForm(false);
+        setCreateData({ code: '', name: '', price: '', description: '' });
+        fetchProducts();
+        setMessage('Produto criado com sucesso!');
+        setTimeout(() => setMessage(''), 5000);
+      } else {
+        // Enhanced error handling
+        if (data.detail?.includes('já existe')) {
+          setMessage(`Erro: ${data.detail}`);
+        } else if (data.detail?.includes('maior que zero')) {
+          setMessage('Erro: O preço deve ser maior que zero');
+        } else {
+          setMessage(`Erro: ${data.detail}`);
+        }
+      }
+    } catch (err) {
+      setMessage('Erro de conexão');
+    }
+  };
+
+  const handleUpdateProduct = async (e) => {
+    e.preventDefault();
+    setMessage('');
+    
+    try {
+      const response = await fetch(`${API_URL}/api/products/${editingProduct.id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          name: editingProduct.name,
+          price: parseFloat(editingProduct.price),
+          description: editingProduct.description,
+          active: editingProduct.active
+        }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        setEditingProduct(null);
+        fetchProducts();
+        setMessage('Produto atualizado com sucesso!');
+        setTimeout(() => setMessage(''), 5000);
+      } else {
+        if (data.detail?.includes('já existe')) {
+          setMessage(`Erro: ${data.detail}`);
+        } else if (data.detail?.includes('maior que zero')) {
+          setMessage('Erro: O preço deve ser maior que zero');
+        } else {
+          setMessage(`Erro: ${data.detail}`);
+        }
+      }
+    } catch (err) {
+      setMessage('Erro de conexão');
+    }
+  };
+
+  const handleDeleteProduct = async (productId) => {
+    if (!window.confirm('Tem certeza que deseja excluir este produto?')) {
+      return;
+    }
+
+    try {
+      const response = await fetch(`${API_URL}/api/products/${productId}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+
+      if (response.ok) {
+        fetchProducts();
+        setMessage('Produto excluído com sucesso!');
+        setTimeout(() => setMessage(''), 5000);
+      }
+    } catch (err) {
+      setMessage('Erro ao excluir produto');
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center h-64">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="bg-white rounded-lg shadow">
+      <div className="px-6 py-4 border-b flex justify-between items-center">
+        <h2 className="text-xl font-bold text-gray-900">Gerenciamento de Produtos</h2>
+        <button
+          onClick={() => setShowCreateForm(true)}
+          className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700"
+        >
+          Novo Produto
+        </button>
+      </div>
+
+      {message && (
+        <div className={`mx-6 mt-4 p-3 rounded ${
+          message.includes('Erro') ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'
+        }`}>
+          {message}
+        </div>
+      )}
+
+      {showCreateForm && (
+        <div className="px-6 py-4 border-b bg-gray-50">
+          <h3 className="text-lg font-medium text-gray-900 mb-4">Criar Novo Produto</h3>
+          <form onSubmit={handleCreateProduct} className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Código
+              </label>
+              <input
+                type="text"
+                value={createData.code}
+                onChange={(e) => setCreateData({...createData, code: e.target.value})}
+                onInput={toUpperCase}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                required
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Nome
+              </label>
+              <input
+                type="text"
+                value={createData.name}
+                onChange={(e) => setCreateData({...createData, name: e.target.value})}
+                onInput={toUpperCase}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                required
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Preço (R$)
+              </label>
+              <input
+                type="number"
+                step="0.01"
+                value={createData.price}
+                onChange={(e) => setCreateData({...createData, price: e.target.value})}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                required
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Descrição
+              </label>
+              <input
+                type="text"
+                value={createData.description}
+                onChange={(e) => setCreateData({...createData, description: e.target.value})}
+                onInput={toUpperCase}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+            <div className="md:col-span-2 flex space-x-2">
+              <button
+                type="submit"
+                className="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700"
+              >
+                Criar Produto
+              </button>
+              <button
+                type="button"
+                onClick={() => setShowCreateForm(false)}
+                className="bg-gray-600 text-white px-4 py-2 rounded-md hover:bg-gray-700"
+              >
+                Cancelar
+              </button>
+            </div>
+          </form>
+        </div>
+      )}
+
+      <div className="overflow-x-auto">
+        <table className="w-full">
+          <thead className="bg-gray-50">
+            <tr>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Código
+              </th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Nome
+              </th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Preço
+              </th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Descrição
+              </th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Status
+              </th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Ações
+              </th>
+            </tr>
+          </thead>
+          <tbody className="bg-white divide-y divide-gray-200">
+            {products.map((product) => (
+              <tr key={product.id}>
+                {editingProduct?.id === product.id ? (
+                  <>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                      {product.code}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <input
+                        type="text"
+                        value={editingProduct.name}
+                        onChange={(e) => setEditingProduct({...editingProduct, name: e.target.value})}
+                        onInput={toUpperCase}
+                        className="w-full px-2 py-1 border border-gray-300 rounded text-sm"
+                      />
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <input
+                        type="number"
+                        step="0.01"
+                        value={editingProduct.price}
+                        onChange={(e) => setEditingProduct({...editingProduct, price: e.target.value})}
+                        className="w-full px-2 py-1 border border-gray-300 rounded text-sm"
+                      />
+                    </td>
+                    <td className="px-6 py-4">
+                      <input
+                        type="text"
+                        value={editingProduct.description || ''}
+                        onChange={(e) => setEditingProduct({...editingProduct, description: e.target.value})}
+                        onInput={toUpperCase}
+                        className="w-full px-2 py-1 border border-gray-300 rounded text-sm"
+                      />
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <select
+                        value={editingProduct.active}
+                        onChange={(e) => setEditingProduct({...editingProduct, active: e.target.value === 'true'})}
+                        className="px-2 py-1 border border-gray-300 rounded text-sm"
+                      >
+                        <option value="true">Ativo</option>
+                        <option value="false">Inativo</option>
+                      </select>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm space-x-2">
+                      <button
+                        onClick={handleUpdateProduct}
+                        className="text-green-600 hover:text-green-900"
+                      >
+                        Salvar
+                      </button>
+                      <button
+                        onClick={() => setEditingProduct(null)}
+                        className="text-gray-600 hover:text-gray-900"
+                      >
+                        Cancelar
+                      </button>
+                    </td>
+                  </>
+                ) : (
+                  <>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                      {product.code}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                      {product.name}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                      R$ {product.price.toFixed(2)}
+                    </td>
+                    <td className="px-6 py-4 text-sm text-gray-900">
+                      {product.description || '-'}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <span className={`px-2 py-1 text-xs font-medium rounded-full ${
+                        product.active ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+                      }`}>
+                        {product.active ? 'Ativo' : 'Inativo'}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm space-x-2">
+                      <button
+                        onClick={() => setEditingProduct(product)}
+                        className="text-blue-600 hover:text-blue-900"
+                      >
+                        Editar
+                      </button>
+                      <button
+                        onClick={() => handleDeleteProduct(product.id)}
+                        className="text-red-600 hover:text-red-900"
+                      >
+                        Excluir
+                      </button>
+                    </td>
+                  </>
+                )}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+};
+
 export default App;
