@@ -1544,7 +1544,7 @@ async def get_client(client_id: str, current_user: User = Depends(get_current_us
 
 @api_router.put("/clients/{client_id}")
 async def update_client(client_id: str, client_update: ClientUpdate, current_user: User = Depends(get_current_user)):
-    if current_user.role not in [UserRole.ADMIN, UserRole.MANAGER]:
+    if current_user.role not in [UserRole.ADMIN, UserRole.MANAGER, UserRole.VENDAS]:
         raise HTTPException(status_code=403, detail="Sem permissão para modificar clientes")
     
     # Find client
