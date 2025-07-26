@@ -8,6 +8,20 @@ function App() {
   const [currentPage, setCurrentPage] = useState('login');
   const [token, setToken] = useState(localStorage.getItem('token'));
 
+  // Utility function to convert to uppercase
+  const toUpperCase = (e) => {
+    e.target.value = e.target.value.toUpperCase();
+  };
+
+  // Utility function to format CPF
+  const formatCPF = (value) => {
+    const cpf = value.replace(/\D/g, '');
+    if (cpf.length <= 11) {
+      return cpf.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.$2.$3-$4');
+    }
+    return value;
+  };
+
   // Login Component
   const LoginPage = () => {
     const [username, setUsername] = useState('');
@@ -69,6 +83,7 @@ function App() {
                 type="text"
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
+                onInput={toUpperCase}
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                 required
               />
@@ -97,7 +112,7 @@ function App() {
           </form>
 
           <div className="mt-6 text-center text-sm text-gray-600">
-            <p>Usuário padrão: <strong>admin</strong></p>
+            <p>Usuário padrão: <strong>ADMIN</strong></p>
             <p>Senha padrão: <strong>admin123</strong></p>
           </div>
         </div>
@@ -370,14 +385,277 @@ function App() {
     );
   };
 
+  // Products Component
+  const ProductsPage = () => {
+    const [products, setProducts] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [showCreateForm, setShowCreateForm] = useState(false);
+    const [createData, setCreateData] = useState({
+      code: '',
+      name: '',
+      price: '',
+      description: ''
+    });
+
+    useEffect(() => {
+      fetchProducts();
+    }, []);
+
+    const fetchProducts = async () => {
+      try {
+        const response = await fetch(`${API_URL}/api/products`, {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+          },
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          setProducts(data);
+        }
+      } catch (err) {
+        console.error('Erro ao buscar produtos:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    const handleCreateProduct = async (e) => {
+      e.preventDefault();
+      try {
+        const response = await fetch(`${API_URL}/api/products`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`,
+          },
+          body: JSON.stringify({
+            ...createData,
+            price: parseFloat(createData.price)
+          }),
+        });
+
+        if (response.ok) {
+          setShowCreateForm(false);
+          setCreateData({ code: '', name: '', price: '', description: '' });
+          fetchProducts();
+        }
+      } catch (err) {
+        console.error('Erro ao criar produto:', err);
+      }
+    };
+
+    if (loading) {
+      return (
+        <div className="flex justify-center items-center h-64">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+        </div>
+      );
+    }
+
+    return (
+      <div className="bg-white rounded-lg shadow">
+        <div className="px-6 py-4 border-b flex justify-between items-center">
+          <h2 className="text-xl font-bold text-gray-900">Produtos</h2>
+          <button
+            onClick={() => setShowCreateForm(true)}
+            className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700"
+          >
+            Novo Produto
+          </button>
+        </div>
+
+        {showCreateForm && (
+          <div className="px-6 py-4 border-b bg-gray-50">
+            <h3 className="text-lg font-medium text-gray-900 mb-4">Criar Novo Produto</h3>
+            <form onSubmit={handleCreateProduct} className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Código do Produto
+                </label>
+                <input
+                  type="text"
+                  value={createData.code}
+                  onChange={(e) => setCreateData({...createData, code: e.target.value})}
+                  onInput={toUpperCase}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  required
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Nome do Produto
+                </label>
+                <input
+                  type="text"
+                  value={createData.name}
+                  onChange={(e) => setCreateData({...createData, name: e.target.value})}
+                  onInput={toUpperCase}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  required
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Preço (R$)
+                </label>
+                <input
+                  type="number"
+                  step="0.01"
+                  value={createData.price}
+                  onChange={(e) => setCreateData({...createData, price: e.target.value})}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  required
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Descrição
+                </label>
+                <input
+                  type="text"
+                  value={createData.description}
+                  onChange={(e) => setCreateData({...createData, description: e.target.value})}
+                  onInput={toUpperCase}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+              <div className="md:col-span-2 flex space-x-2">
+                <button
+                  type="submit"
+                  className="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700"
+                >
+                  Criar Produto
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setShowCreateForm(false)}
+                  className="bg-gray-600 text-white px-4 py-2 rounded-md hover:bg-gray-700"
+                >
+                  Cancelar
+                </button>
+              </div>
+            </form>
+          </div>
+        )}
+
+        <div className="overflow-x-auto">
+          <table className="w-full">
+            <thead className="bg-gray-50">
+              <tr>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Código
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Nome
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Preço
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Descrição
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Criado em
+                </th>
+              </tr>
+            </thead>
+            <tbody className="bg-white divide-y divide-gray-200">
+              {products.map((product) => (
+                <tr key={product.id}>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                    {product.code}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                    {product.name}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                    R$ {product.price.toFixed(2)}
+                  </td>
+                  <td className="px-6 py-4 text-sm text-gray-900">
+                    {product.description || '-'}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                    {new Date(product.created_at).toLocaleDateString('pt-BR')}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    );
+  };
+
   // Cashier Component
   const CashierPage = () => {
     const [amount, setAmount] = useState('');
     const [description, setDescription] = useState('');
     const [type, setType] = useState('entrada');
     const [paymentMethod, setPaymentMethod] = useState('dinheiro');
+    const [selectedProduct, setSelectedProduct] = useState('');
+    const [productSearch, setProductSearch] = useState('');
+    const [products, setProducts] = useState([]);
+    const [searchResults, setSearchResults] = useState([]);
     const [loading, setLoading] = useState(false);
     const [message, setMessage] = useState('');
+
+    useEffect(() => {
+      fetchProducts();
+    }, []);
+
+    const fetchProducts = async () => {
+      try {
+        const response = await fetch(`${API_URL}/api/products`, {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+          },
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          setProducts(data);
+        }
+      } catch (err) {
+        console.error('Erro ao buscar produtos:', err);
+      }
+    };
+
+    const searchProducts = async (searchTerm) => {
+      if (!searchTerm.trim()) {
+        setSearchResults([]);
+        return;
+      }
+
+      try {
+        const response = await fetch(`${API_URL}/api/products/search?q=${encodeURIComponent(searchTerm)}`, {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+          },
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          setSearchResults(data);
+        }
+      } catch (err) {
+        console.error('Erro ao buscar produtos:', err);
+      }
+    };
+
+    const handleProductSearch = (e) => {
+      const value = e.target.value.toUpperCase();
+      setProductSearch(value);
+      searchProducts(value);
+    };
+
+    const selectProduct = (product) => {
+      setSelectedProduct(product.id);
+      setAmount(product.price.toString());
+      setDescription(product.name);
+      setProductSearch(`${product.code} - ${product.name}`);
+      setSearchResults([]);
+    };
 
     const getPaymentMethods = () => {
       if (type === 'entrada') {
@@ -412,6 +690,7 @@ function App() {
             amount: parseFloat(amount),
             description,
             payment_method: paymentMethod,
+            product_id: selectedProduct || null,
           }),
         });
 
@@ -419,6 +698,8 @@ function App() {
           setMessage('Transação registrada com sucesso!');
           setAmount('');
           setDescription('');
+          setSelectedProduct('');
+          setProductSearch('');
           setTimeout(() => setMessage(''), 3000);
         } else {
           const errorData = await response.json();
@@ -454,7 +735,6 @@ function App() {
                   value={type}
                   onChange={(e) => {
                     setType(e.target.value);
-                    // Reset payment method when type changes
                     setPaymentMethod('dinheiro');
                   }}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -489,6 +769,36 @@ function App() {
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
+                Buscar Produto (Opcional)
+              </label>
+              <div className="relative">
+                <input
+                  type="text"
+                  value={productSearch}
+                  onChange={handleProductSearch}
+                  onInput={toUpperCase}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  placeholder="Digite o código ou nome do produto"
+                />
+                {searchResults.length > 0 && (
+                  <div className="absolute z-10 w-full bg-white border border-gray-300 rounded-md shadow-lg max-h-48 overflow-y-auto">
+                    {searchResults.map((product) => (
+                      <div
+                        key={product.id}
+                        onClick={() => selectProduct(product)}
+                        className="px-3 py-2 hover:bg-gray-100 cursor-pointer"
+                      >
+                        <div className="font-medium">{product.code} - {product.name}</div>
+                        <div className="text-sm text-gray-600">R$ {product.price.toFixed(2)}</div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
                 Valor (R$)
               </label>
               <input
@@ -508,6 +818,7 @@ function App() {
               <textarea
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
+                onInput={toUpperCase}
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                 rows="3"
                 required
@@ -533,14 +844,28 @@ function App() {
   const HistoryPage = () => {
     const [transactions, setTransactions] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [filters, setFilters] = useState({
+      search: '',
+      month: '',
+      year: new Date().getFullYear(),
+      type: '',
+      paymentMethod: ''
+    });
 
     useEffect(() => {
       fetchTransactions();
-    }, []);
+    }, [filters]);
 
     const fetchTransactions = async () => {
       try {
-        const response = await fetch(`${API_URL}/api/transactions`, {
+        const params = new URLSearchParams();
+        if (filters.search) params.append('search', filters.search);
+        if (filters.month) params.append('month', filters.month);
+        if (filters.year) params.append('year', filters.year);
+        if (filters.type) params.append('transaction_type', filters.type);
+        if (filters.paymentMethod) params.append('payment_method', filters.paymentMethod);
+
+        const response = await fetch(`${API_URL}/api/transactions?${params}`, {
           headers: {
             'Authorization': `Bearer ${token}`,
           },
@@ -557,6 +882,55 @@ function App() {
       }
     };
 
+    const handleCancelTransaction = async (transactionId) => {
+      if (!window.confirm('Tem certeza que deseja cancelar esta transação?')) {
+        return;
+      }
+
+      try {
+        const response = await fetch(`${API_URL}/api/transactions/${transactionId}`, {
+          method: 'DELETE',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+          },
+        });
+
+        if (response.ok) {
+          fetchTransactions();
+        }
+      } catch (err) {
+        console.error('Erro ao cancelar transação:', err);
+      }
+    };
+
+    const generatePDF = async () => {
+      try {
+        const params = new URLSearchParams();
+        if (filters.month) params.append('month', filters.month);
+        if (filters.year) params.append('year', filters.year);
+
+        const response = await fetch(`${API_URL}/api/reports/transactions/pdf?${params}`, {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+          },
+        });
+
+        if (response.ok) {
+          const blob = await response.blob();
+          const url = window.URL.createObjectURL(blob);
+          const link = document.createElement('a');
+          link.href = url;
+          link.download = `transacoes_${filters.month || 'todas'}_${filters.year}.pdf`;
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+          window.URL.revokeObjectURL(url);
+        }
+      } catch (err) {
+        console.error('Erro ao gerar PDF:', err);
+      }
+    };
+
     if (loading) {
       return (
         <div className="flex justify-center items-center h-64">
@@ -568,7 +942,102 @@ function App() {
     return (
       <div className="bg-white rounded-lg shadow">
         <div className="px-6 py-4 border-b">
-          <h2 className="text-xl font-bold text-gray-900">Histórico de Transações</h2>
+          <div className="flex justify-between items-center">
+            <h2 className="text-xl font-bold text-gray-900">Histórico de Transações</h2>
+            <button
+              onClick={generatePDF}
+              className="bg-red-600 text-white px-4 py-2 rounded-md hover:bg-red-700 flex items-center space-x-2"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+              </svg>
+              <span>Gerar PDF</span>
+            </button>
+          </div>
+        </div>
+
+        {/* Filters */}
+        <div className="px-6 py-4 border-b bg-gray-50">
+          <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Buscar
+              </label>
+              <input
+                type="text"
+                value={filters.search}
+                onChange={(e) => setFilters({...filters, search: e.target.value})}
+                onInput={toUpperCase}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                placeholder="NOME, DESCRIÇÃO..."
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Mês
+              </label>
+              <select
+                value={filters.month}
+                onChange={(e) => setFilters({...filters, month: e.target.value})}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              >
+                <option value="">Todos</option>
+                <option value="1">Janeiro</option>
+                <option value="2">Fevereiro</option>
+                <option value="3">Março</option>
+                <option value="4">Abril</option>
+                <option value="5">Maio</option>
+                <option value="6">Junho</option>
+                <option value="7">Julho</option>
+                <option value="8">Agosto</option>
+                <option value="9">Setembro</option>
+                <option value="10">Outubro</option>
+                <option value="11">Novembro</option>
+                <option value="12">Dezembro</option>
+              </select>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Ano
+              </label>
+              <input
+                type="number"
+                value={filters.year}
+                onChange={(e) => setFilters({...filters, year: e.target.value})}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Tipo
+              </label>
+              <select
+                value={filters.type}
+                onChange={(e) => setFilters({...filters, type: e.target.value})}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              >
+                <option value="">Todos</option>
+                <option value="entrada">Entrada</option>
+                <option value="saida">Saída</option>
+              </select>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Pagamento
+              </label>
+              <select
+                value={filters.paymentMethod}
+                onChange={(e) => setFilters({...filters, paymentMethod: e.target.value})}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              >
+                <option value="">Todos</option>
+                <option value="dinheiro">Dinheiro</option>
+                <option value="cartao">Cartão</option>
+                <option value="pix">PIX</option>
+                <option value="boleto">Boleto</option>
+              </select>
+            </div>
+          </div>
         </div>
 
         <div className="overflow-x-auto">
@@ -590,16 +1059,24 @@ function App() {
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Pagamento
                 </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Produto
+                </th>
                 {(user.role === 'admin' || user.role === 'manager') && (
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Usuário
+                  </th>
+                )}
+                {(user.role === 'admin' || user.role === 'manager') && (
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Ações
                   </th>
                 )}
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
               {transactions.map((transaction) => (
-                <tr key={transaction.id}>
+                <tr key={transaction.id} className={transaction.cancelled ? 'bg-red-50' : ''}>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                     {new Date(transaction.created_at).toLocaleDateString('pt-BR', {
                       day: '2-digit',
@@ -611,14 +1088,16 @@ function App() {
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <span className={`px-2 py-1 text-xs font-medium rounded-full ${
+                      transaction.cancelled ? 'bg-red-100 text-red-800' :
                       transaction.type === 'entrada' 
                         ? 'bg-green-100 text-green-800' 
                         : 'bg-red-100 text-red-800'
                     }`}>
-                      {transaction.type === 'entrada' ? 'Entrada' : 'Saída'}
+                      {transaction.cancelled ? 'CANCELADA' : transaction.type.toUpperCase()}
                     </span>
                   </td>
                   <td className={`px-6 py-4 whitespace-nowrap text-sm font-medium ${
+                    transaction.cancelled ? 'text-gray-500 line-through' :
                     transaction.type === 'entrada' ? 'text-green-600' : 'text-red-600'
                   }`}>
                     R$ {transaction.amount.toFixed(2)}
@@ -627,11 +1106,26 @@ function App() {
                     {transaction.description}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                    {transaction.payment_method}
+                    {transaction.payment_method.toUpperCase()}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                    {transaction.product_code ? `${transaction.product_code} - ${transaction.product_name}` : '-'}
                   </td>
                   {(user.role === 'admin' || user.role === 'manager') && (
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                       {transaction.user_name}
+                    </td>
+                  )}
+                  {(user.role === 'admin' || user.role === 'manager') && (
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                      {!transaction.cancelled && (
+                        <button
+                          onClick={() => handleCancelTransaction(transaction.id)}
+                          className="text-red-600 hover:text-red-900 text-xs"
+                        >
+                          Cancelar
+                        </button>
+                      )}
                     </td>
                   )}
                 </tr>
@@ -751,6 +1245,7 @@ function App() {
                   type="text"
                   value={createData.username}
                   onChange={(e) => setCreateData({...createData, username: e.target.value})}
+                  onInput={toUpperCase}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                   required
                 />
@@ -763,6 +1258,7 @@ function App() {
                   type="email"
                   value={createData.email}
                   onChange={(e) => setCreateData({...createData, email: e.target.value})}
+                  onInput={toUpperCase}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                   required
                 />
@@ -866,7 +1362,7 @@ function App() {
                     {new Date(userItem.created_at).toLocaleDateString('pt-BR')}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                    {userItem.username !== 'admin' && (
+                    {userItem.username !== 'ADMIN' && (
                       <button
                         onClick={() => handleToggleUser(userItem.id, userItem.active)}
                         className={`px-3 py-1 rounded-md text-xs font-medium ${
@@ -964,9 +1460,10 @@ function App() {
                       log.activity_type.includes('user') ? 'bg-purple-100 text-purple-800' :
                       log.activity_type.includes('transaction') ? 'bg-green-100 text-green-800' :
                       log.activity_type.includes('bill') ? 'bg-yellow-100 text-yellow-800' :
+                      log.activity_type.includes('cancelled') ? 'bg-red-100 text-red-800' :
                       'bg-gray-100 text-gray-800'
                     }`}>
-                      {log.activity_type.replace('_', ' ')}
+                      {log.activity_type.replace('_', ' ').toUpperCase()}
                     </span>
                   </td>
                   <td className="px-6 py-4 text-sm text-gray-900">
@@ -995,7 +1492,8 @@ function App() {
       name: '',
       email: '',
       phone: '',
-      address: ''
+      address: '',
+      cpf: ''
     });
     const [billData, setBillData] = useState({
       client_id: '',
@@ -1046,8 +1544,11 @@ function App() {
 
         if (response.ok) {
           setShowCreateClient(false);
-          setClientData({ name: '', email: '', phone: '', address: '' });
+          setClientData({ name: '', email: '', phone: '', address: '', cpf: '' });
           fetchData();
+        } else {
+          const errorData = await response.json();
+          alert(`Erro: ${errorData.detail}`);
         }
       } catch (err) {
         console.error('Erro ao criar cliente:', err);
@@ -1118,6 +1619,52 @@ function App() {
       }
     };
 
+    const handleCancelPayment = async (installmentId) => {
+      if (!window.confirm('Tem certeza que deseja cancelar este pagamento?')) {
+        return;
+      }
+
+      try {
+        const response = await fetch(`${API_URL}/api/installments/${installmentId}/cancel`, {
+          method: 'DELETE',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+          },
+        });
+
+        if (response.ok) {
+          fetchData();
+          if (selectedBill) {
+            handleViewInstallments(selectedBill);
+          }
+        }
+      } catch (err) {
+        console.error('Erro ao cancelar pagamento:', err);
+      }
+    };
+
+    const handleCancelBill = async (billId) => {
+      if (!window.confirm('Tem certeza que deseja cancelar todo o boleto?')) {
+        return;
+      }
+
+      try {
+        const response = await fetch(`${API_URL}/api/bills/${billId}/cancel`, {
+          method: 'DELETE',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+          },
+        });
+
+        if (response.ok) {
+          fetchData();
+          setSelectedBill(null);
+        }
+      } catch (err) {
+        console.error('Erro ao cancelar boleto:', err);
+      }
+    };
+
     if (loading) {
       return (
         <div className="flex justify-center items-center h-64">
@@ -1160,6 +1707,7 @@ function App() {
                   type="text"
                   value={clientData.name}
                   onChange={(e) => setClientData({...clientData, name: e.target.value})}
+                  onInput={toUpperCase}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                   required
                 />
@@ -1170,7 +1718,20 @@ function App() {
                   type="email"
                   value={clientData.email}
                   onChange={(e) => setClientData({...clientData, email: e.target.value})}
+                  onInput={toUpperCase}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  required
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">CPF</label>
+                <input
+                  type="text"
+                  value={clientData.cpf}
+                  onChange={(e) => setClientData({...clientData, cpf: formatCPF(e.target.value)})}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  placeholder="000.000.000-00"
+                  maxLength="14"
                   required
                 />
               </div>
@@ -1183,12 +1744,13 @@ function App() {
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
               </div>
-              <div>
+              <div className="md:col-span-2">
                 <label className="block text-sm font-medium text-gray-700 mb-1">Endereço</label>
                 <input
                   type="text"
                   value={clientData.address}
                   onChange={(e) => setClientData({...clientData, address: e.target.value})}
+                  onInput={toUpperCase}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
               </div>
@@ -1226,7 +1788,9 @@ function App() {
                 >
                   <option value="">Selecione um cliente</option>
                   {clients.map(client => (
-                    <option key={client.id} value={client.id}>{client.name}</option>
+                    <option key={client.id} value={client.id}>
+                      {client.name} - {client.cpf}
+                    </option>
                   ))}
                 </select>
               </div>
@@ -1259,6 +1823,7 @@ function App() {
                   type="text"
                   value={billData.description}
                   onChange={(e) => setBillData({...billData, description: e.target.value})}
+                  onInput={toUpperCase}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                   required
                 />
@@ -1295,6 +1860,9 @@ function App() {
                     Cliente
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    CPF
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Parcela
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -1316,6 +1884,9 @@ function App() {
                   <tr key={bill.id}>
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
                       {bill.client_name}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                      {bill.client_cpf}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                       {bill.installment_number}
@@ -1375,6 +1946,9 @@ function App() {
                     Cliente
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    CPF
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Descrição
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -1397,6 +1971,9 @@ function App() {
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
                       {bill.client_name}
                     </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                      {bill.client_cpf}
+                    </td>
                     <td className="px-6 py-4 text-sm text-gray-900">
                       {bill.description}
                     </td>
@@ -1410,12 +1987,22 @@ function App() {
                       {new Date(bill.created_at).toLocaleDateString('pt-BR')}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                      <button
-                        onClick={() => handleViewInstallments(bill.id)}
-                        className="text-blue-600 hover:text-blue-900"
-                      >
-                        Ver Parcelas
-                      </button>
+                      <div className="flex space-x-2">
+                        <button
+                          onClick={() => handleViewInstallments(bill.id)}
+                          className="text-blue-600 hover:text-blue-900 text-xs"
+                        >
+                          Ver Parcelas
+                        </button>
+                        {(user.role === 'admin' || user.role === 'manager') && (
+                          <button
+                            onClick={() => handleCancelBill(bill.id)}
+                            className="text-red-600 hover:text-red-900 text-xs"
+                          >
+                            Cancelar
+                          </button>
+                        )}
+                      </div>
                     </td>
                   </tr>
                 ))}
@@ -1456,6 +2043,9 @@ function App() {
                       <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                         Pago em
                       </th>
+                      <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Ações
+                      </th>
                     </tr>
                   </thead>
                   <tbody className="bg-white divide-y divide-gray-200">
@@ -1479,6 +2069,16 @@ function App() {
                         </td>
                         <td className="px-4 py-2 whitespace-nowrap text-sm text-gray-900">
                           {installment.paid_date ? new Date(installment.paid_date).toLocaleDateString('pt-BR') : '-'}
+                        </td>
+                        <td className="px-4 py-2 whitespace-nowrap text-sm text-gray-900">
+                          {installment.status === 'paid' && (user.role === 'admin' || user.role === 'manager') && (
+                            <button
+                              onClick={() => handleCancelPayment(installment.id)}
+                              className="text-red-600 hover:text-red-900 text-xs"
+                            >
+                              Cancelar Pagamento
+                            </button>
+                          )}
                         </td>
                       </tr>
                     ))}
@@ -1527,6 +2127,27 @@ function App() {
 
   if (currentPage === 'dashboard') {
     return <Dashboard />;
+  }
+
+  if (currentPage === 'products') {
+    return (
+      <div className="min-h-screen bg-gray-100">
+        <header className="bg-white shadow-sm border-b">
+          <div className="flex justify-between items-center px-6 py-4">
+            <h1 className="text-2xl font-bold text-gray-800">Produtos</h1>
+            <button
+              onClick={() => setCurrentPage('dashboard')}
+              className="text-blue-600 hover:text-blue-800"
+            >
+              ← Voltar ao Dashboard
+            </button>
+          </div>
+        </header>
+        <main className="px-6 py-8">
+          <ProductsPage />
+        </main>
+      </div>
+    );
   }
 
   if (currentPage === 'cashier') {
