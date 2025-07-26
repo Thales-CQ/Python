@@ -253,9 +253,9 @@
 /* Sidebar menu styles */
 .sidebar-trigger {
   position: fixed;
-  left: -2px;
+  left: -1px;
   top: 0;
-  width: 6px;
+  width: 3px;
   height: 100vh;
   background: linear-gradient(to bottom, #eab308, #f97316, #ef4444);
   z-index: 60;
@@ -304,14 +304,14 @@
 
 /* Content margin for sidebar */
 .content-with-sidebar {
-  margin-left: 8px;
+  margin-left: 4px;
   transition: margin-left 0.3s ease;
 }
 
 /* Responsive sidebar adjustments */
 @media (max-width: 768px) {
   .sidebar-trigger {
-    width: 4px;
+    width: 2px;
   }
   
   .sidebar-trigger:hover {
