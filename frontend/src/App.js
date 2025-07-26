@@ -111,12 +111,10 @@ function App() {
         setIsAuthenticated(true);
       } else {
         localStorage.removeItem('token');
-        setToken(null);
         setIsAuthenticated(false);
       }
     } catch (err) {
       localStorage.removeItem('token');
-      setToken(null);
       setIsAuthenticated(false);
     }
   };
