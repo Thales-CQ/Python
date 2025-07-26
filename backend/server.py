@@ -694,6 +694,70 @@ async def update_user(user_id: str, user_update: UserUpdate, current_user: User 
     
     return {"message": "Usuário atualizado com sucesso"}
 
+@api_router.put("/users/{user_id}/basic")
+async def update_user_basic(user_id: str, user_update: UserBasicUpdate, current_user: User = Depends(get_current_user)):
+    if current_user.role not in [UserRole.ADMIN, UserRole.MANAGER]:
+        raise HTTPException(status_code=403, detail="Sem permissão para modificar usuários")
+    
+    # Find user
+    user = await db.users.find_one({"id": user_id})
+    if not user:
+        raise HTTPException(status_code=404, detail="Usuário não encontrado")
+    
+    # Check permissions for managers
+    if current_user.role == UserRole.MANAGER and user["role"] not in ["reception", "salesperson"]:
+        raise HTTPException(status_code=403, detail="Gerentes só podem modificar recepção")
+    
+    # Managers cannot edit other managers or admins
+    if current_user.role == UserRole.MANAGER and user["role"] in ["manager", "admin"]:
+        raise HTTPException(status_code=403, detail="Gerentes não podem editar outros gerentes ou administradores")
+    
+    # Managers cannot change roles to admin/manager
+    if current_user.role == UserRole.MANAGER and user_update.role and user_update.role in [UserRole.ADMIN, UserRole.MANAGER]:
+        raise HTTPException(status_code=403, detail="Gerentes não podem alterar função para administrador ou gerente")
+    
+    # Check for duplicate username
+    if user_update.username and user_update.username != user["username"]:
+        existing_user = await db.users.find_one({"username": user_update.username, "id": {"$ne": user_id}})
+        if existing_user:
+            raise HTTPException(status_code=400, detail="Nome de usuário já existe")
+    
+    # Check for duplicate email
+    if user_update.email and user_update.email != user["email"]:
+        existing_email = await db.users.find_one({"email": user_update.email, "id": {"$ne": user_id}})
+        if existing_email:
+            raise HTTPException(status_code=400, detail="Email já cadastrado")
+
+    # Update user
+    update_data = {k: v for k, v in user_update.dict().items() if v is not None}
+    if update_data:
+        result = await db.users.update_one(
+            {"id": user_id},
+            {"$set": update_data}
+        )
+        
+        if result.matched_count == 0:
+            raise HTTPException(status_code=404, detail="Usuário não encontrado")
+
+        # Log activity
+        changes = []
+        if user_update.username:
+            changes.append(f"nome alterado para '{user_update.username}'")
+        if user_update.email:
+            changes.append(f"email alterado para '{user_update.email}'")
+        if user_update.role:
+            changes.append(f"função alterada para '{user_update.role}'")
+        
+        await log_activity(
+            ActivityType.USER_PERMISSIONS_CHANGED,
+            f"Dados básicos do usuário '{user['username']}' alterados: {', '.join(changes)}",
+            current_user.id,
+            current_user.username,
+            {"target_user": user['username'], "changes": changes}
+        )
+    
+    return {"message": "Dados do usuário atualizados com sucesso"}
+
 @api_router.put("/users/{user_id}/password")
 async def change_user_password(user_id: str, password_change: UserPasswordChange, current_user: User = Depends(get_current_user)):
     # Find user
