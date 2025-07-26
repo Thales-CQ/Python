@@ -599,6 +599,14 @@ function App() {
     const [searchResults, setSearchResults] = useState([]);
     const [loading, setLoading] = useState(false);
     const [message, setMessage] = useState('');
+    
+    // Client payment states
+    const [showClientPayment, setShowClientPayment] = useState(false);
+    const [clientsWithBills, setClientsWithBills] = useState([]);
+    const [selectedClient, setSelectedClient] = useState('');
+    const [clientProducts, setClientProducts] = useState([]);
+    const [selectedClientProduct, setSelectedClientProduct] = useState('');
+    const [clientPaymentMethod, setClientPaymentMethod] = useState('dinheiro');
 
     useEffect(() => {
       fetchProducts();
