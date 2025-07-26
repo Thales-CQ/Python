@@ -3,36 +3,43 @@ import './App.css';
 
 // Splash Screen Component
 const SplashScreen = ({ onSplashComplete }) => {
+  const [showLogin, setShowLogin] = useState(false);
+
   useEffect(() => {
     const timer = setTimeout(() => {
-      onSplashComplete();
+      setShowLogin(true); // Mostrar login sobre a imagem
     }, 6000); // 6 segundos
 
     return () => clearTimeout(timer);
-  }, [onSplashComplete]);
+  }, []);
 
   return (
-    <div className="splash-screen">
-      <div className="splash-background"></div>
-      <div className="splash-overlay"></div>
-      <div className="splash-content">
-        <div className="splash-logo">
-          <div className="logo-icon">
-            <svg className="w-24 h-24 text-white" fill="currentColor" viewBox="0 0 24 24">
-              <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
-            </svg>
+    <div className="splash-screen-with-image">
+      <div className="splash-image-background"></div>
+      <div className="splash-overlay-dark"></div>
+      
+      {!showLogin ? (
+        // Tela inicial por 6 segundos
+        <div className="splash-content-initial">
+          <div className="company-logo-area">
+            <h1 className="company-name">NOME DA EMPRESA</h1>
+            <p className="company-subtitle">Sistema de Gestão Empresarial</p>
           </div>
         </div>
-        <div className="splash-title">
-          <h1 className="system-title">SISTEMA DE GESTÃO</h1>
-          <h2 className="company-title">CAIXA EMPRESARIAL</h2>
-          <div className="splash-subtitle">Controle Financeiro Inteligente</div>
+      ) : (
+        // Login aparece por cima da imagem
+        <div className="login-over-image">
+          <LoginPage 
+            setToken={(token) => {
+              localStorage.setItem('token', token);
+              onSplashComplete();
+            }} 
+            setUser={() => {}} 
+            setIsAuthenticated={() => {}}
+            toUpperCase={toUpperCase}
+          />
         </div>
-        <div className="loading-bar">
-          <div className="loading-progress"></div>
-        </div>
-        <div className="splash-version">v2.0 - 2025</div>
-      </div>
+      )}
     </div>
   );
 };
