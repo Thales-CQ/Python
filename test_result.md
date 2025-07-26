@@ -221,15 +221,18 @@ backend:
 
   - task: "Advanced Specific Permissions System"
     implemented: true
-    working: "NA"
+    working: true
     file: "server.py, App.js"
     stuck_count: 0
     priority: "high"
-    needs_retesting: true
+    needs_retesting: false
     status_history:
         - working: "NA"
           agent: "main"
           comment: "Implemented specific permissions for reception users (bills, reports, products), updated hasPermission function, admin can grant specific access, menu items now show/hide based on specific permissions"
+        - working: true
+          agent: "testing"
+          comment: "✅ TESTED: Advanced permissions system working correctly. Reception users have default permissions (cash_operations, clients). Admin can grant specific permissions like 'bills'. Check-permission endpoint works for all roles. Admin has all permissions, manager has management permissions."
 
   - task: "Force Password Change System"
     implemented: true
