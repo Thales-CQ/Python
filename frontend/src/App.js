@@ -86,6 +86,10 @@ function App() {
       if (response.ok) {
         const userData = await response.json();
         setUser(userData);
+        // Set initial page based on user role
+        if (userData.role === 'vendas') {
+          setCurrentPage('clients');
+        }
         setShowSplash(false); // Não mostrar splash se já autenticado
       } else {
         logout();
