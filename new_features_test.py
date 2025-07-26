@@ -92,7 +92,7 @@ class CashSystemTester:
         self.log("📦 Testing Product Creation...")
         
         product_data = {
-            "code": "PLANO_INTERNET",
+            "code": f"PLANO_INTERNET_{int(time.time())}",
             "name": "PLANO DE INTERNET",
             "price": 100.00,
             "description": "PLANO MENSAL DE INTERNET"
