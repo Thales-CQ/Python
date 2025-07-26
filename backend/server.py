@@ -631,6 +631,8 @@ async def update_user(user_id: str, user_update: UserUpdate, current_user: User 
             actions.append("ativado" if user_update.active else "desativado")
         if user_update.permissions is not None:
             actions.append("permissões alteradas")
+        if user_update.require_password_change is not None:
+            actions.append("nova senha obrigatória definida" if user_update.require_password_change else "nova senha obrigatória removida")
         
         await log_activity(
             ActivityType.USER_PERMISSIONS_CHANGED if user_update.permissions else ActivityType.USER_ACTIVATED if user_update.active else ActivityType.USER_DEACTIVATED,
