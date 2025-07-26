@@ -3398,6 +3398,7 @@ const UsersPage = ({ user, token, toUpperCase }) => {
                       className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                     >
                       <option value="reception">Recepção</option>
+                      <option value="vendas">Vendas</option>
                       {user.role === 'admin' && <option value="manager">Gerente</option>}
                       {user.role === 'admin' && <option value="admin">Administrador</option>}
                     </select>
