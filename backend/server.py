@@ -486,6 +486,7 @@ async def create_admin_user():
             "role": "admin",
             "permissions": {},
             "active": True,
+            "require_password_change": False,
             "created_at": datetime.utcnow(),
             "created_by": "system"
         }
