@@ -88,6 +88,7 @@ function App() {
       if (response.ok) {
         const userData = await response.json();
         setUser(userData);
+        setShowSplash(false); // Não mostrar splash se já autenticado
       } else {
         logout();
       }
