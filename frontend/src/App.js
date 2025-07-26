@@ -423,12 +423,12 @@ const HomePage = ({ user, token }) => {
   return (
     <div className="space-y-6">
       {/* Welcome Section */}
-      <div className="bg-white rounded-lg shadow p-6">
+      <div className="bg-gradient-to-r from-yellow-400 via-orange-500 to-red-500 rounded-xl shadow-lg p-6 border-2 border-yellow-300">
         <div className="text-center">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">
+          <h1 className="text-3xl font-bold text-white mb-2 drop-shadow-lg">
             Bem-vindo, {user?.username}!
           </h1>
-          <p className="text-lg text-gray-600 capitalize">
+          <p className="text-lg text-yellow-100 capitalize font-medium">
             {currentDateTime}
           </p>
         </div>
