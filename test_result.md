@@ -291,6 +291,18 @@ backend:
           agent: "testing"
           comment: "✅ SECURITY VULNERABILITY FIXED: Manager permission restrictions now working correctly. Tested all 4 scenarios: 1) Manager creating reception ✅ WORKS 2) Manager creating manager ❌ CORRECTLY BLOCKED with 'Gerentes só podem criar usuários de recepção' 3) Manager creating admin ❌ CORRECTLY BLOCKED with same error 4) Admin creating any role ✅ WORKS. Security fix implemented in lines 503-505 of server.py with proper role hierarchy enforcement."
 
+  - task: "Sales Menu Visibility for Vendas Role"
+    implemented: true
+    working: false
+    file: "App.js"
+    stuck_count: 0
+    priority: "medium"
+    needs_retesting: true
+    status_history:
+        - working: "NA"
+          agent: "main"
+          comment: "Sales menu items (Realizar Venda, Meus Relatórios) not visually appearing for vendas role users despite being coded correctly in lines 426-460 of App.js"
+
 frontend:
   - task: "Error Messages Display"
     implemented: true
