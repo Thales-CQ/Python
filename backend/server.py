@@ -82,7 +82,7 @@ def format_cpf(cpf: str) -> str:
 class UserRole(str, Enum):
     ADMIN = "admin"
     MANAGER = "manager"
-    SALESPERSON = "salesperson"
+    RECEPTION = "reception"  # Changed from salesperson to reception
 
 class TransactionType(str, Enum):
     ENTRADA = "entrada"
