@@ -1456,7 +1456,7 @@ async def get_transactions_summary(current_user: User = Depends(get_current_user
 # Clients
 @api_router.post("/clients")
 async def create_client(client: ClientCreate, current_user: User = Depends(get_current_user)):
-    if current_user.role not in [UserRole.ADMIN, UserRole.MANAGER]:
+    if current_user.role not in [UserRole.ADMIN, UserRole.MANAGER, UserRole.VENDAS]:
         raise HTTPException(status_code=403, detail="Sem permissão para criar clientes")
     
     # Check if CPF already exists
