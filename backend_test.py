@@ -829,6 +829,15 @@ class CaixaAPITester:
         self.test_enhanced_installment_payment()
         self.test_enhanced_error_messages()
 
+        # NEW FUNCTIONALITY TESTS - From Review Request
+        print("\n🆕 New Functionality Tests (Review Request)")
+        self.test_role_change_salesperson_to_reception()
+        self.test_product_quantity_system()
+        self.test_advanced_specific_permissions()
+        self.test_force_password_change_system()
+        self.test_enhanced_user_management_functions()
+        self.test_manager_permission_restrictions()
+
         return True
 
     def test_dashboard_stats(self):
