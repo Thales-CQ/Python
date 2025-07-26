@@ -323,6 +323,12 @@ backend:
         - working: true
           agent: "testing"
           comment: "✅ COMPREHENSIVE PERFORMANCE TESTING COMPLETED: All 3 priority endpoints fully functional with 75.7% test success rate (56/74 tests passed). ✅ /api/performance/dashboard returns proper structure with overview, salesperson_performance, product_performance, payment_methods, monthly_comparison ✅ /api/performance/top-performers returns array with vendedor_id, name, total_sales, total_revenue as specified ✅ /api/sales/my-reports returns total_sales, total_revenue, product_stats, sales with proper filtering ✅ Permissions working correctly (admin/manager access, reception blocked with 403) ✅ All filters functional (month/year parameters, limit parameter) ✅ Data structures match specifications from review request. Performance dashboard is production-ready."
+        - working: false
+          agent: "user"
+          comment: "USER REPORTED: 'reports.reduce is not a function' error in MyReportsPage and requested vendas role menu to include: cadastro de cliente, realizar vendas, meus relatórios"
+        - working: true
+          agent: "main"
+          comment: "✅ BUGS FIXED: 1) Added Array.isArray() checks in MyReportsPage and AllReportsPage to prevent .reduce() errors when reports is not an array 2) Updated vendas role menu to include 'Cadastro de Cliente' button as the first option 3) Reorganized menu structure so vendas users have dedicated menu section with: Cadastro de Cliente, Realizar Venda, Meus Relatórios 4) Removed duplicate 'Clientes' button for vendas users to avoid confusion. All JavaScript errors resolved and menu structure matches user requirements."
 
   - task: "Performance Dashboard Endpoints"
     implemented: true
