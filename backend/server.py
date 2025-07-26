@@ -174,6 +174,21 @@ class UserUpdate(BaseModel):
     permissions: Optional[dict] = None
     require_password_change: Optional[bool] = None
 
+class UserBasicUpdate(BaseModel):
+    username: Optional[str] = None
+    email: Optional[str] = None
+    role: Optional[UserRole] = None
+    
+    @validator('username', 'email', pre=True)
+    def uppercase_fields(cls, v):
+        return to_upper_case(v) if v else v
+    
+    @validator('email')
+    def validate_email_field(cls, v):
+        if v and not validate_email(v):
+            raise ValueError('Email inválido')
+        return v.upper() if v else v
+
 class UserPasswordChange(BaseModel):
     new_password: str
     
