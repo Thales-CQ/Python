@@ -2653,7 +2653,7 @@ const UsersPage = ({ user, token, toUpperCase }) => {
     username: '',
     email: '',
     password: '',
-    role: 'salesperson'
+    role: 'reception'
   });
   const [message, setMessage] = useState('');
 
