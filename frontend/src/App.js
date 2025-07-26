@@ -140,22 +140,22 @@ const LoginPage = ({ setIsAuthenticated, toUpperCase }) => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-900 via-blue-800 to-blue-600 flex items-center justify-center px-4">
+    <div className="min-h-screen bg-gradient-to-br from-orange-400 via-red-500 to-red-600 flex items-center justify-center px-4">
       <div className="max-w-md w-full space-y-8">
-        <div className="bg-white rounded-lg shadow-xl p-8">
+        <div className="bg-white rounded-xl shadow-2xl p-8 border-2 border-yellow-300">
           <div className="text-center mb-8">
-            <p className="text-lg text-gray-700 font-medium">Faça login para continuar</p>
+            <p className="text-xl text-gray-800 font-semibold">Faça login para continuar</p>
           </div>
 
           {error && (
-            <div className="mb-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded text-center">
+            <div className="mb-4 p-3 bg-red-100 border-2 border-red-300 text-red-800 rounded-lg text-center font-medium">
               {error}
             </div>
           )}
 
           <form onSubmit={handleSubmit} className="space-y-6">
             <div className="text-center">
-              <label htmlFor="username" className="block text-sm font-medium text-gray-700 mb-2">
+              <label htmlFor="username" className="block text-sm font-semibold text-gray-800 mb-2">
                 Usuário
               </label>
               <input
@@ -164,14 +164,14 @@ const LoginPage = ({ setIsAuthenticated, toUpperCase }) => {
                 value={credentials.username}
                 onChange={(e) => setCredentials({...credentials, username: e.target.value})}
                 onInput={toUpperCase}
-                className="w-full px-4 py-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-center text-lg"
+                className="w-full px-4 py-3 border-2 border-yellow-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent text-center text-lg font-medium bg-yellow-50"
                 placeholder="NOME DE USUÁRIO"
                 required
               />
             </div>
 
             <div className="text-center">
-              <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-2">
+              <label htmlFor="password" className="block text-sm font-semibold text-gray-800 mb-2">
                 Senha
               </label>
               <input
@@ -179,7 +179,7 @@ const LoginPage = ({ setIsAuthenticated, toUpperCase }) => {
                 type="password"
                 value={credentials.password}
                 onChange={(e) => setCredentials({...credentials, password: e.target.value})}
-                className="w-full px-4 py-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-center text-lg"
+                className="w-full px-4 py-3 border-2 border-yellow-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent text-center text-lg font-medium bg-yellow-50"
                 placeholder="••••••••"
                 required
               />
@@ -188,7 +188,7 @@ const LoginPage = ({ setIsAuthenticated, toUpperCase }) => {
             <button
               type="submit"
               disabled={loading}
-              className="w-full py-3 px-4 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 transition-colors"
+              className="w-full py-3 px-4 bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 text-white font-bold rounded-lg focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500 disabled:opacity-50 transition-all duration-200 text-lg shadow-lg border-2 border-yellow-400"
             >
               {loading ? 'Entrando...' : 'Entrar'}
             </button>
