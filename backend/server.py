@@ -1139,8 +1139,94 @@ async def cancel_transaction(transaction_id: str, current_user: User = Depends(g
     
     return {"message": "Transação cancelada com sucesso"}
 
-@api_router.get("/transactions/summary")
-async def get_transactions_summary(current_user: User = Depends(get_current_user)):
+@api_router.post("/bills/installments/{installment_id}/pay")
+async def pay_installment(
+    installment_id: str, 
+    payment: BillPayment, 
+    current_user: User = Depends(get_current_user)
+):
+    """Pay a specific installment"""
+    # Find the installment
+    installment = await db.bill_installments.find_one({"id": installment_id, "cancelled": False})
+    if not installment:
+        raise HTTPException(status_code=404, detail="Parcela não encontrada")
+    
+    if installment["status"] != "pending":
+        raise HTTPException(status_code=400, detail="Parcela já foi paga ou cancelada")
+    
+    # Get bill info
+    bill = await db.bills.find_one({"id": installment["bill_id"]})
+    if not bill:
+        raise HTTPException(status_code=404, detail="Cobrança não encontrada")
+    
+    # Get client info
+    client = await db.clients.find_one({"id": bill["client_id"]})
+    if not client:
+        raise HTTPException(status_code=404, detail="Cliente não encontrado")
+    
+    # Get product info (if exists)
+    product = None
+    if bill.get("product_id"):
+        product = await db.products.find_one({"id": bill["product_id"]})
+    
+    # Update installment as paid
+    await db.bill_installments.update_one(
+        {"id": installment_id},
+        {"$set": {
+            "status": "paid",
+            "paid_date": datetime.utcnow(),
+            "payment_method": payment.payment_method,
+            "paid_by": current_user.id
+        }}
+    )
+    
+    # Create transaction record
+    transaction_dict = {
+        "id": str(uuid.uuid4()),
+        "type": "pagamento_cliente",
+        "amount": installment["amount"],
+        "description": f"PAGAMENTO - {bill['description']} - PARCELA {installment['installment_number']}",
+        "payment_method": payment.payment_method,
+        "product_id": bill.get("product_id"),
+        "product_code": product["code"] if product else None,
+        "product_name": product["name"] if product else bill.get("product_name"),
+        "client_id": bill["client_id"],
+        "client_name": client["name"],
+        "client_cpf": client["cpf"],
+        "installment_id": installment_id,
+        "user_id": current_user.id,
+        "user_name": current_user.username,
+        "cancelled": False,
+        "created_at": datetime.utcnow()
+    }
+    
+    await db.transactions.insert_one(transaction_dict)
+    
+    # Log activity
+    await log_activity(
+        ActivityType.CLIENT_PAYMENT_RECEIVED,
+        f"Pagamento recebido de {client['name']} - Parcela {installment['installment_number']} - R$ {installment['amount']:.2f}",
+        current_user.id,
+        current_user.username,
+        {
+            "client_name": client["name"],
+            "client_cpf": client["cpf"],
+            "installment_number": installment["installment_number"],
+            "amount": installment["amount"],
+            "payment_method": payment.payment_method,
+            "bill_description": bill["description"]
+        }
+    )
+    
+    return {
+        "message": "Pagamento registrado com sucesso",
+        "transaction": Transaction(**transaction_dict),
+        "installment_paid": installment["installment_number"],
+        "amount": installment["amount"]
+    }
+
+@api_router.get("/dashboard/stats")
+async def get_dashboard_stats(current_user: User = Depends(get_current_user)):
     # Get current month transactions
     now = datetime.utcnow()
     start_of_month = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
