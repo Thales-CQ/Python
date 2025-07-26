@@ -664,11 +664,11 @@ async def change_user_password(user_id: str, password_change: UserPasswordChange
         if user_id != current_user.id:
             raise HTTPException(status_code=403, detail="Sem permissão para alterar senha de outro usuário")
     
-    # Update password
+    # Update password and reset require_password_change flag
     hashed_password = get_password_hash(password_change.new_password)
     result = await db.users.update_one(
         {"id": user_id},
-        {"$set": {"password": hashed_password}}
+        {"$set": {"password": hashed_password, "require_password_change": False}}
     )
     
     if result.matched_count == 0:
