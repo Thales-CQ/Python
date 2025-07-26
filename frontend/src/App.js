@@ -526,13 +526,13 @@ const HomePage = ({ user, token }) => {
       </div>
 
       {/* History Preview Section */}
-      <div className="bg-white rounded-lg shadow">
-        <div className="px-6 py-4 border-b border-gray-200">
+      <div className="bg-white rounded-xl shadow-lg border-2 border-yellow-300">
+        <div className="px-6 py-4 border-b border-gray-200 bg-gradient-to-r from-yellow-400 to-orange-500 rounded-t-xl">
           <div className="flex justify-between items-center">
-            <h3 className="text-lg font-medium text-gray-900">Histórico Recente</h3>
+            <h3 className="text-lg font-bold text-white">Histórico Recente</h3>
             <button
               onClick={() => setShowHistoryPreview(!showHistoryPreview)}
-              className="px-3 py-1 bg-blue-600 text-white rounded-md hover:bg-blue-700 text-sm"
+              className="px-4 py-2 bg-white text-red-600 rounded-lg hover:bg-gray-100 text-sm font-bold border-2 border-yellow-300 shadow-md transition-all duration-200"
             >
               {showHistoryPreview ? 'Ocultar' : 'Exibir'}
             </button>
@@ -544,37 +544,37 @@ const HomePage = ({ user, token }) => {
             {stats?.recent_transactions?.length > 0 ? (
               <div className="overflow-x-auto">
                 <table className="w-full text-sm">
-                  <thead className="bg-gray-50">
+                  <thead className="bg-gradient-to-r from-yellow-100 to-orange-100">
                     <tr>
-                      <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Data</th>
-                      <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Tipo</th>
-                      <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Valor</th>
-                      <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Descrição</th>
+                      <th className="px-4 py-3 text-left text-xs font-bold text-gray-800 uppercase border-b-2 border-yellow-300">Data</th>
+                      <th className="px-4 py-3 text-left text-xs font-bold text-gray-800 uppercase border-b-2 border-yellow-300">Tipo</th>
+                      <th className="px-4 py-3 text-left text-xs font-bold text-gray-800 uppercase border-b-2 border-yellow-300">Valor</th>
+                      <th className="px-4 py-3 text-left text-xs font-bold text-gray-800 uppercase border-b-2 border-yellow-300">Descrição</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-200">
                     {stats.recent_transactions.slice(0, 5).map((transaction) => (
-                      <tr key={transaction.id}>
-                        <td className="px-4 py-2 whitespace-nowrap text-gray-900">
+                      <tr key={transaction.id} className="hover:bg-yellow-50 transition-colors duration-150">
+                        <td className="px-4 py-3 whitespace-nowrap text-gray-900 font-medium">
                           {new Date(transaction.created_at).toLocaleDateString('pt-BR')}
                         </td>
-                        <td className="px-4 py-2 whitespace-nowrap">
-                          <span className={`px-2 py-1 text-xs font-medium rounded-full ${
-                            transaction.type === 'entrada' ? 'bg-green-100 text-green-800' :
-                            transaction.type === 'pagamento_cliente' ? 'bg-blue-100 text-blue-800' :
-                            'bg-red-100 text-red-800'
+                        <td className="px-4 py-3 whitespace-nowrap">
+                          <span className={`px-3 py-1 text-xs font-bold rounded-full border-2 ${
+                            transaction.type === 'entrada' ? 'bg-yellow-100 text-orange-800 border-yellow-400' :
+                            transaction.type === 'pagamento_cliente' ? 'bg-blue-100 text-blue-800 border-blue-400' :
+                            'bg-red-100 text-red-800 border-red-400'
                           }`}>
                             {transaction.type === 'entrada' ? 'ENTRADA' :
                              transaction.type === 'pagamento_cliente' ? 'PAG.CLIENTE' :
                              'SAÍDA'}
                           </span>
                         </td>
-                        <td className={`px-4 py-2 whitespace-nowrap font-medium ${
-                          transaction.type === 'entrada' || transaction.type === 'pagamento_cliente' ? 'text-green-600' : 'text-red-600'
+                        <td className={`px-4 py-3 whitespace-nowrap font-bold ${
+                          transaction.type === 'entrada' || transaction.type === 'pagamento_cliente' ? 'text-orange-600' : 'text-red-600'
                         }`}>
                           R$ {transaction.amount.toFixed(2)}
                         </td>
-                        <td className="px-4 py-2 text-gray-900 truncate max-w-xs">
+                        <td className="px-4 py-3 text-gray-900 truncate max-w-xs font-medium">
                           {transaction.description}
                         </td>
                       </tr>
@@ -583,7 +583,7 @@ const HomePage = ({ user, token }) => {
                 </table>
               </div>
             ) : (
-              <p className="text-gray-500 text-center py-4">Nenhuma transação recente</p>
+              <p className="text-gray-500 text-center py-4 font-medium">Nenhuma transação recente</p>
             )}
           </div>
         )}
