@@ -272,6 +272,9 @@ backend:
         - working: true
           agent: "testing"
           comment: "✅ BACKEND RE-TESTED: All user deletion functionality working perfectly. Admin can delete manager/reception/vendas users, correctly blocked from deleting main admin, proper error handling for non-existent users, non-admin users correctly blocked with 403. Issue was frontend error handling, now fixed."
+        - working: true
+          agent: "user"
+          comment: "✅ USER CONFIRMED: 'funcionando a exclusao de usuario' - User deletion is now working correctly after frontend error handling fix"
 
   - task: "Manager Permission Restrictions"
     implemented: true
