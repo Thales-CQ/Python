@@ -2863,6 +2863,66 @@ const UsersPage = ({ user, token, toUpperCase }) => {
     }
   };
 
+  const handleManagePermissions = (userItem) => {
+    const currentPermissions = userItem.permissions || {};
+    const availablePermissions = [
+      { key: 'bills', label: 'Cobranças' },
+      { key: 'reports', label: 'Relatórios' },
+      { key: 'products', label: 'Produtos' }
+    ];
+
+    const permissionsText = availablePermissions.map(perm => {
+      const hasPermission = currentPermissions[perm.key] === true;
+      return `${perm.label}: ${hasPermission ? 'SIM' : 'NÃO'}`;
+    }).join('\n');
+
+    const newPermissionsText = prompt(
+      `Permissões atuais para ${userItem.username}:\n${permissionsText}\n\n` +
+      `Digite as permissões separadas por vírgula (bills, reports, products):\n` +
+      `Deixe vazio para remover todas as permissões.`
+    );
+
+    if (newPermissionsText === null) return; // User cancelled
+
+    const newPermissions = {};
+    if (newPermissionsText.trim()) {
+      const permissionsList = newPermissionsText.split(',').map(p => p.trim().toLowerCase());
+      availablePermissions.forEach(perm => {
+        newPermissions[perm.key] = permissionsList.includes(perm.key);
+      });
+    }
+
+    updateUserPermissions(userItem.id, userItem.username, newPermissions);
+  };
+
+  const updateUserPermissions = async (userId, username, permissions) => {
+    try {
+      const response = await fetch(`${API_URL}/api/users/${userId}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          permissions: permissions
+        }),
+      });
+
+      if (response.ok) {
+        fetchUsers();
+        setMessage(`Permissões atualizadas para ${username}!`);
+        setTimeout(() => setMessage(''), 3000);
+      } else {
+        const data = await response.json();
+        setMessage(`Erro: ${data.detail}`);
+        setTimeout(() => setMessage(''), 3000);
+      }
+    } catch (err) {
+      setMessage('Erro ao atualizar permissões');
+      setTimeout(() => setMessage(''), 3000);
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex justify-center items-center h-64">
