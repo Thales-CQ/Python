@@ -209,7 +209,7 @@ const Header = ({ user, currentPage, setCurrentPage, logout, hasPermission }) =>
         <div className="flex justify-between items-center h-16">
           {/* Logo Space */}
           <div className="flex items-center space-x-4">
-            <div className="flex-shrink-0 w-48 flex items-center">
+            <div className="flex-shrink-0 logo-area">
               {/* Espaço reservado para logo da empresa */}
               <div className="w-12 h-12 bg-white rounded-lg flex items-center justify-center shadow-lg border-2 border-yellow-300">
                 <div className="w-8 h-8 bg-gradient-to-br from-yellow-400 to-orange-500 rounded-md flex items-center justify-center">
@@ -217,8 +217,8 @@ const Header = ({ user, currentPage, setCurrentPage, logout, hasPermission }) =>
                 </div>
               </div>
               <div className="ml-3 text-white">
-                <div className="text-sm font-bold">Sua Empresa</div>
-                <div className="text-xs text-yellow-100">Gestão Financeira</div>
+                <div className="logo-text-sm font-bold">Sua Empresa</div>
+                <div className="logo-text-xs text-yellow-100">Gestão Financeira</div>
               </div>
             </div>
           </div>
