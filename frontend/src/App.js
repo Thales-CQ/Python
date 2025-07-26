@@ -101,7 +101,6 @@ function App() {
 
   const handleSplashComplete = () => {
     setShowSplash(false);
-    setIsAuthenticated(true);
   };
 
   const handleLogout = () => {
