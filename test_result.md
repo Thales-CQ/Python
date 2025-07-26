@@ -329,6 +329,12 @@ backend:
         - working: true
           agent: "main"
           comment: "✅ BUGS FIXED: 1) Added Array.isArray() checks in MyReportsPage and AllReportsPage to prevent .reduce() errors when reports is not an array 2) Updated vendas role menu to include 'Cadastro de Cliente' button as the first option 3) Reorganized menu structure so vendas users have dedicated menu section with: Cadastro de Cliente, Realizar Venda, Meus Relatórios 4) Removed duplicate 'Clientes' button for vendas users to avoid confusion. All JavaScript errors resolved and menu structure matches user requirements."
+        - working: true
+          agent: "main"
+          comment: "✅ PERMISSIONS UPDATED: Added UserRole.VENDAS to client management endpoints - Line 1459 (POST /clients) and Line 1547 (PUT /clients/{id}) to allow vendas users to create and update clients. Sales permission already existed. Now vendas users can: 1) Cadastrar clientes 2) Realizar vendas 3) Ver clientes e produtos. Security maintained for other endpoints."
+        - working: true
+          agent: "testing"
+          comment: "🎯 VENDAS PERMISSIONS FULLY TESTED: Comprehensive testing completed with 100% success rate (11/11 tests passed). VERIFIED WORKING: ✅ Vendas can CREATE clients (POST /api/clients) - Line 1459 permission added ✅ Vendas can UPDATE clients (PUT /api/clients/{id}) - Line 1547 permission added ✅ Vendas can CREATE sales (POST /api/sales) - Already had permission ✅ Vendas can VIEW clients/products - No restrictions (correct). SECURITY VERIFIED: ✅ Vendas CANNOT create products (403) ✅ Vendas CANNOT access performance dashboard (403) ✅ Vendas CANNOT manage users (403) ✅ Vendas CANNOT create bills (403). All requested permissions working correctly while maintaining security restrictions."
 
   - task: "Performance Dashboard Endpoints"
     implemented: true
