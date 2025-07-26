@@ -476,7 +476,9 @@ const Header = ({ user, currentPage, setCurrentPage, logout, hasPermission }) =>
                   {user?.username}
                 </div>
                 <div className="text-yellow-200 text-xs font-medium">
-                  {user?.role === 'admin' ? 'Administrador' : user?.role === 'manager' ? 'Gerente' : 'Recepção'}
+                  {user?.role === 'admin' ? 'Administrador' : 
+                   user?.role === 'manager' ? 'Gerente' : 
+                   user?.role === 'vendas' ? 'Vendas' : 'Recepção'}
                 </div>
               </div>
               <button
