@@ -2552,4 +2552,504 @@ const PendingChargesPage = ({ user, token }) => {
   );
 };
 
+// Users Management Component
+const UsersPage = ({ user, token, toUpperCase }) => {
+  const [users, setUsers] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [showCreateForm, setShowCreateForm] = useState(false);
+  const [createData, setCreateData] = useState({
+    username: '',
+    email: '',
+    password: '',
+    role: 'salesperson'
+  });
+  const [message, setMessage] = useState('');
+
+  useEffect(() => {
+    fetchUsers();
+  }, []);
+
+  const fetchUsers = async () => {
+    try {
+      const response = await fetch(`${API_URL}/api/users`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setUsers(data);
+      }
+    } catch (err) {
+      console.error('Erro ao buscar usuários:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleCreateUser = async (e) => {
+    e.preventDefault();
+    setMessage('');
+    
+    try {
+      const response = await fetch(`${API_URL}/api/register`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+        body: JSON.stringify(createData),
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        setShowCreateForm(false);
+        setCreateData({ username: '', email: '', password: '', role: 'salesperson' });
+        fetchUsers();
+        setMessage('Usuário criado com sucesso!');
+        setTimeout(() => setMessage(''), 5000);
+      } else {
+        if (data.detail?.includes('já existe')) {
+          setMessage(`Erro: ${data.detail}`);
+        } else if (data.detail?.includes('já cadastrado')) {
+          setMessage(`Erro: ${data.detail}`);
+        } else if (data.detail?.includes('Email inválido')) {
+          setMessage('Erro: Email inválido');
+        } else if (data.detail?.includes('6 caracteres')) {
+          setMessage('Erro: Senha deve ter pelo menos 6 caracteres');
+        } else {
+          setMessage(`Erro: ${data.detail}`);
+        }
+      }
+    } catch (err) {
+      setMessage('Erro de conexão');
+    }
+  };
+
+  const handleToggleUser = async (userId, currentStatus) => {
+    try {
+      const response = await fetch(`${API_URL}/api/users/${userId}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+        body: JSON.stringify({ active: !currentStatus }),
+      });
+
+      if (response.ok) {
+        fetchUsers();
+        setMessage(`Usuário ${!currentStatus ? 'ativado' : 'desativado'} com sucesso!`);
+        setTimeout(() => setMessage(''), 3000);
+      }
+    } catch (err) {
+      console.error('Erro ao atualizar usuário:', err);
+    }
+  };
+
+  const handleDeleteUser = async (userId, username) => {
+    if (!window.confirm(`Tem certeza que deseja excluir o usuário ${username}?`)) {
+      return;
+    }
+
+    try {
+      const response = await fetch(`${API_URL}/api/users/${userId}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+
+      if (response.ok) {
+        fetchUsers();
+        setMessage('Usuário excluído com sucesso!');
+        setTimeout(() => setMessage(''), 3000);
+      }
+    } catch (err) {
+      setMessage('Erro ao excluir usuário');
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center h-64">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="bg-white rounded-lg shadow">
+      <div className="px-6 py-4 border-b flex justify-between items-center">
+        <h2 className="text-xl font-bold text-gray-900">Gerenciamento de Usuários</h2>
+        <button
+          onClick={() => setShowCreateForm(true)}
+          className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 font-medium"
+        >
+          Novo Usuário
+        </button>
+      </div>
+
+      {message && (
+        <div className={`mx-6 mt-4 p-3 rounded ${
+          message.includes('Erro') ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'
+        }`}>
+          {message}
+        </div>
+      )}
+
+      {showCreateForm && (
+        <div className="px-6 py-4 border-b bg-blue-50">
+          <h3 className="text-lg font-medium text-gray-900 mb-4">Criar Novo Usuário</h3>
+          <form onSubmit={handleCreateUser} className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Nome de Usuário *
+              </label>
+              <input
+                type="text"
+                value={createData.username}
+                onChange={(e) => setCreateData({...createData, username: e.target.value})}
+                onInput={toUpperCase}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                required
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Email *
+              </label>
+              <input
+                type="email"
+                value={createData.email}
+                onChange={(e) => setCreateData({...createData, email: e.target.value})}
+                onInput={toUpperCase}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                required
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Senha *
+              </label>
+              <input
+                type="password"
+                value={createData.password}
+                onChange={(e) => setCreateData({...createData, password: e.target.value})}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                required
+                minLength="6"
+                placeholder="Mínimo 6 caracteres"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Função *
+              </label>
+              <select
+                value={createData.role}
+                onChange={(e) => setCreateData({...createData, role: e.target.value})}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              >
+                <option value="salesperson">Vendedor</option>
+                <option value="manager">Gerente</option>
+                {user.role === 'admin' && <option value="admin">Administrador</option>}
+              </select>
+            </div>
+            <div className="md:col-span-2 flex space-x-2">
+              <button
+                type="submit"
+                className="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700"
+              >
+                Criar Usuário
+              </button>
+              <button
+                type="button"
+                onClick={() => setShowCreateForm(false)}
+                className="bg-gray-600 text-white px-4 py-2 rounded-md hover:bg-gray-700"
+              >
+                Cancelar
+              </button>
+            </div>
+          </form>
+        </div>
+      )}
+
+      <div className="overflow-x-auto">
+        <table className="w-full">
+          <thead className="bg-gray-50">
+            <tr>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Usuário
+              </th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Email
+              </th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Função
+              </th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Status
+              </th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Criado em
+              </th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Ações
+              </th>
+            </tr>
+          </thead>
+          <tbody className="bg-white divide-y divide-gray-200">
+            {users.map((userItem) => (
+              <tr key={userItem.id}>
+                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                  {userItem.username}
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                  {userItem.email}
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap">
+                  <span className={`px-2 py-1 text-xs font-medium rounded-full ${
+                    userItem.role === 'admin' ? 'bg-red-100 text-red-800' :
+                    userItem.role === 'manager' ? 'bg-blue-100 text-blue-800' :
+                    'bg-green-100 text-green-800'
+                  }`}>
+                    {userItem.role === 'admin' ? 'Administrador' :
+                     userItem.role === 'manager' ? 'Gerente' : 'Vendedor'}
+                  </span>
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap">
+                  <span className={`px-2 py-1 text-xs font-medium rounded-full ${
+                    userItem.active ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+                  }`}>
+                    {userItem.active ? 'Ativo' : 'Inativo'}
+                  </span>
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                  {new Date(userItem.created_at).toLocaleDateString('pt-BR')}
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm space-x-2">
+                  {userItem.username !== 'ADMIN' && (
+                    <>
+                      <button
+                        onClick={() => handleToggleUser(userItem.id, userItem.active)}
+                        className={`px-3 py-1 rounded-md text-xs font-medium ${
+                          userItem.active 
+                            ? 'bg-yellow-600 text-white hover:bg-yellow-700' 
+                            : 'bg-green-600 text-white hover:bg-green-700'
+                        }`}
+                      >
+                        {userItem.active ? 'Desativar' : 'Ativar'}
+                      </button>
+                      {user.role === 'admin' && (
+                        <button
+                          onClick={() => handleDeleteUser(userItem.id, userItem.username)}
+                          className="bg-red-600 text-white px-3 py-1 rounded-md text-xs font-medium hover:bg-red-700"
+                        >
+                          Excluir
+                        </button>
+                      )}
+                    </>
+                  )}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+};
+
+// Activity Logs Component (Admin only)
+const ActivityLogsPage = ({ user, token, toUpperCase }) => {
+  const [logs, setLogs] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [filters, setFilters] = useState({
+    startDate: '',
+    endDate: '',
+    userName: '',
+    activityType: ''
+  });
+
+  useEffect(() => {
+    fetchLogs();
+  }, [filters]);
+
+  const fetchLogs = async () => {
+    setLoading(true);
+    try {
+      const params = new URLSearchParams();
+      if (filters.startDate) params.append('start_date', filters.startDate);
+      if (filters.endDate) params.append('end_date', filters.endDate);
+      if (filters.userName) params.append('user_name', filters.userName);
+      if (filters.activityType) params.append('activity_type', filters.activityType);
+
+      const response = await fetch(`${API_URL}/api/activity-logs?${params}`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setLogs(data);
+      }
+    } catch (err) {
+      console.error('Erro ao buscar logs:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (user.role !== 'admin') {
+    return (
+      <div className="bg-white rounded-lg shadow p-6">
+        <div className="text-center">
+          <h2 className="text-xl font-bold text-gray-900 mb-4">Acesso Negado</h2>
+          <p className="text-gray-600">Apenas administradores podem visualizar logs de atividade.</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center h-64">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="bg-white rounded-lg shadow">
+      <div className="px-6 py-4 border-b">
+        <h2 className="text-xl font-bold text-gray-900">Histórico de Atividades</h2>
+      </div>
+
+      {/* Filters */}
+      <div className="px-6 py-4 border-b bg-gray-50">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Data Início
+            </label>
+            <input
+              type="date"
+              value={filters.startDate}
+              onChange={(e) => setFilters({...filters, startDate: e.target.value})}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Data Fim
+            </label>
+            <input
+              type="date"
+              value={filters.endDate}
+              onChange={(e) => setFilters({...filters, endDate: e.target.value})}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Nome do Usuário
+            </label>
+            <input
+              type="text"
+              value={filters.userName}
+              onChange={(e) => setFilters({...filters, userName: e.target.value})}
+              onInput={toUpperCase}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              placeholder="NOME DO USUÁRIO"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Tipo de Atividade
+            </label>
+            <select
+              value={filters.activityType}
+              onChange={(e) => setFilters({...filters, activityType: e.target.value})}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            >
+              <option value="">Todos</option>
+              <option value="login">Login</option>
+              <option value="login_failed">Login Falhado</option>
+              <option value="user_created">Usuário Criado</option>
+              <option value="user_deactivated">Usuário Desativado</option>
+              <option value="user_activated">Usuário Ativado</option>
+              <option value="user_deleted">Usuário Excluído</option>
+              <option value="transaction_created">Transação Criada</option>
+              <option value="transaction_cancelled">Transação Cancelada</option>
+              <option value="product_created">Produto Criado</option>
+              <option value="product_modified">Produto Modificado</option>
+              <option value="product_deleted">Produto Excluído</option>
+              <option value="bill_created">Cobrança Criada</option>
+              <option value="bill_paid">Cobrança Paga</option>
+              <option value="client_created">Cliente Criado</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <div className="overflow-x-auto">
+        <table className="w-full">
+          <thead className="bg-gray-50">
+            <tr>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Data/Hora
+              </th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Usuário
+              </th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Atividade
+              </th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Descrição
+              </th>
+            </tr>
+          </thead>
+          <tbody className="bg-white divide-y divide-gray-200">
+            {logs.map((log) => (
+              <tr key={log.id}>
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                  {new Date(log.timestamp).toLocaleString('pt-BR')}
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                  {log.user_name}
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap">
+                  <span className={`px-2 py-1 text-xs font-medium rounded-full ${
+                    log.activity_type.includes('failed') ? 'bg-red-100 text-red-800' :
+                    log.activity_type.includes('deleted') || log.activity_type.includes('cancelled') ? 'bg-red-100 text-red-800' :
+                    log.activity_type.includes('created') || log.activity_type.includes('paid') ? 'bg-green-100 text-green-800' :
+                    log.activity_type.includes('login') ? 'bg-blue-100 text-blue-800' :
+                    'bg-gray-100 text-gray-800'
+                  }`}>
+                    {log.activity_type.replace('_', ' ').toUpperCase()}
+                  </span>
+                </td>
+                <td className="px-6 py-4 text-sm text-gray-900">
+                  {log.description}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+
+      {logs.length === 0 && (
+        <div className="text-center py-8 text-gray-500">
+          <p>Nenhum log de atividade encontrado</p>
+        </div>
+      )}
+    </div>
+  );
+};
+
 export default App;
