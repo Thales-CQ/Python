@@ -1818,24 +1818,34 @@ async def generate_transactions_pdf(
 @api_router.get("/activity-logs")
 async def get_activity_logs(
     current_user: User = Depends(get_current_user),
-    date_from: Optional[str] = Query(None),
-    date_to: Optional[str] = Query(None),
-    user_name: Optional[str] = Query(None),
-    activity_type: Optional[str] = Query(None)
+    start_date: Optional[str] = Query(None, description="Start date filter (YYYY-MM-DD)"),
+    end_date: Optional[str] = Query(None, description="End date filter (YYYY-MM-DD)"),
+    user_name: Optional[str] = Query(None, description="Filter by user name"),
+    activity_type: Optional[str] = Query(None, description="Filter by activity type")
 ):
     if current_user.role != UserRole.ADMIN:
         raise HTTPException(status_code=403, detail="Apenas administradores podem ver logs de atividade")
     
-    # Build query
+    # Build query filters
     query = {}
     
-    if date_from or date_to:
-        date_query = {}
-        if date_from:
-            date_query["$gte"] = datetime.fromisoformat(date_from)
-        if date_to:
-            date_query["$lt"] = datetime.fromisoformat(date_to) + timedelta(days=1)
-        query["timestamp"] = date_query
+    if start_date or end_date:
+        date_filter = {}
+        if start_date:
+            try:
+                start_dt = datetime.strptime(start_date, "%Y-%m-%d")
+                date_filter["$gte"] = start_dt
+            except ValueError:
+                raise HTTPException(status_code=400, detail="Formato de data inválido para start_date")
+        
+        if end_date:
+            try:
+                end_dt = datetime.strptime(end_date, "%Y-%m-%d").replace(hour=23, minute=59, second=59)
+                date_filter["$lte"] = end_dt
+            except ValueError:
+                raise HTTPException(status_code=400, detail="Formato de data inválido para end_date")
+        
+        query["timestamp"] = date_filter
     
     if user_name:
         query["user_name"] = {"$regex": user_name.upper(), "$options": "i"}
