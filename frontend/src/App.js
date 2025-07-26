@@ -2795,6 +2795,74 @@ const UsersPage = ({ user, token, toUpperCase }) => {
     }
   };
 
+  const handleResetPassword = async (userId, username) => {
+    const newPassword = prompt(`Digite a nova senha para ${username}:`);
+    if (!newPassword) return;
+    
+    if (newPassword.length < 6) {
+      setMessage('Erro: Senha deve ter pelo menos 6 caracteres');
+      setTimeout(() => setMessage(''), 3000);
+      return;
+    }
+
+    try {
+      const response = await fetch(`${API_URL}/api/users/${userId}/password`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          new_password: newPassword
+        }),
+      });
+
+      if (response.ok) {
+        setMessage(`Senha alterada com sucesso para ${username}!`);
+        setTimeout(() => setMessage(''), 3000);
+      } else {
+        const data = await response.json();
+        setMessage(`Erro: ${data.detail}`);
+        setTimeout(() => setMessage(''), 3000);
+      }
+    } catch (err) {
+      setMessage('Erro ao alterar senha');
+      setTimeout(() => setMessage(''), 3000);
+    }
+  };
+
+  const handleForcePasswordChange = async (userId, username) => {
+    if (!window.confirm(`Forçar ${username} a alterar senha no próximo login?`)) {
+      return;
+    }
+
+    try {
+      const response = await fetch(`${API_URL}/api/users/${userId}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          require_password_change: true
+        }),
+      });
+
+      if (response.ok) {
+        fetchUsers();
+        setMessage(`${username} será obrigado a alterar senha no próximo login!`);
+        setTimeout(() => setMessage(''), 3000);
+      } else {
+        const data = await response.json();
+        setMessage(`Erro: ${data.detail}`);
+        setTimeout(() => setMessage(''), 3000);
+      }
+    } catch (err) {
+      setMessage('Erro ao configurar mudança de senha obrigatória');
+      setTimeout(() => setMessage(''), 3000);
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex justify-center items-center h-64">
