@@ -122,6 +122,12 @@ function App() {
     return false;
   };
 
+  // Show splash screen
+  if (showSplash) {
+    return <SplashScreen onSplashComplete={handleSplashComplete} />;
+  }
+
+  // Show loading
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-100 flex items-center justify-center">
@@ -130,6 +136,7 @@ function App() {
     );
   }
 
+  // Show login or main app
   if (!isAuthenticated) {
     return <LoginPage setIsAuthenticated={setIsAuthenticated} toUpperCase={toUpperCase} />;
   }
