@@ -2703,7 +2703,17 @@ const UsersPage = ({ user, token, toUpperCase }) => {
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showCreateForm, setShowCreateForm] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
   const [editingUser, setEditingUser] = useState(null);
+  const [editFormData, setEditFormData] = useState({
+    username: '',
+    email: '',
+    role: '',
+    newPassword: '',
+    confirmPassword: '',
+    active: true,
+    permissions: {}
+  });
   const [createData, setCreateData] = useState({
     username: '',
     email: '',
