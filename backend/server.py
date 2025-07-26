@@ -197,6 +197,7 @@ class Product(BaseModel):
     name: str
     price: float
     description: Optional[str] = None
+    quantity: Optional[int] = None  # None = infinite, integer = finite quantity
     active: bool = True
     created_at: datetime = Field(default_factory=datetime.utcnow)
     created_by: str
