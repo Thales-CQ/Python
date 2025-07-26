@@ -4331,8 +4331,8 @@ const AllReportsPage = ({ user, token }) => {
     }
   };
 
-  const totalSales = reports.length;
-  const totalValue = reports.reduce((sum, report) => sum + report.total_value, 0);
+  const totalSales = Array.isArray(reports) ? reports.length : 0;
+  const totalValue = Array.isArray(reports) ? reports.reduce((sum, report) => sum + report.total_value, 0) : 0;
 
   // Group by vendedor for summary
   const vendedorStats = reports.reduce((acc, report) => {
