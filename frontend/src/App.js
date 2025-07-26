@@ -436,21 +436,21 @@ const HomePage = ({ user, token }) => {
 
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <div className="bg-green-50 border border-green-200 rounded-lg p-6">
+        <div className="bg-gradient-to-br from-yellow-100 to-yellow-200 border-2 border-yellow-400 rounded-xl p-6 shadow-lg">
           <div className="flex items-center">
             <div className="flex-shrink-0">
-              <div className="w-8 h-8 bg-green-600 rounded-md flex items-center justify-center">
-                <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <div className="w-12 h-12 bg-gradient-to-br from-yellow-500 to-orange-500 rounded-xl flex items-center justify-center shadow-md">
+                <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
                 </svg>
               </div>
             </div>
             <div className="ml-5 w-0 flex-1">
               <dl>
-                <dt className="text-sm font-medium text-gray-500 truncate">
+                <dt className="text-sm font-bold text-gray-700 truncate">
                   Total Entradas
                 </dt>
-                <dd className="text-2xl font-bold text-green-600">
+                <dd className="text-2xl font-bold text-orange-600">
                   R$ {stats?.total_entrada?.toFixed(2) || '0.00'}
                 </dd>
               </dl>
@@ -458,18 +458,18 @@ const HomePage = ({ user, token }) => {
           </div>
         </div>
 
-        <div className="bg-red-50 border border-red-200 rounded-lg p-6">
+        <div className="bg-gradient-to-br from-red-100 to-red-200 border-2 border-red-400 rounded-xl p-6 shadow-lg">
           <div className="flex items-center">
             <div className="flex-shrink-0">
-              <div className="w-8 h-8 bg-red-600 rounded-md flex items-center justify-center">
-                <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <div className="w-12 h-12 bg-gradient-to-br from-red-500 to-red-600 rounded-xl flex items-center justify-center shadow-md">
+                <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 12H4" />
                 </svg>
               </div>
             </div>
             <div className="ml-5 w-0 flex-1">
               <dl>
-                <dt className="text-sm font-medium text-gray-500 truncate">
+                <dt className="text-sm font-bold text-gray-700 truncate">
                   Total Saídas  
                 </dt>
                 <dd className="text-2xl font-bold text-red-600">
@@ -480,21 +480,21 @@ const HomePage = ({ user, token }) => {
           </div>
         </div>
 
-        <div className={`${stats?.saldo >= 0 ? 'bg-blue-50 border-blue-200' : 'bg-yellow-50 border-yellow-200'} border rounded-lg p-6`}>
+        <div className={`${stats?.saldo >= 0 ? 'bg-gradient-to-br from-blue-100 to-blue-200 border-2 border-blue-400' : 'bg-gradient-to-br from-orange-100 to-orange-200 border-2 border-orange-400'} rounded-xl p-6 shadow-lg`}>
           <div className="flex items-center">
             <div className="flex-shrink-0">
-              <div className={`w-8 h-8 ${stats?.saldo >= 0 ? 'bg-blue-600' : 'bg-yellow-600'} rounded-md flex items-center justify-center`}>
-                <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <div className={`w-12 h-12 ${stats?.saldo >= 0 ? 'bg-gradient-to-br from-blue-500 to-blue-600' : 'bg-gradient-to-br from-orange-500 to-orange-600'} rounded-xl flex items-center justify-center shadow-md`}>
+                <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1" />
                 </svg>
               </div>
             </div>
             <div className="ml-5 w-0 flex-1">
               <dl>
-                <dt className="text-sm font-medium text-gray-500 truncate">
+                <dt className="text-sm font-bold text-gray-700 truncate">
                   Saldo em Caixa
                 </dt>
-                <dd className={`text-2xl font-bold ${stats?.saldo >= 0 ? 'text-blue-600' : 'text-yellow-600'}`}>
+                <dd className={`text-2xl font-bold ${stats?.saldo >= 0 ? 'text-blue-600' : 'text-orange-600'}`}>
                   R$ {stats?.saldo?.toFixed(2) || '0.00'}
                 </dd>
               </dl>
@@ -502,21 +502,21 @@ const HomePage = ({ user, token }) => {
           </div>
         </div>
 
-        <div className="bg-gray-50 border border-gray-200 rounded-lg p-6">
+        <div className="bg-gradient-to-br from-gray-100 to-gray-200 border-2 border-black rounded-xl p-6 shadow-lg">
           <div className="flex items-center">
             <div className="flex-shrink-0">
-              <div className="w-8 h-8 bg-gray-600 rounded-md flex items-center justify-center">
-                <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <div className="w-12 h-12 bg-gradient-to-br from-black to-gray-800 rounded-xl flex items-center justify-center shadow-md">
+                <svg className="w-6 h-6 text-yellow-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
                 </svg>
               </div>
             </div>
             <div className="ml-5 w-0 flex-1">
               <dl>
-                <dt className="text-sm font-medium text-gray-500 truncate">
+                <dt className="text-sm font-bold text-gray-700 truncate">
                   Transações Hoje
                 </dt>
-                <dd className="text-2xl font-bold text-gray-600">
+                <dd className="text-2xl font-bold text-black">
                   {stats?.today_transactions || 0}
                 </dd>
               </dl>
