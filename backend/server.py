@@ -558,6 +558,10 @@ async def login(user: UserLogin):
     if not db_user["active"]:
         raise HTTPException(status_code=401, detail="Usuário desativado")
     
+    # Check if password change is required
+    if db_user.get("require_password_change", False):
+        raise HTTPException(status_code=401, detail="É necessário alterar a senha antes de continuar")
+    
     # Create token
     access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
     access_token = create_access_token(
