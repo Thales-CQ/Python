@@ -2947,6 +2947,52 @@ const UsersPage = ({ user, token, toUpperCase }) => {
     }
   };
 
+  const handleEditUser = (userItem) => {
+    setEditingUser({
+      id: userItem.id,
+      username: userItem.username,
+      email: userItem.email,
+      role: userItem.role
+    });
+  };
+
+  const handleUpdateUser = async (e) => {
+    e.preventDefault();
+    setMessage('');
+    
+    try {
+      const response = await fetch(`${API_URL}/api/users/${editingUser.id}/basic`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          username: editingUser.username,
+          email: editingUser.email,
+          role: editingUser.role
+        }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        setEditingUser(null);
+        fetchUsers();
+        setMessage('Dados do usuário atualizados com sucesso!');
+        setTimeout(() => setMessage(''), 5000);
+      } else {
+        if (data.detail?.includes('já existe')) {
+          setMessage(`Erro: ${data.detail}`);
+        } else {
+          setMessage(`Erro: ${data.detail}`);
+        }
+      }
+    } catch (err) {
+      setMessage('Erro de conexão');
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex justify-center items-center h-64">
