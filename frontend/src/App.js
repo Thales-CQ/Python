@@ -2957,47 +2957,117 @@ const UsersPage = ({ user, token, toUpperCase }) => {
     }
   };
 
-  const handleEditUser = (userItem) => {
-    setEditingUser({
-      id: userItem.id,
+  const openEditModal = (userItem) => {
+    setEditingUser(userItem);
+    setEditFormData({
       username: userItem.username,
       email: userItem.email,
-      role: userItem.role
+      role: userItem.role,
+      newPassword: '',
+      confirmPassword: '',
+      active: userItem.active,
+      permissions: userItem.permissions || {}
+    });
+    setShowEditModal(true);
+  };
+
+  const closeEditModal = () => {
+    setShowEditModal(false);
+    setEditingUser(null);
+    setEditFormData({
+      username: '',
+      email: '',
+      role: '',
+      newPassword: '',
+      confirmPassword: '',
+      active: true,
+      permissions: {}
     });
   };
 
-  const handleUpdateUser = async (e) => {
+  const handleSaveUser = async (e) => {
     e.preventDefault();
     setMessage('');
-    
+
+    // Validar senhas se foram preenchidas
+    if (editFormData.newPassword && editFormData.newPassword !== editFormData.confirmPassword) {
+      setMessage('Erro: As senhas não coincidem');
+      setTimeout(() => setMessage(''), 3000);
+      return;
+    }
+
+    if (editFormData.newPassword && editFormData.newPassword.length < 6) {
+      setMessage('Erro: Senha deve ter pelo menos 6 caracteres');
+      setTimeout(() => setMessage(''), 3000);
+      return;
+    }
+
     try {
-      const response = await fetch(`${API_URL}/api/users/${editingUser.id}/basic`, {
+      // 1. Atualizar dados básicos
+      const basicResponse = await fetch(`${API_URL}/api/users/${editingUser.id}/basic`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`,
         },
         body: JSON.stringify({
-          username: editingUser.username,
-          email: editingUser.email,
-          role: editingUser.role
+          username: editFormData.username,
+          email: editFormData.email,
+          role: editFormData.role
         }),
       });
 
-      const data = await response.json();
+      if (!basicResponse.ok) {
+        const data = await basicResponse.json();
+        setMessage(`Erro: ${data.detail}`);
+        return;
+      }
 
-      if (response.ok) {
-        setEditingUser(null);
-        fetchUsers();
-        setMessage('Dados do usuário atualizados com sucesso!');
-        setTimeout(() => setMessage(''), 5000);
-      } else {
-        if (data.detail?.includes('já existe')) {
-          setMessage(`Erro: ${data.detail}`);
-        } else {
-          setMessage(`Erro: ${data.detail}`);
+      // 2. Atualizar status e permissões
+      const statusResponse = await fetch(`${API_URL}/api/users/${editingUser.id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          active: editFormData.active,
+          permissions: editFormData.permissions
+        }),
+      });
+
+      if (!statusResponse.ok) {
+        const data = await statusResponse.json();
+        setMessage(`Erro ao atualizar status: ${data.detail}`);
+        return;
+      }
+
+      // 3. Atualizar senha se fornecida
+      if (editFormData.newPassword) {
+        const passwordResponse = await fetch(`${API_URL}/api/users/${editingUser.id}/password`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`,
+          },
+          body: JSON.stringify({
+            new_password: editFormData.newPassword
+          }),
+        });
+
+        if (!passwordResponse.ok) {
+          const data = await passwordResponse.json();
+          setMessage(`Erro ao alterar senha: ${data.detail}`);
+          return;
         }
       }
+
+      // Sucesso
+      closeEditModal();
+      fetchUsers();
+      setMessage('Usuário atualizado com sucesso!');
+      setTimeout(() => setMessage(''), 5000);
+
     } catch (err) {
       setMessage('Erro de conexão');
     }
