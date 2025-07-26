@@ -2,6 +2,16 @@
 @import 'tailwindcss/components';
 @import 'tailwindcss/utilities';
 
+/* Custom color scheme - Blue, Red, Yellow, Black, White */
+:root {
+  --primary-blue: #2563eb;
+  --primary-red: #dc2626;
+  --primary-yellow: #eab308;
+  --primary-yellow-light: #fef3c7;
+  --primary-black: #1f2937;
+  --primary-white: #ffffff;
+}
+
 .App {
   text-align: center;
 }
@@ -68,26 +78,30 @@
   }
 }
 
-/* Custom button styles */
+/* Custom button styles with new color scheme */
 .btn-primary {
-  @apply bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500;
+  @apply bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors;
 }
 
 .btn-secondary {
-  @apply bg-gray-600 text-white px-4 py-2 rounded-md hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-500;
+  @apply bg-gray-600 text-white px-4 py-2 rounded-md hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-500 transition-colors;
 }
 
 .btn-success {
-  @apply bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500;
+  @apply bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 transition-colors;
 }
 
 .btn-danger {
-  @apply bg-red-600 text-white px-4 py-2 rounded-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500;
+  @apply bg-red-600 text-white px-4 py-2 rounded-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 transition-colors;
+}
+
+.btn-warning {
+  @apply bg-yellow-500 text-white px-4 py-2 rounded-md hover:bg-yellow-600 focus:outline-none focus:ring-2 focus:ring-yellow-500 transition-colors;
 }
 
 /* Card styles */
 .card {
-  @apply bg-white rounded-lg shadow-md p-6;
+  @apply bg-white rounded-lg shadow-md p-6 border border-gray-200;
 }
 
 .card-header {
@@ -104,15 +118,19 @@
 }
 
 .form-input {
-  @apply w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500;
+  @apply w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors;
+}
+
+.form-input:focus {
+  text-align: center;
 }
 
 .form-select {
-  @apply w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500;
+  @apply w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors;
 }
 
 .form-textarea {
-  @apply w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500;
+  @apply w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors;
 }
 
 /* Table styles */
@@ -125,7 +143,7 @@
 }
 
 .table-row {
-  @apply bg-white border-b hover:bg-gray-50;
+  @apply bg-white border-b hover:bg-gray-50 transition-colors;
 }
 
 .table-cell {
@@ -134,23 +152,23 @@
 
 /* Alert styles */
 .alert {
-  @apply px-4 py-3 rounded mb-4;
+  @apply px-4 py-3 rounded mb-4 border;
 }
 
 .alert-success {
-  @apply bg-green-100 border border-green-400 text-green-700;
+  @apply bg-green-50 border-green-200 text-green-800;
 }
 
 .alert-error {
-  @apply bg-red-100 border border-red-400 text-red-700;
+  @apply bg-red-50 border-red-200 text-red-800;
 }
 
 .alert-warning {
-  @apply bg-yellow-100 border border-yellow-400 text-yellow-700;
+  @apply bg-yellow-50 border-yellow-200 text-yellow-800;
 }
 
 .alert-info {
-  @apply bg-blue-100 border border-blue-400 text-blue-700;
+  @apply bg-blue-50 border-blue-200 text-blue-800;
 }
 
 /* Badge styles */
@@ -195,18 +213,159 @@
   transition: all 0.3s ease;
 }
 
-/* Header gradient */
+/* Header gradient with new colors */
 .header-gradient {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #2563eb 0%, #1e40af 100%);
 }
 
 /* Dashboard card hover effect */
-.dashboard-card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+.dashboard-card {
+  @apply transition-all duration-300 hover:shadow-lg hover:-translate-y-1;
 }
 
 /* Loading spinner */
 .loading-spinner {
   @apply animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600;
+}
+
+/* Login form centering */
+.login-container {
+  @apply min-h-screen flex items-center justify-center;
+  background: linear-gradient(135deg, #2563eb 0%, #1e40af 50%, #1d4ed8 100%);
+}
+
+.login-form {
+  @apply bg-white p-8 rounded-lg shadow-2xl w-full max-w-md;
+}
+
+.login-input {
+  @apply w-full px-4 py-3 border border-gray-300 rounded-md text-center focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all;
+}
+
+.login-input:focus {
+  @apply text-center;
+}
+
+/* Status indicators */
+.status-active {
+  @apply bg-green-100 text-green-800 px-2 py-1 rounded-full text-xs font-medium;
+}
+
+.status-inactive {
+  @apply bg-red-100 text-red-800 px-2 py-1 rounded-full text-xs font-medium;
+}
+
+.status-pending {
+  @apply bg-yellow-100 text-yellow-800 px-2 py-1 rounded-full text-xs font-medium;
+}
+
+.status-overdue {
+  @apply bg-red-100 text-red-800 px-2 py-1 rounded-full text-xs font-medium;
+}
+
+/* Navigation styles */
+.nav-item {
+  @apply px-4 py-2 rounded-md transition-colors;
+}
+
+.nav-item.active {
+  @apply bg-blue-600 text-white;
+}
+
+.nav-item:not(.active) {
+  @apply text-gray-700 hover:bg-gray-100;
+}
+
+/* Error message styles */
+.error-message {
+  @apply bg-red-50 border border-red-200 text-red-800 px-4 py-3 rounded-md mb-4;
+}
+
+.success-message {
+  @apply bg-green-50 border border-green-200 text-green-800 px-4 py-3 rounded-md mb-4;
+}
+
+/* Validation styles */
+.input-error {
+  @apply border-red-300 focus:border-red-500 focus:ring-red-500;
+}
+
+.input-success {
+  @apply border-green-300 focus:border-green-500 focus:ring-green-500;
+}
+
+/* Home page specific styles */
+.home-card {
+  @apply bg-white rounded-lg shadow-md p-6 border border-gray-200 hover:shadow-lg transition-shadow;
+}
+
+.home-summary-card {
+  @apply bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-lg shadow-lg p-6 hover:shadow-xl transition-shadow;
+}
+
+.home-datetime {
+  @apply text-lg font-semibold text-gray-800 mb-4;
+}
+
+/* Activity log styles */
+.activity-log-item {
+  @apply border-l-4 border-blue-500 bg-blue-50 p-4 mb-2 rounded-r-lg;
+}
+
+.activity-log-item.warning {
+  @apply border-yellow-500 bg-yellow-50;
+}
+
+.activity-log-item.error {
+  @apply border-red-500 bg-red-50;
+}
+
+.activity-log-item.success {
+  @apply border-green-500 bg-green-50;
+}
+
+/* Client management styles */
+.client-card {
+  @apply bg-white rounded-lg shadow-md p-6 border border-gray-200 hover:shadow-lg transition-shadow;
+}
+
+.client-search-result {
+  @apply p-3 hover:bg-gray-50 cursor-pointer border-b last:border-b-0;
+}
+
+/* Billing styles */
+.billing-card {
+  @apply bg-white rounded-lg shadow-md p-6 border border-gray-200;
+}
+
+.installment-card {
+  @apply bg-gray-50 rounded-lg p-4 border border-gray-200 mb-2;
+}
+
+.installment-card.overdue {
+  @apply bg-red-50 border-red-200;
+}
+
+.installment-card.paid {
+  @apply bg-green-50 border-green-200;
+}
+
+/* Utility classes */
+.text-center-focus:focus {
+  text-align: center;
+}
+
+.gradient-bg {
+  background: linear-gradient(135deg, #2563eb 0%, #1e40af 100%);
+}
+
+.shadow-hover:hover {
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+}
+
+/* Print styles */
+@media print {
+  .no-print {
+    display: none !important;
+  }
 }
