@@ -235,6 +235,7 @@ class ProductUpdate(BaseModel):
     name: Optional[str] = None
     price: Optional[float] = None
     description: Optional[str] = None
+    quantity: Optional[int] = None
     active: Optional[bool] = None
     
     @validator('name', 'description', pre=True)
