@@ -194,9 +194,9 @@ function App() {
         hasPermission={hasPermission}
       />
       <main className="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8 content-with-sidebar page-transition">
-        {currentPage === 'home' && <HomePage user={user} token={token} />}
-        {currentPage === 'cash-operation' && <CashOperationPage user={user} token={token} toUpperCase={toUpperCase} />}
-        {currentPage === 'history' && <HistoryPage user={user} token={token} toUpperCase={toUpperCase} />}
+        {currentPage === 'home' && user?.role !== 'vendas' && <HomePage user={user} token={token} />}
+        {currentPage === 'cash-operation' && user?.role !== 'vendas' && <CashOperationPage user={user} token={token} toUpperCase={toUpperCase} />}
+        {currentPage === 'history' && user?.role !== 'vendas' && <HistoryPage user={user} token={token} toUpperCase={toUpperCase} />}
         {currentPage === 'users' && hasPermission(['admin', 'manager']) && <UsersPage user={user} token={token} toUpperCase={toUpperCase} />}
         {currentPage === 'products' && (hasPermission(['admin', 'manager']) || hasPermission(['reception'], 'products')) && <ProductsPage user={user} token={token} toUpperCase={toUpperCase} />}
         {currentPage === 'clients' && <ClientsPage user={user} token={token} toUpperCase={toUpperCase} />}
