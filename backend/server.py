@@ -584,7 +584,8 @@ async def login(user: UserLogin):
             "username": db_user["username"],
             "email": db_user["email"],
             "role": db_user["role"],
-            "permissions": db_user.get("permissions", {})
+            "permissions": db_user.get("permissions", {}),
+            "require_password_change": db_user.get("require_password_change", False)
         }
     }
 
