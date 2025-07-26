@@ -82,7 +82,7 @@ function App() {
         logout={logout}
         hasPermission={hasPermission}
       />
-      <main className="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8 ml-2">
+      <main className="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8 content-with-sidebar page-transition">
         {currentPage === 'home' && <HomePage user={user} token={token} />}
         {currentPage === 'cash-operation' && <CashOperationPage user={user} token={token} toUpperCase={toUpperCase} />}
         {currentPage === 'history' && <HistoryPage user={user} token={token} toUpperCase={toUpperCase} />}
