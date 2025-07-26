@@ -553,36 +553,36 @@ const HomePage = ({ user, token }) => {
   });
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 md:space-y-6">
       {/* Welcome Section */}
-      <div className="bg-gradient-to-r from-yellow-400 via-orange-500 to-red-500 rounded-xl shadow-lg p-6 border-2 border-yellow-300">
+      <div className="bg-gradient-to-r from-yellow-400 via-orange-500 to-red-500 rounded-xl shadow-lg p-4 md:p-6 border-2 border-yellow-300">
         <div className="text-center">
-          <h1 className="text-3xl font-bold text-white mb-2 drop-shadow-lg">
+          <h1 className="text-xl md:text-3xl font-bold text-white mb-2 drop-shadow-lg">
             Bem-vindo, {user?.username}!
           </h1>
-          <p className="text-lg text-yellow-100 capitalize font-medium">
+          <p className="text-sm md:text-lg text-yellow-100 capitalize font-medium">
             {currentDateTime}
           </p>
         </div>
       </div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <div className="bg-gradient-to-br from-yellow-100 to-yellow-200 border-2 border-yellow-400 rounded-xl p-6 shadow-lg">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 md:gap-6">
+        <div className="bg-gradient-to-br from-yellow-100 to-yellow-200 border-2 border-yellow-400 rounded-xl p-4 md:p-6 shadow-lg">
           <div className="flex items-center">
             <div className="flex-shrink-0">
-              <div className="w-12 h-12 bg-gradient-to-br from-yellow-500 to-orange-500 rounded-xl flex items-center justify-center shadow-md">
-                <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <div className="w-10 h-10 md:w-12 md:h-12 bg-gradient-to-br from-yellow-500 to-orange-500 rounded-xl flex items-center justify-center shadow-md">
+                <svg className="w-5 h-5 md:w-6 md:h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
                 </svg>
               </div>
             </div>
-            <div className="ml-5 w-0 flex-1">
+            <div className="ml-3 md:ml-5 w-0 flex-1">
               <dl>
-                <dt className="text-sm font-bold text-gray-700 truncate">
+                <dt className="text-xs md:text-sm font-bold text-gray-700 truncate">
                   Total Entradas
                 </dt>
-                <dd className="text-2xl font-bold text-orange-600">
+                <dd className="text-lg md:text-2xl font-bold text-orange-600">
                   R$ {stats?.total_entrada?.toFixed(2) || '0.00'}
                 </dd>
               </dl>
@@ -590,21 +590,21 @@ const HomePage = ({ user, token }) => {
           </div>
         </div>
 
-        <div className="bg-gradient-to-br from-red-100 to-red-200 border-2 border-red-400 rounded-xl p-6 shadow-lg">
+        <div className="bg-gradient-to-br from-red-100 to-red-200 border-2 border-red-400 rounded-xl p-4 md:p-6 shadow-lg">
           <div className="flex items-center">
             <div className="flex-shrink-0">
-              <div className="w-12 h-12 bg-gradient-to-br from-red-500 to-red-600 rounded-xl flex items-center justify-center shadow-md">
-                <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <div className="w-10 h-10 md:w-12 md:h-12 bg-gradient-to-br from-red-500 to-red-600 rounded-xl flex items-center justify-center shadow-md">
+                <svg className="w-5 h-5 md:w-6 md:h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 12H4" />
                 </svg>
               </div>
             </div>
-            <div className="ml-5 w-0 flex-1">
+            <div className="ml-3 md:ml-5 w-0 flex-1">
               <dl>
-                <dt className="text-sm font-bold text-gray-700 truncate">
+                <dt className="text-xs md:text-sm font-bold text-gray-700 truncate">
                   Total Saídas  
                 </dt>
-                <dd className="text-2xl font-bold text-red-600">
+                <dd className="text-lg md:text-2xl font-bold text-red-600">
                   R$ {stats?.total_saida?.toFixed(2) || '0.00'}
                 </dd>
               </dl>
@@ -612,21 +612,21 @@ const HomePage = ({ user, token }) => {
           </div>
         </div>
 
-        <div className={`${stats?.saldo >= 0 ? 'bg-gradient-to-br from-blue-100 to-blue-200 border-2 border-blue-400' : 'bg-gradient-to-br from-orange-100 to-orange-200 border-2 border-orange-400'} rounded-xl p-6 shadow-lg`}>
+        <div className={`${stats?.saldo >= 0 ? 'bg-gradient-to-br from-blue-100 to-blue-200 border-2 border-blue-400' : 'bg-gradient-to-br from-orange-100 to-orange-200 border-2 border-orange-400'} rounded-xl p-4 md:p-6 shadow-lg`}>
           <div className="flex items-center">
             <div className="flex-shrink-0">
-              <div className={`w-12 h-12 ${stats?.saldo >= 0 ? 'bg-gradient-to-br from-blue-500 to-blue-600' : 'bg-gradient-to-br from-orange-500 to-orange-600'} rounded-xl flex items-center justify-center shadow-md`}>
-                <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <div className={`w-10 h-10 md:w-12 md:h-12 ${stats?.saldo >= 0 ? 'bg-gradient-to-br from-blue-500 to-blue-600' : 'bg-gradient-to-br from-orange-500 to-orange-600'} rounded-xl flex items-center justify-center shadow-md`}>
+                <svg className="w-5 h-5 md:w-6 md:h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1" />
                 </svg>
               </div>
             </div>
-            <div className="ml-5 w-0 flex-1">
+            <div className="ml-3 md:ml-5 w-0 flex-1">
               <dl>
-                <dt className="text-sm font-bold text-gray-700 truncate">
+                <dt className="text-xs md:text-sm font-bold text-gray-700 truncate">
                   Saldo em Caixa
                 </dt>
-                <dd className={`text-2xl font-bold ${stats?.saldo >= 0 ? 'text-blue-600' : 'text-orange-600'}`}>
+                <dd className={`text-lg md:text-2xl font-bold ${stats?.saldo >= 0 ? 'text-blue-600' : 'text-orange-600'}`}>
                   R$ {stats?.saldo?.toFixed(2) || '0.00'}
                 </dd>
               </dl>
@@ -634,21 +634,21 @@ const HomePage = ({ user, token }) => {
           </div>
         </div>
 
-        <div className="bg-gradient-to-br from-gray-100 to-gray-200 border-2 border-black rounded-xl p-6 shadow-lg">
+        <div className="bg-gradient-to-br from-gray-100 to-gray-200 border-2 border-black rounded-xl p-4 md:p-6 shadow-lg">
           <div className="flex items-center">
             <div className="flex-shrink-0">
-              <div className="w-12 h-12 bg-gradient-to-br from-black to-gray-800 rounded-xl flex items-center justify-center shadow-md">
-                <svg className="w-6 h-6 text-yellow-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <div className="w-10 h-10 md:w-12 md:h-12 bg-gradient-to-br from-black to-gray-800 rounded-xl flex items-center justify-center shadow-md">
+                <svg className="w-5 h-5 md:w-6 md:h-6 text-yellow-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
                 </svg>
               </div>
             </div>
-            <div className="ml-5 w-0 flex-1">
+            <div className="ml-3 md:ml-5 w-0 flex-1">
               <dl>
-                <dt className="text-sm font-bold text-gray-700 truncate">
+                <dt className="text-xs md:text-sm font-bold text-gray-700 truncate">
                   Transações Hoje
                 </dt>
-                <dd className="text-2xl font-bold text-black">
+                <dd className="text-lg md:text-2xl font-bold text-black">
                   {stats?.today_transactions || 0}
                 </dd>
               </dl>
@@ -659,12 +659,12 @@ const HomePage = ({ user, token }) => {
 
       {/* History Preview Section */}
       <div className="bg-white rounded-xl shadow-lg border-2 border-yellow-300">
-        <div className="px-6 py-4 border-b border-gray-200 bg-gradient-to-r from-yellow-400 to-orange-500 rounded-t-xl">
+        <div className="px-4 md:px-6 py-4 border-b border-gray-200 bg-gradient-to-r from-yellow-400 to-orange-500 rounded-t-xl">
           <div className="flex justify-between items-center">
-            <h3 className="text-lg font-bold text-white">Histórico Recente</h3>
+            <h3 className="text-base md:text-lg font-bold text-white">Histórico Recente</h3>
             <button
               onClick={() => setShowHistoryPreview(!showHistoryPreview)}
-              className="px-4 py-2 bg-white text-red-600 rounded-lg hover:bg-gray-100 text-sm font-bold border-2 border-yellow-300 shadow-md transition-all duration-200"
+              className="px-3 md:px-4 py-2 bg-white text-red-600 rounded-lg hover:bg-gray-100 text-xs md:text-sm font-bold border-2 border-yellow-300 shadow-md transition-all duration-200"
             >
               {showHistoryPreview ? 'Ocultar' : 'Exibir'}
             </button>
@@ -672,26 +672,26 @@ const HomePage = ({ user, token }) => {
         </div>
 
         {showHistoryPreview && (
-          <div className="p-6">
+          <div className="p-4 md:p-6">
             {stats?.recent_transactions?.length > 0 ? (
               <div className="overflow-x-auto">
-                <table className="w-full text-sm">
+                <table className="w-full text-xs md:text-sm">
                   <thead className="bg-gradient-to-r from-yellow-100 to-orange-100">
                     <tr>
-                      <th className="px-4 py-3 text-left text-xs font-bold text-gray-800 uppercase border-b-2 border-yellow-300">Data</th>
-                      <th className="px-4 py-3 text-left text-xs font-bold text-gray-800 uppercase border-b-2 border-yellow-300">Tipo</th>
-                      <th className="px-4 py-3 text-left text-xs font-bold text-gray-800 uppercase border-b-2 border-yellow-300">Valor</th>
-                      <th className="px-4 py-3 text-left text-xs font-bold text-gray-800 uppercase border-b-2 border-yellow-300">Descrição</th>
+                      <th className="px-2 md:px-4 py-2 md:py-3 text-left text-xs font-bold text-gray-800 uppercase border-b-2 border-yellow-300">Data</th>
+                      <th className="px-2 md:px-4 py-2 md:py-3 text-left text-xs font-bold text-gray-800 uppercase border-b-2 border-yellow-300">Tipo</th>
+                      <th className="px-2 md:px-4 py-2 md:py-3 text-left text-xs font-bold text-gray-800 uppercase border-b-2 border-yellow-300">Valor</th>
+                      <th className="px-2 md:px-4 py-2 md:py-3 text-left text-xs font-bold text-gray-800 uppercase border-b-2 border-yellow-300 hidden sm:table-cell">Descrição</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-200">
                     {stats.recent_transactions.slice(0, 5).map((transaction) => (
                       <tr key={transaction.id} className="hover:bg-yellow-50 transition-colors duration-150">
-                        <td className="px-4 py-3 whitespace-nowrap text-gray-900 font-medium">
+                        <td className="px-2 md:px-4 py-2 md:py-3 whitespace-nowrap text-gray-900 font-medium text-xs md:text-sm">
                           {new Date(transaction.created_at).toLocaleDateString('pt-BR')}
                         </td>
-                        <td className="px-4 py-3 whitespace-nowrap">
-                          <span className={`px-3 py-1 text-xs font-bold rounded-full border-2 ${
+                        <td className="px-2 md:px-4 py-2 md:py-3 whitespace-nowrap">
+                          <span className={`px-2 md:px-3 py-1 text-xs font-bold rounded-full border-2 ${
                             transaction.type === 'entrada' ? 'bg-yellow-100 text-orange-800 border-yellow-400' :
                             transaction.type === 'pagamento_cliente' ? 'bg-blue-100 text-blue-800 border-blue-400' :
                             'bg-red-100 text-red-800 border-red-400'
@@ -701,12 +701,12 @@ const HomePage = ({ user, token }) => {
                              'SAÍDA'}
                           </span>
                         </td>
-                        <td className={`px-4 py-3 whitespace-nowrap font-bold ${
+                        <td className={`px-2 md:px-4 py-2 md:py-3 whitespace-nowrap font-bold text-xs md:text-sm ${
                           transaction.type === 'entrada' || transaction.type === 'pagamento_cliente' ? 'text-orange-600' : 'text-red-600'
                         }`}>
                           R$ {transaction.amount.toFixed(2)}
                         </td>
-                        <td className="px-4 py-3 text-gray-900 truncate max-w-xs font-medium">
+                        <td className="px-2 md:px-4 py-2 md:py-3 text-gray-900 truncate max-w-xs font-medium text-xs md:text-sm hidden sm:table-cell">
                           {transaction.description}
                         </td>
                       </tr>
@@ -715,7 +715,7 @@ const HomePage = ({ user, token }) => {
                 </table>
               </div>
             ) : (
-              <p className="text-gray-500 text-center py-4 font-medium">Nenhuma transação recente</p>
+              <p className="text-gray-500 text-center py-4 font-medium text-sm md:text-base">Nenhuma transação recente</p>
             )}
           </div>
         )}
