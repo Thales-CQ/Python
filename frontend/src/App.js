@@ -204,12 +204,8 @@ const Header = ({ user, currentPage, setCurrentPage, logout, hasPermission }) =>
   return (
     <>
       {/* Sidebar Menu */}
-      <div className="fixed left-0 top-0 h-full w-2 bg-yellow-500 z-50 group hover:w-64 transition-all duration-300 shadow-2xl">
-        {/* Hover trigger area */}
-        <div className="w-full h-full bg-gradient-to-b from-yellow-500 via-orange-500 to-red-500"></div>
-        
-        {/* Expanded sidebar content */}
-        <div className="absolute top-0 left-0 w-64 h-full bg-gradient-to-b from-yellow-500 via-orange-500 to-red-500 opacity-0 group-hover:opacity-100 transition-all duration-300 shadow-2xl border-r-4 border-yellow-300">
+      <div className="sidebar-trigger">
+        <div className="sidebar-content">
           {/* Logo area */}
           <div className="p-4 border-b-2 border-yellow-300">
             <div className="flex items-center space-x-3">
@@ -226,13 +222,15 @@ const Header = ({ user, currentPage, setCurrentPage, logout, hasPermission }) =>
           </div>
 
           {/* Navigation Menu */}
-          <nav className="py-4 px-2 space-y-1 overflow-y-auto">
+          <nav className="py-4 px-2 space-y-1 overflow-y-auto h-full pb-32">
+            <div className="text-xs font-bold text-yellow-100 px-3 mb-3">PRINCIPAL</div>
+            
             <button
               onClick={() => setCurrentPage('home')}
-              className={`w-full flex items-center px-3 py-3 text-sm font-bold rounded-lg transition-all duration-200 ${
+              className={`w-full flex items-center px-3 py-3 text-sm font-bold rounded-lg transition-all duration-200 menu-item-enter ${
                 currentPage === 'home' 
-                  ? 'bg-white text-red-600 shadow-lg' 
-                  : 'text-white hover:bg-white hover:text-red-600 hover:shadow-md'
+                  ? 'bg-white text-red-600 shadow-lg transform scale-105' 
+                  : 'text-white hover:bg-white hover:text-red-600 hover:shadow-md hover:transform hover:scale-105'
               }`}
             >
               <svg className="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -243,10 +241,10 @@ const Header = ({ user, currentPage, setCurrentPage, logout, hasPermission }) =>
             
             <button
               onClick={() => setCurrentPage('cash-operation')}
-              className={`w-full flex items-center px-3 py-3 text-sm font-bold rounded-lg transition-all duration-200 ${
+              className={`w-full flex items-center px-3 py-3 text-sm font-bold rounded-lg transition-all duration-200 menu-item-enter ${
                 currentPage === 'cash-operation' 
-                  ? 'bg-white text-red-600 shadow-lg' 
-                  : 'text-white hover:bg-white hover:text-red-600 hover:shadow-md'
+                  ? 'bg-white text-red-600 shadow-lg transform scale-105' 
+                  : 'text-white hover:bg-white hover:text-red-600 hover:shadow-md hover:transform hover:scale-105'
               }`}
             >
               <svg className="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -257,10 +255,10 @@ const Header = ({ user, currentPage, setCurrentPage, logout, hasPermission }) =>
             
             <button
               onClick={() => setCurrentPage('history')}
-              className={`w-full flex items-center px-3 py-3 text-sm font-bold rounded-lg transition-all duration-200 ${
+              className={`w-full flex items-center px-3 py-3 text-sm font-bold rounded-lg transition-all duration-200 menu-item-enter ${
                 currentPage === 'history' 
-                  ? 'bg-white text-red-600 shadow-lg' 
-                  : 'text-white hover:bg-white hover:text-red-600 hover:shadow-md'
+                  ? 'bg-white text-red-600 shadow-lg transform scale-105' 
+                  : 'text-white hover:bg-white hover:text-red-600 hover:shadow-md hover:transform hover:scale-105'
               }`}
             >
               <svg className="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -271,16 +269,16 @@ const Header = ({ user, currentPage, setCurrentPage, logout, hasPermission }) =>
 
             {hasPermission(['admin', 'manager']) && (
               <>
-                <div className="border-t-2 border-yellow-300 my-2 pt-2">
+                <div className="border-t-2 border-yellow-300 my-3 pt-3">
                   <div className="text-xs font-bold text-yellow-100 px-3 mb-2">GERENCIAMENTO</div>
                 </div>
 
                 <button
                   onClick={() => setCurrentPage('products')}
-                  className={`w-full flex items-center px-3 py-3 text-sm font-bold rounded-lg transition-all duration-200 ${
+                  className={`w-full flex items-center px-3 py-3 text-sm font-bold rounded-lg transition-all duration-200 menu-item-enter ${
                     currentPage === 'products' 
-                      ? 'bg-white text-red-600 shadow-lg' 
-                      : 'text-white hover:bg-white hover:text-red-600 hover:shadow-md'
+                      ? 'bg-white text-red-600 shadow-lg transform scale-105' 
+                      : 'text-white hover:bg-white hover:text-red-600 hover:shadow-md hover:transform hover:scale-105'
                   }`}
                 >
                   <svg className="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -291,10 +289,10 @@ const Header = ({ user, currentPage, setCurrentPage, logout, hasPermission }) =>
                 
                 <button
                   onClick={() => setCurrentPage('clients')}
-                  className={`w-full flex items-center px-3 py-3 text-sm font-bold rounded-lg transition-all duration-200 ${
+                  className={`w-full flex items-center px-3 py-3 text-sm font-bold rounded-lg transition-all duration-200 menu-item-enter ${
                     currentPage === 'clients' 
-                      ? 'bg-white text-red-600 shadow-lg' 
-                      : 'text-white hover:bg-white hover:text-red-600 hover:shadow-md'
+                      ? 'bg-white text-red-600 shadow-lg transform scale-105' 
+                      : 'text-white hover:bg-white hover:text-red-600 hover:shadow-md hover:transform hover:scale-105'
                   }`}
                 >
                   <svg className="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -305,10 +303,10 @@ const Header = ({ user, currentPage, setCurrentPage, logout, hasPermission }) =>
                 
                 <button
                   onClick={() => setCurrentPage('billing')}
-                  className={`w-full flex items-center px-3 py-3 text-sm font-bold rounded-lg transition-all duration-200 ${
+                  className={`w-full flex items-center px-3 py-3 text-sm font-bold rounded-lg transition-all duration-200 menu-item-enter ${
                     currentPage === 'billing' 
-                      ? 'bg-white text-red-600 shadow-lg' 
-                      : 'text-white hover:bg-white hover:text-red-600 hover:shadow-md'
+                      ? 'bg-white text-red-600 shadow-lg transform scale-105' 
+                      : 'text-white hover:bg-white hover:text-red-600 hover:shadow-md hover:transform hover:scale-105'
                   }`}
                 >
                   <svg className="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -319,10 +317,10 @@ const Header = ({ user, currentPage, setCurrentPage, logout, hasPermission }) =>
                 
                 <button
                   onClick={() => setCurrentPage('pending-charges')}
-                  className={`w-full flex items-center px-3 py-3 text-sm font-bold rounded-lg transition-all duration-200 ${
+                  className={`w-full flex items-center px-3 py-3 text-sm font-bold rounded-lg transition-all duration-200 menu-item-enter ${
                     currentPage === 'pending-charges' 
-                      ? 'bg-black text-yellow-400 shadow-lg' 
-                      : 'text-white hover:bg-black hover:text-yellow-400 hover:shadow-md'
+                      ? 'bg-black text-yellow-400 shadow-lg transform scale-105' 
+                      : 'text-white hover:bg-black hover:text-yellow-400 hover:shadow-md hover:transform hover:scale-105'
                   }`}
                 >
                   <svg className="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -333,10 +331,10 @@ const Header = ({ user, currentPage, setCurrentPage, logout, hasPermission }) =>
                 
                 <button
                   onClick={() => setCurrentPage('users')}
-                  className={`w-full flex items-center px-3 py-3 text-sm font-bold rounded-lg transition-all duration-200 ${
+                  className={`w-full flex items-center px-3 py-3 text-sm font-bold rounded-lg transition-all duration-200 menu-item-enter ${
                     currentPage === 'users' 
-                      ? 'bg-white text-red-600 shadow-lg' 
-                      : 'text-white hover:bg-white hover:text-red-600 hover:shadow-md'
+                      ? 'bg-white text-red-600 shadow-lg transform scale-105' 
+                      : 'text-white hover:bg-white hover:text-red-600 hover:shadow-md hover:transform hover:scale-105'
                   }`}
                 >
                   <svg className="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -349,16 +347,16 @@ const Header = ({ user, currentPage, setCurrentPage, logout, hasPermission }) =>
 
             {hasPermission(['admin']) && (
               <>
-                <div className="border-t-2 border-yellow-300 my-2 pt-2">
+                <div className="border-t-2 border-yellow-300 my-3 pt-3">
                   <div className="text-xs font-bold text-yellow-100 px-3 mb-2">ADMINISTRAÇÃO</div>
                 </div>
 
                 <button
                   onClick={() => setCurrentPage('activity-logs')}
-                  className={`w-full flex items-center px-3 py-3 text-sm font-bold rounded-lg transition-all duration-200 ${
+                  className={`w-full flex items-center px-3 py-3 text-sm font-bold rounded-lg transition-all duration-200 menu-item-enter ${
                     currentPage === 'activity-logs' 
-                      ? 'bg-blue-600 text-white shadow-lg' 
-                      : 'text-white hover:bg-blue-600 hover:text-white hover:shadow-md'
+                      ? 'bg-blue-600 text-white shadow-lg transform scale-105' 
+                      : 'text-white hover:bg-blue-600 hover:text-white hover:shadow-md hover:transform hover:scale-105'
                   }`}
                 >
                   <svg className="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -368,28 +366,28 @@ const Header = ({ user, currentPage, setCurrentPage, logout, hasPermission }) =>
                 </button>
               </>
             )}
-          </nav>
 
-          {/* User info and logout at bottom */}
-          <div className="absolute bottom-0 left-0 right-0 p-4 border-t-2 border-yellow-300">
-            <div className="bg-white bg-opacity-20 rounded-lg px-3 py-2 backdrop-blur-sm border-2 border-yellow-300 mb-3">
-              <div className="text-white text-sm font-bold">
-                {user?.username}
+            {/* User info and logout at bottom */}
+            <div className="fixed bottom-0 left-0 right-0 w-64 p-4 bg-gradient-to-t from-red-500 to-transparent">
+              <div className="bg-white bg-opacity-20 rounded-lg px-3 py-2 backdrop-blur-sm border-2 border-yellow-300 mb-3">
+                <div className="text-white text-sm font-bold">
+                  {user?.username}
+                </div>
+                <div className="text-yellow-200 text-xs font-medium">
+                  {user?.role === 'admin' ? 'Administrador' : user?.role === 'manager' ? 'Gerente' : 'Vendedor'}
+                </div>
               </div>
-              <div className="text-yellow-200 text-xs font-medium">
-                {user?.role === 'admin' ? 'Administrador' : user?.role === 'manager' ? 'Gerente' : 'Vendedor'}
-              </div>
+              <button
+                onClick={logout}
+                className="w-full bg-black hover:bg-gray-800 text-yellow-400 px-3 py-2 rounded-lg text-sm font-bold transition-all duration-200 flex items-center justify-center border-2 border-yellow-300 shadow-lg hover:transform hover:scale-105"
+              >
+                <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                </svg>
+                Sair
+              </button>
             </div>
-            <button
-              onClick={logout}
-              className="w-full bg-black hover:bg-gray-800 text-yellow-400 px-3 py-2 rounded-lg text-sm font-bold transition-all duration-200 flex items-center justify-center border-2 border-yellow-300 shadow-lg"
-            >
-              <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
-              </svg>
-              Sair
-            </button>
-          </div>
+          </nav>
         </div>
       </div>
 
