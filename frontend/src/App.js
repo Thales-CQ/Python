@@ -1698,6 +1698,7 @@ function App() {
   const BillingPage = () => {
     const [clients, setClients] = useState([]);
     const [bills, setBills] = useState([]);
+    const [products, setProducts] = useState([]);
     const [pendingBills, setPendingBills] = useState([]);
     const [selectedBill, setSelectedBill] = useState(null);
     const [installments, setInstallments] = useState([]);
@@ -1713,6 +1714,7 @@ function App() {
     });
     const [billData, setBillData] = useState({
       client_id: '',
+      product_id: '',
       total_amount: '',
       description: '',
       installments: 1
