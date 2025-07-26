@@ -116,12 +116,13 @@ class CashSystemTester:
         """Test creating a client with valid CPF"""
         self.log("👤 Testing Client Creation...")
         
+        timestamp = int(time.time())
         client_data = {
-            "name": "JOÃO DA SILVA",
-            "email": "JOAO@EMAIL.COM",
+            "name": f"JOÃO DA SILVA {timestamp}",
+            "email": f"JOAO{timestamp}@EMAIL.COM",
             "phone": "11999999999",
             "address": "RUA DAS FLORES, 123",
-            "cpf": f"111444777{35 + int(time.time()) % 10}"  # Generate unique valid CPF
+            "cpf": "52998224725"  # Different valid CPF
         }
         
         success, response = self.run_test(
