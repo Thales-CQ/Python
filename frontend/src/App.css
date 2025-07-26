@@ -29,10 +29,16 @@
   left: 0;
   width: 100%;
   height: 100%;
-  background-image: url('https://customer-assets.emergentagent.com/job_finflow-74/artifacts/hb2bze76_ChatGPT%20Image%2026%20de%20jul.%20de%202025%2C%2016_28_44.png');
-  background-size: cover;
-  background-position: center;
-  background-repeat: no-repeat;
+  background: linear-gradient(135deg, 
+    #1e3a8a 0%,     /* Azul escuro */
+    #3b82f6 25%,    /* Azul */
+    #ef4444 50%,    /* Vermelho */
+    #f59e0b 75%,    /* Amarelo */
+    #1f2937 100%    /* Preto */
+  ), url('https://customer-assets.emergentagent.com/job_finflow-74/artifacts/hb2bze76_ChatGPT%20Image%2026%20de%20jul.%20de%202025%2C%2016_28_44.png');
+  background-size: cover, cover;
+  background-position: center, center;
+  background-repeat: no-repeat, no-repeat;
 }
 
 .splash-overlay-dark {
