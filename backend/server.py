@@ -118,6 +118,7 @@ class ActivityType(str, Enum):
     CLIENT_MODIFIED = "client_modified"
     LOGIN = "login"
     LOGIN_FAILED = "login_failed"
+    SALE_CREATED = "sale_created"  # New activity type for sales
 
 class BillStatus(str, Enum):
     PENDING = "pending"
