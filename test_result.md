@@ -408,13 +408,9 @@ metadata:
 
 test_plan:
   current_focus:
-    - "Role Change: Salesperson to Reception"
-    - "Product Quantity System (finite/infinite)"
-    - "Advanced Specific Permissions System"
-    - "Force Password Change System"
-    - "Enhanced User Management Functions"
     - "Manager Permission Restrictions"
-  stuck_tasks: []
+  stuck_tasks:
+    - "Manager Permission Restrictions"
   test_all: false
   test_priority: "high_first"
 
