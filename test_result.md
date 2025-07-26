@@ -251,11 +251,11 @@ backend:
 
   - task: "Enhanced User Management Functions"
     implemented: true
-    working: true
+    working: false
     file: "server.py, App.js"
-    stuck_count: 0
+    stuck_count: 1
     priority: "high"
-    needs_retesting: false
+    needs_retesting: true
     status_history:
         - working: "NA"
           agent: "main"
@@ -263,6 +263,12 @@ backend:
         - working: true
           agent: "testing"
           comment: "✅ TESTED: Enhanced user management functions working. Admin can reset passwords, manage permissions, activate/deactivate users, and delete users (except main admin). Password change endpoints work correctly. User update endpoints functional."
+        - working: false
+          agent: "user"
+          comment: "USER REPORTED: 'usuario administrador nao esta conseguindo excluir os usuarios' - Administrator cannot delete users"
+        - working: "NA"
+          agent: "main"
+          comment: "ISSUE IDENTIFIED: Frontend handleDeleteUser function was not properly handling error responses. When deletion failed, no error message was shown to user, making it appear that the function was broken. Fixed error handling to display specific error messages from backend."
 
   - task: "Manager Permission Restrictions"
     implemented: true
