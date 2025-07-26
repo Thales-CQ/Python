@@ -260,12 +260,12 @@
     @apply w-32;
   }
   
-  .logo-area .text-sm {
-    @apply text-xs;
+  .logo-area .logo-text-sm {
+    font-size: 0.75rem;
   }
   
-  .logo-area .text-xs {
-    @apply text-xs;
+  .logo-area .logo-text-xs {
+    font-size: 0.625rem;
   }
 }
 
