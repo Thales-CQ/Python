@@ -3297,6 +3297,7 @@ const UsersPage = ({ user, token, toUpperCase }) => {
                   <span className={`px-2 py-1 text-xs font-medium rounded-full ${
                     userItem.role === 'admin' ? 'bg-red-100 text-red-800' :
                     userItem.role === 'manager' ? 'bg-blue-100 text-blue-800' :
+                    userItem.role === 'vendas' ? 'bg-purple-100 text-purple-800' :
                     'bg-green-100 text-green-800'
                   }`}>
                     {userItem.role === 'admin' ? 'Administrador' :
