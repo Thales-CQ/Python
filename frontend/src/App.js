@@ -1454,7 +1454,8 @@ const ProductsPage = ({ user, token, toUpperCase }) => {
         },
         body: JSON.stringify({
           ...createData,
-          price: parseFloat(createData.price)
+          price: parseFloat(createData.price),
+          quantity: createData.quantity ? parseInt(createData.quantity) : null
         }),
       });
 
