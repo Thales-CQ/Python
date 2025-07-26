@@ -40,7 +40,9 @@ const SplashScreen = ({ onSplashComplete }) => {
               window.location.reload();
             }}
             setUser={() => {}}
-            setIsAuthenticated={() => {}}
+            setIsAuthenticated={() => {
+              // Login bem-sucedido, a página vai recarregar
+            }}
             toUpperCase={toUpperCase}
           />
         </div>
