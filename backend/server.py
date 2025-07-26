@@ -594,6 +594,29 @@ async def login(user: UserLogin):
 async def get_current_user_info(current_user: User = Depends(get_current_user)):
     return current_user
 
+@api_router.post("/check-permission")
+async def check_user_permission(permission_request: dict, current_user: User = Depends(get_current_user)):
+    """Check if user has specific permission"""
+    permission_name = permission_request.get("permission")
+    
+    # Admin has all permissions
+    if current_user.role == UserRole.ADMIN:
+        return {"has_permission": True}
+    
+    # Manager has management permissions
+    if current_user.role == UserRole.MANAGER:
+        manager_permissions = ["users", "products", "clients", "bills", "reports"]
+        return {"has_permission": permission_name in manager_permissions}
+    
+    # Reception has basic permissions + specific granted permissions
+    if current_user.role == UserRole.RECEPTION:
+        basic_permissions = ["cash_operations", "clients"]
+        specific_permissions = list(current_user.permissions.keys()) if current_user.permissions else []
+        all_permissions = basic_permissions + specific_permissions
+        return {"has_permission": permission_name in all_permissions}
+    
+    return {"has_permission": False}
+
 @api_router.get("/users")
 async def get_users(current_user: User = Depends(get_current_user)):
     if current_user.role not in [UserRole.ADMIN, UserRole.MANAGER]:
