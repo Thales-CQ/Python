@@ -199,18 +199,18 @@ const LoginPage = ({ setIsAuthenticated, toUpperCase }) => {
   );
 };
 
-// Enhanced Header with better design
+// Enhanced Header with new color scheme
 const Header = ({ user, currentPage, setCurrentPage, logout, hasPermission }) => {
   return (
-    <header className="bg-gradient-to-r from-blue-800 to-blue-900 shadow-xl">
+    <header className="bg-gradient-to-r from-yellow-500 via-orange-500 to-red-500 shadow-2xl border-b-4 border-yellow-300">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between h-16">
           <div className="flex items-center">
             <div className="flex-shrink-0">
               <div className="flex items-center">
-                <svg className="w-8 h-8 text-yellow-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1" />
-                </svg>
+                <div className="w-10 h-10 bg-white rounded-full flex items-center justify-center shadow-lg">
+                  <div className="w-6 h-6 bg-gradient-to-br from-yellow-400 to-orange-500 rounded-full"></div>
+                </div>
               </div>
             </div>
           </div>
@@ -218,10 +218,10 @@ const Header = ({ user, currentPage, setCurrentPage, logout, hasPermission }) =>
           <nav className="flex items-center space-x-1">
             <button
               onClick={() => setCurrentPage('home')}
-              className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
+              className={`px-4 py-2 rounded-lg text-sm font-bold transition-all duration-200 border-2 ${
                 currentPage === 'home' 
-                  ? 'bg-blue-700 text-white shadow-lg transform scale-105' 
-                  : 'text-blue-100 hover:bg-blue-700 hover:text-white hover:shadow-md'
+                  ? 'bg-white text-red-600 shadow-lg transform scale-105 border-yellow-300' 
+                  : 'text-white hover:bg-white hover:text-red-600 hover:shadow-md border-transparent hover:border-yellow-300'
               }`}
             >
               <svg className="w-4 h-4 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -232,10 +232,10 @@ const Header = ({ user, currentPage, setCurrentPage, logout, hasPermission }) =>
             
             <button
               onClick={() => setCurrentPage('cash-operation')}
-              className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
+              className={`px-4 py-2 rounded-lg text-sm font-bold transition-all duration-200 border-2 ${
                 currentPage === 'cash-operation' 
-                  ? 'bg-blue-700 text-white shadow-lg transform scale-105' 
-                  : 'text-blue-100 hover:bg-blue-700 hover:text-white hover:shadow-md'
+                  ? 'bg-white text-red-600 shadow-lg transform scale-105 border-yellow-300' 
+                  : 'text-white hover:bg-white hover:text-red-600 hover:shadow-md border-transparent hover:border-yellow-300'
               }`}
             >
               <svg className="w-4 h-4 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -246,10 +246,10 @@ const Header = ({ user, currentPage, setCurrentPage, logout, hasPermission }) =>
             
             <button
               onClick={() => setCurrentPage('history')}
-              className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
+              className={`px-4 py-2 rounded-lg text-sm font-bold transition-all duration-200 border-2 ${
                 currentPage === 'history' 
-                  ? 'bg-blue-700 text-white shadow-lg transform scale-105' 
-                  : 'text-blue-100 hover:bg-blue-700 hover:text-white hover:shadow-md'
+                  ? 'bg-white text-red-600 shadow-lg transform scale-105 border-yellow-300' 
+                  : 'text-white hover:bg-white hover:text-red-600 hover:shadow-md border-transparent hover:border-yellow-300'
               }`}
             >
               <svg className="w-4 h-4 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -262,10 +262,10 @@ const Header = ({ user, currentPage, setCurrentPage, logout, hasPermission }) =>
               <>
                 <button
                   onClick={() => setCurrentPage('products')}
-                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
+                  className={`px-4 py-2 rounded-lg text-sm font-bold transition-all duration-200 border-2 ${
                     currentPage === 'products' 
-                      ? 'bg-blue-700 text-white shadow-lg transform scale-105' 
-                      : 'text-blue-100 hover:bg-blue-700 hover:text-white hover:shadow-md'
+                      ? 'bg-white text-red-600 shadow-lg transform scale-105 border-yellow-300' 
+                      : 'text-white hover:bg-white hover:text-red-600 hover:shadow-md border-transparent hover:border-yellow-300'
                   }`}
                 >
                   <svg className="w-4 h-4 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -276,10 +276,10 @@ const Header = ({ user, currentPage, setCurrentPage, logout, hasPermission }) =>
                 
                 <button
                   onClick={() => setCurrentPage('clients')}
-                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
+                  className={`px-4 py-2 rounded-lg text-sm font-bold transition-all duration-200 border-2 ${
                     currentPage === 'clients' 
-                      ? 'bg-blue-700 text-white shadow-lg transform scale-105' 
-                      : 'text-blue-100 hover:bg-blue-700 hover:text-white hover:shadow-md'
+                      ? 'bg-white text-red-600 shadow-lg transform scale-105 border-yellow-300' 
+                      : 'text-white hover:bg-white hover:text-red-600 hover:shadow-md border-transparent hover:border-yellow-300'
                   }`}
                 >
                   <svg className="w-4 h-4 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -290,10 +290,10 @@ const Header = ({ user, currentPage, setCurrentPage, logout, hasPermission }) =>
                 
                 <button
                   onClick={() => setCurrentPage('billing')}
-                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
+                  className={`px-4 py-2 rounded-lg text-sm font-bold transition-all duration-200 border-2 ${
                     currentPage === 'billing' 
-                      ? 'bg-blue-700 text-white shadow-lg transform scale-105' 
-                      : 'text-blue-100 hover:bg-blue-700 hover:text-white hover:shadow-md'
+                      ? 'bg-white text-red-600 shadow-lg transform scale-105 border-yellow-300' 
+                      : 'text-white hover:bg-white hover:text-red-600 hover:shadow-md border-transparent hover:border-yellow-300'
                   }`}
                 >
                   <svg className="w-4 h-4 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -304,10 +304,10 @@ const Header = ({ user, currentPage, setCurrentPage, logout, hasPermission }) =>
                 
                 <button
                   onClick={() => setCurrentPage('pending-charges')}
-                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
+                  className={`px-4 py-2 rounded-lg text-sm font-bold transition-all duration-200 border-2 ${
                     currentPage === 'pending-charges' 
-                      ? 'bg-yellow-600 text-white shadow-lg transform scale-105' 
-                      : 'text-blue-100 hover:bg-yellow-600 hover:text-white hover:shadow-md'
+                      ? 'bg-black text-yellow-400 shadow-lg transform scale-105 border-yellow-300' 
+                      : 'text-white hover:bg-black hover:text-yellow-400 hover:shadow-md border-transparent hover:border-yellow-300'
                   }`}
                 >
                   <svg className="w-4 h-4 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -318,10 +318,10 @@ const Header = ({ user, currentPage, setCurrentPage, logout, hasPermission }) =>
                 
                 <button
                   onClick={() => setCurrentPage('users')}
-                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
+                  className={`px-4 py-2 rounded-lg text-sm font-bold transition-all duration-200 border-2 ${
                     currentPage === 'users' 
-                      ? 'bg-blue-700 text-white shadow-lg transform scale-105' 
-                      : 'text-blue-100 hover:bg-blue-700 hover:text-white hover:shadow-md'
+                      ? 'bg-white text-red-600 shadow-lg transform scale-105 border-yellow-300' 
+                      : 'text-white hover:bg-white hover:text-red-600 hover:shadow-md border-transparent hover:border-yellow-300'
                   }`}
                 >
                   <svg className="w-4 h-4 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -335,10 +335,10 @@ const Header = ({ user, currentPage, setCurrentPage, logout, hasPermission }) =>
             {hasPermission(['admin']) && (
               <button
                 onClick={() => setCurrentPage('activity-logs')}
-                className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
+                className={`px-4 py-2 rounded-lg text-sm font-bold transition-all duration-200 border-2 ${
                   currentPage === 'activity-logs' 
-                    ? 'bg-blue-700 text-white shadow-lg transform scale-105' 
-                    : 'text-blue-100 hover:bg-blue-700 hover:text-white hover:shadow-md'
+                    ? 'bg-blue-600 text-white shadow-lg transform scale-105 border-yellow-300' 
+                    : 'text-white hover:bg-blue-600 hover:text-white hover:shadow-md border-transparent hover:border-yellow-300'
                 }`}
               >
                 <svg className="w-4 h-4 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -350,17 +350,17 @@ const Header = ({ user, currentPage, setCurrentPage, logout, hasPermission }) =>
           </nav>
 
           <div className="flex items-center space-x-4">
-            <div className="text-right">
-              <div className="text-blue-100 text-sm font-medium">
+            <div className="text-right bg-white bg-opacity-20 rounded-lg px-3 py-1 backdrop-blur-sm">
+              <div className="text-white text-sm font-bold">
                 {user?.username}
               </div>
-              <div className="text-blue-200 text-xs">
+              <div className="text-yellow-200 text-xs font-medium">
                 {user?.role === 'admin' ? 'Administrador' : user?.role === 'manager' ? 'Gerente' : 'Vendedor'}
               </div>
             </div>
             <button
               onClick={logout}
-              className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors duration-200 flex items-center"
+              className="bg-black hover:bg-gray-800 text-yellow-400 px-4 py-2 rounded-lg text-sm font-bold transition-all duration-200 flex items-center border-2 border-yellow-300 shadow-lg"
             >
               <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
