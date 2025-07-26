@@ -1852,6 +1852,147 @@ class CaixaAPITester:
 
         print("   ✅ Performance endpoints testing completed")
 
+    def test_vendas_role_permissions(self):
+        """Test vendas role permissions - PRIORITY FROM CURRENT REVIEW REQUEST"""
+        if not self.admin_token:
+            self.log_test("Vendas Role Permissions", False, "No admin token")
+            return
+
+        print("   🎯 TESTING VENDAS ROLE PERMISSIONS (REVIEW REQUEST PRIORITY)")
+        
+        # Create vendas user for testing
+        vendas_data = {
+            'username': 'TESTE_VENDAS',
+            'email': 'vendas@teste.com',
+            'password': '123456',
+            'role': 'vendas'
+        }
+        
+        success, user_result = self.make_request('POST', 'register', vendas_data, self.admin_token)
+        if not success:
+            self.log_test("Create Vendas User", False, str(user_result))
+            return
+        
+        # Login as vendas user
+        success, login_data = self.make_request('POST', 'login', {
+            'username': vendas_data['username'],
+            'password': vendas_data['password']
+        })
+        
+        if not success or 'access_token' not in login_data:
+            self.log_test("Vendas User Login", False, str(login_data))
+            return
+            
+        vendas_token = login_data['access_token']
+        self.log_test("Vendas User Login", True, f"Role: {login_data.get('user', {}).get('role', 'N/A')}")
+
+        # TEST 1: Criar clientes (POST /api/clients) - Should WORK
+        print("   🔍 Testing vendas can CREATE clients...")
+        client_data = {
+            'name': 'Cliente Teste Vendas',
+            'email': 'cliente.vendas@teste.com',
+            'phone': '11999999999',
+            'address': 'Rua Teste 123',
+            'cpf': '11144477735'  # Valid CPF
+        }
+        
+        success, client_result = self.make_request('POST', 'clients', client_data, vendas_token)
+        self.log_test("Vendas Can CREATE Clients", success, 
+                     f"Client created: {client_result.get('name', 'N/A')}" if success else str(client_result))
+        
+        created_client_id = client_result.get('id') if success else None
+
+        # TEST 2: Atualizar clientes (PUT /api/clients/{id}) - Should WORK
+        if created_client_id:
+            print("   🔍 Testing vendas can UPDATE clients...")
+            update_data = {
+                'phone': '11888888888',
+                'address': 'Rua Atualizada 456'
+            }
+            
+            success, update_result = self.make_request('PUT', f'clients/{created_client_id}', 
+                                                     update_data, vendas_token)
+            self.log_test("Vendas Can UPDATE Clients", success,
+                         "Client updated successfully" if success else str(update_result))
+
+        # TEST 3: Ver clientes (GET /api/clients) - Should WORK (no restriction)
+        print("   🔍 Testing vendas can VIEW clients...")
+        success, clients_result = self.make_request('GET', 'clients', token=vendas_token)
+        self.log_test("Vendas Can VIEW Clients", success,
+                     f"Found {len(clients_result) if isinstance(clients_result, list) else 0} clients" if success else str(clients_result))
+
+        # TEST 4: Ver produtos (GET /api/products) - Should WORK (no restriction)
+        print("   🔍 Testing vendas can VIEW products...")
+        success, products_result = self.make_request('GET', 'products', token=vendas_token)
+        self.log_test("Vendas Can VIEW Products", success,
+                     f"Found {len(products_result) if isinstance(products_result, list) else 0} products" if success else str(products_result))
+
+        # TEST 5: Realizar vendas (POST /api/sales) - Should WORK (already had permission)
+        print("   🔍 Testing vendas can CREATE sales...")
+        if created_client_id and isinstance(products_result, list) and products_result:
+            product_id = products_result[0].get('id')
+            if product_id:
+                sale_data = {
+                    'client_id': created_client_id,
+                    'product_id': product_id,
+                    'quantity': 2,
+                    'payment_method': 'dinheiro'
+                }
+                
+                success, sale_result = self.make_request('POST', 'sales', sale_data, vendas_token)
+                self.log_test("Vendas Can CREATE Sales", success,
+                             f"Sale created: R${sale_result.get('total_value', 0):.2f}" if success else str(sale_result))
+            else:
+                self.log_test("Vendas Can CREATE Sales", False, "No product available for sale test")
+        else:
+            self.log_test("Vendas Can CREATE Sales", False, "No client or products available for sale test")
+
+        # TEST 6: SECURITY - Vendas should NOT be able to create products
+        print("   🔒 Testing vendas CANNOT CREATE products (security check)...")
+        product_data = {
+            'code': 'VENDAS_TEST',
+            'name': 'Produto Teste Vendas',
+            'price': 99.99,
+            'description': 'Should not be created'
+        }
+        
+        success, product_result = self.make_request('POST', 'products', product_data, 
+                                                   vendas_token, expected_status=403)
+        self.log_test("Vendas CANNOT CREATE Products (Security)", success,
+                     "Correctly blocked from creating products" if success else f"SECURITY ISSUE: {product_result}")
+
+        # TEST 7: SECURITY - Vendas should NOT be able to access performance dashboard
+        print("   🔒 Testing vendas CANNOT ACCESS performance dashboard (security check)...")
+        success, dashboard_result = self.make_request('GET', 'performance/dashboard', 
+                                                     token=vendas_token, expected_status=403)
+        self.log_test("Vendas CANNOT ACCESS Performance Dashboard (Security)", success,
+                     "Correctly blocked from performance dashboard" if success else f"SECURITY ISSUE: {dashboard_result}")
+
+        # TEST 8: SECURITY - Vendas should NOT be able to manage users
+        print("   🔒 Testing vendas CANNOT MANAGE users (security check)...")
+        success, users_result = self.make_request('GET', 'users', 
+                                                 token=vendas_token, expected_status=403)
+        self.log_test("Vendas CANNOT MANAGE Users (Security)", success,
+                     "Correctly blocked from user management" if success else f"SECURITY ISSUE: {users_result}")
+
+        # TEST 9: SECURITY - Vendas should NOT be able to create bills
+        print("   🔒 Testing vendas CANNOT CREATE bills (security check)...")
+        if created_client_id:
+            bill_data = {
+                'client_id': created_client_id,
+                'total_amount': 300.0,
+                'description': 'Should not be created',
+                'installments': 3
+            }
+            
+            success, bill_result = self.make_request('POST', 'bills', bill_data, 
+                                                   vendas_token, expected_status=403)
+            self.log_test("Vendas CANNOT CREATE Bills (Security)", success,
+                         "Correctly blocked from creating bills" if success else f"SECURITY ISSUE: {bill_result}")
+
+        print("   ✅ VENDAS ROLE PERMISSIONS TESTING COMPLETED")
+        return True
+
     def print_summary(self):
         """Print test summary"""
         print("\n" + "=" * 60)
