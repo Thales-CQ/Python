@@ -1683,4 +1683,377 @@ const ProductsPage = ({ user, token, toUpperCase }) => {
   );
 };
 
+// Clients Page with dedicated menu
+const ClientsPage = ({ user, token, toUpperCase }) => {
+  const [activeTab, setActiveTab] = useState('register');
+  const [clients, setClients] = useState([]);
+  const [searchResults, setSearchResults] = useState([]);
+  const [selectedClient, setSelectedClient] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [message, setMessage] = useState('');
+  const [createData, setCreateData] = useState({
+    name: '',
+    email: '',
+    phone: '',
+    address: '',
+    cpf: ''
+  });
+  const [searchQuery, setSearchQuery] = useState('');
+
+  useEffect(() => {
+    if (activeTab === 'search') {
+      fetchClients();
+    }
+  }, [activeTab]);
+
+  const fetchClients = async () => {
+    setLoading(true);
+    try {
+      const response = await fetch(`${API_URL}/api/clients`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setClients(data);
+        setSearchResults(data);
+      }
+    } catch (err) {
+      console.error('Erro ao buscar clientes:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleSearch = (query) => {
+    setSearchQuery(query);
+    if (!query.trim()) {
+      setSearchResults(clients);
+      return;
+    }
+
+    const filtered = clients.filter(client =>
+      client.name.toLowerCase().includes(query.toLowerCase()) ||
+      client.cpf.includes(query.replace(/\D/g, ''))
+    );
+    setSearchResults(filtered);
+  };
+
+  const handleCreateClient = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    setMessage('');
+
+    try {
+      const response = await fetch(`${API_URL}/api/clients`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+        body: JSON.stringify(createData),
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        setMessage('Cliente criado com sucesso!');
+        setCreateData({ name: '', email: '', phone: '', address: '', cpf: '' });
+        setTimeout(() => setMessage(''), 5000);
+      } else {
+        if (data.detail?.includes('já cadastrado')) {
+          setMessage(`Erro: ${data.detail}`);
+        } else if (data.detail?.includes('CPF inválido')) {
+          setMessage('Erro: CPF inválido');
+        } else if (data.detail?.includes('Email inválido')) {
+          setMessage('Erro: Email inválido');
+        } else {
+          setMessage(`Erro: ${data.detail}`);
+        }
+      }
+    } catch (err) {
+      setMessage('Erro de conexão');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fetchClientDetails = async (clientId) => {
+    try {
+      const [clientResponse, billsResponse] = await Promise.all([
+        fetch(`${API_URL}/api/clients/${clientId}`, {
+          headers: { 'Authorization': `Bearer ${token}` }
+        }),
+        fetch(`${API_URL}/api/clients/${clientId}/pending-bills`, {
+          headers: { 'Authorization': `Bearer ${token}` }
+        })
+      ]);
+
+      if (clientResponse.ok && billsResponse.ok) {
+        const clientData = await clientResponse.json();
+        const billsData = await billsResponse.json();
+        
+        setSelectedClient({
+          ...clientData,
+          bills: billsData.products_with_bills || []
+        });
+      }
+    } catch (err) {
+      console.error('Erro ao buscar detalhes do cliente:', err);
+    }
+  };
+
+  return (
+    <div className="space-y-6">
+      {/* Header with Tabs */}
+      <div className="bg-white rounded-lg shadow">
+        <div className="border-b border-gray-200">
+          <nav className="flex space-x-8 px-6">
+            <button
+              onClick={() => setActiveTab('register')}
+              className={`py-4 px-1 border-b-2 font-medium text-sm ${
+                activeTab === 'register'
+                  ? 'border-blue-500 text-blue-600'
+                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+              }`}
+            >
+              Cadastrar Cliente
+            </button>
+            <button
+              onClick={() => setActiveTab('search')}
+              className={`py-4 px-1 border-b-2 font-medium text-sm ${
+                activeTab === 'search'
+                  ? 'border-blue-500 text-blue-600'
+                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+              }`}
+            >
+              Buscar Cliente
+            </button>
+          </nav>
+        </div>
+
+        <div className="p-6">
+          {message && (
+            <div className={`mb-4 p-3 rounded ${
+              message.includes('Erro') ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'
+            }`}>
+              {message}
+            </div>
+          )}
+
+          {activeTab === 'register' && (
+            <div>
+              <h2 className="text-xl font-bold text-gray-900 mb-6">Cadastrar Novo Cliente</h2>
+              <form onSubmit={handleCreateClient} className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Nome Completo *
+                  </label>
+                  <input
+                    type="text"
+                    value={createData.name}
+                    onChange={(e) => setCreateData({...createData, name: e.target.value})}
+                    onInput={toUpperCase}
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    required
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    CPF *
+                  </label>
+                  <input
+                    type="text"
+                    value={createData.cpf}
+                    onChange={(e) => setCreateData({...createData, cpf: e.target.value})}
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    placeholder="000.000.000-00"
+                    required
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Email *
+                  </label>
+                  <input
+                    type="email"
+                    value={createData.email}
+                    onChange={(e) => setCreateData({...createData, email: e.target.value})}
+                    onInput={toUpperCase}
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    required
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Telefone
+                  </label>
+                  <input
+                    type="tel"
+                    value={createData.phone}
+                    onChange={(e) => setCreateData({...createData, phone: e.target.value})}
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    placeholder="(11) 99999-9999"
+                  />
+                </div>
+
+                <div className="md:col-span-2">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Endereço
+                  </label>
+                  <input
+                    type="text"
+                    value={createData.address}
+                    onChange={(e) => setCreateData({...createData, address: e.target.value})}
+                    onInput={toUpperCase}
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  />
+                </div>
+
+                <div className="md:col-span-2">
+                  <button
+                    type="submit"
+                    disabled={loading}
+                    className="w-full bg-blue-600 text-white py-3 px-4 rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 font-medium"
+                  >
+                    {loading ? 'Cadastrando...' : 'Cadastrar Cliente'}
+                  </button>
+                </div>
+              </form>
+            </div>
+          )}
+
+          {activeTab === 'search' && (
+            <div>
+              <h2 className="text-xl font-bold text-gray-900 mb-6">Buscar Cliente</h2>
+              
+              <div className="mb-6">
+                <input
+                  type="text"
+                  value={searchQuery}
+                  onChange={(e) => handleSearch(e.target.value)}
+                  onInput={toUpperCase}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  placeholder="BUSCAR POR NOME OU CPF..."
+                />
+              </div>
+
+              {loading ? (
+                <div className="flex justify-center items-center h-32">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {searchResults.map((client) => (
+                    <div
+                      key={client.id}
+                      className="bg-gray-50 border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow cursor-pointer"
+                      onClick={() => fetchClientDetails(client.id)}
+                    >
+                      <h3 className="font-medium text-gray-900">{client.name}</h3>
+                      <p className="text-sm text-gray-600">CPF: {client.cpf}</p>
+                      <p className="text-sm text-gray-600">Email: {client.email}</p>
+                      <button className="mt-2 text-blue-600 hover:text-blue-800 text-sm font-medium">
+                        Ver Detalhes →
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {searchResults.length === 0 && !loading && (
+                <div className="text-center py-8 text-gray-500">
+                  {searchQuery ? 'Nenhum cliente encontrado' : 'Nenhum cliente cadastrado'}
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Client Details Modal */}
+      {selectedClient && (
+        <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+          <div className="relative top-20 mx-auto p-5 border w-11/12 md:w-3/4 lg:w-1/2 shadow-lg rounded-md bg-white">
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="text-lg font-bold text-gray-900">Detalhes do Cliente</h3>
+              <button
+                onClick={() => setSelectedClient(null)}
+                className="text-gray-400 hover:text-gray-600"
+              >
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+
+            <div className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">Nome</label>
+                  <p className="text-sm text-gray-900">{selectedClient.name}</p>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">CPF</label>
+                  <p className="text-sm text-gray-900">{selectedClient.cpf}</p>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">Email</label>
+                  <p className="text-sm text-gray-900">{selectedClient.email}</p>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">Telefone</label>
+                  <p className="text-sm text-gray-900">{selectedClient.phone || 'Não informado'}</p>
+                </div>
+              </div>
+
+              {selectedClient.address && (
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">Endereço</label>
+                  <p className="text-sm text-gray-900">{selectedClient.address}</p>
+                </div>
+              )}
+
+              {selectedClient.bills && selectedClient.bills.length > 0 && (
+                <div>
+                  <h4 className="text-md font-medium text-gray-900 mb-2">Produtos e Pagamentos</h4>
+                  <div className="space-y-2">
+                    {selectedClient.bills.map((bill, index) => (
+                      <div key={index} className="bg-gray-50 p-3 rounded-lg">
+                        <div className="flex justify-between items-center">
+                          <div>
+                            <p className="font-medium text-gray-900">
+                              {bill.product_code} - {bill.product_name}
+                            </p>
+                            <p className="text-sm text-gray-600">
+                              {bill.pending_installments.length} parcelas pendentes
+                            </p>
+                          </div>
+                          <div className="text-right">
+                            <p className="text-sm font-medium text-gray-900">
+                              R$ {bill.product_price?.toFixed(2)}
+                            </p>
+                            {bill.oldest_overdue && (
+                              <span className="text-xs text-red-600 font-medium">VENCIDA</span>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
 export default App;
