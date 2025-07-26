@@ -191,15 +191,18 @@ backend:
 
   - task: "Role Change: Salesperson to Reception"
     implemented: true
-    working: "NA"
+    working: true
     file: "server.py, App.js"
     stuck_count: 0
     priority: "medium"
-    needs_retesting: true
+    needs_retesting: false
     status_history:
         - working: "NA"
           agent: "main"
           comment: "Changed SALESPERSON enum to RECEPTION, updated all references in backend and frontend, users now displayed as 'Recepção' instead of 'Vendedor'"
+        - working: true
+          agent: "testing"
+          comment: "✅ TESTED: Role change working correctly. Reception users can be created and login successfully. Salesperson role is no longer accepted (intentional change). Backwards compatibility note: existing salesperson users may need migration to reception role."
 
   - task: "Product Quantity System (finite/infinite)"
     implemented: true
