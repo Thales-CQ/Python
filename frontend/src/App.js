@@ -199,41 +199,43 @@ const LoginPage = ({ setIsAuthenticated, toUpperCase }) => {
   );
 };
 
-// Enhanced Header with logo space and responsive design
+// Enhanced Header with sidebar menu
 const Header = ({ user, currentPage, setCurrentPage, logout, hasPermission }) => {
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-
   return (
-    <header className="bg-gradient-to-r from-yellow-500 via-orange-500 to-red-500 shadow-2xl border-b-4 border-yellow-300">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between items-center h-16">
-          {/* Logo Space */}
-          <div className="flex items-center space-x-4">
-            <div className="flex-shrink-0 logo-area">
-              {/* Espaço reservado para logo da empresa */}
-              <div className="w-12 h-12 bg-white rounded-lg flex items-center justify-center shadow-lg border-2 border-yellow-300">
-                <div className="w-8 h-8 bg-gradient-to-br from-yellow-400 to-orange-500 rounded-md flex items-center justify-center">
-                  <span className="text-white text-sm font-bold">LOGO</span>
+    <>
+      {/* Sidebar Menu */}
+      <div className="fixed left-0 top-0 h-full w-2 bg-yellow-500 z-50 group hover:w-64 transition-all duration-300 shadow-2xl">
+        {/* Hover trigger area */}
+        <div className="w-full h-full bg-gradient-to-b from-yellow-500 via-orange-500 to-red-500"></div>
+        
+        {/* Expanded sidebar content */}
+        <div className="absolute top-0 left-0 w-64 h-full bg-gradient-to-b from-yellow-500 via-orange-500 to-red-500 opacity-0 group-hover:opacity-100 transition-all duration-300 shadow-2xl border-r-4 border-yellow-300">
+          {/* Logo area */}
+          <div className="p-4 border-b-2 border-yellow-300">
+            <div className="flex items-center space-x-3">
+              <div className="w-10 h-10 bg-white rounded-lg flex items-center justify-center shadow-lg border-2 border-yellow-300">
+                <div className="w-6 h-6 bg-gradient-to-br from-yellow-400 to-orange-500 rounded-md flex items-center justify-center">
+                  <span className="text-white text-xs font-bold">LOGO</span>
                 </div>
               </div>
-              <div className="ml-3 text-white">
-                <div className="logo-text-sm font-bold">Sua Empresa</div>
-                <div className="logo-text-xs text-yellow-100">Gestão Financeira</div>
+              <div className="text-white">
+                <div className="text-sm font-bold">Sua Empresa</div>
+                <div className="text-xs text-yellow-100">Gestão Financeira</div>
               </div>
             </div>
           </div>
-          
-          {/* Desktop Navigation */}
-          <nav className="hidden lg:flex items-center space-x-1">
+
+          {/* Navigation Menu */}
+          <nav className="py-4 px-2 space-y-1 overflow-y-auto">
             <button
               onClick={() => setCurrentPage('home')}
-              className={`px-3 py-2 rounded-lg text-xs font-bold transition-all duration-200 border-2 ${
+              className={`w-full flex items-center px-3 py-3 text-sm font-bold rounded-lg transition-all duration-200 ${
                 currentPage === 'home' 
-                  ? 'bg-white text-red-600 shadow-lg transform scale-105 border-yellow-300' 
-                  : 'text-white hover:bg-white hover:text-red-600 hover:shadow-md border-transparent hover:border-yellow-300'
+                  ? 'bg-white text-red-600 shadow-lg' 
+                  : 'text-white hover:bg-white hover:text-red-600 hover:shadow-md'
               }`}
             >
-              <svg className="w-3 h-3 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
               </svg>
               Home
@@ -241,13 +243,13 @@ const Header = ({ user, currentPage, setCurrentPage, logout, hasPermission }) =>
             
             <button
               onClick={() => setCurrentPage('cash-operation')}
-              className={`px-3 py-2 rounded-lg text-xs font-bold transition-all duration-200 border-2 ${
+              className={`w-full flex items-center px-3 py-3 text-sm font-bold rounded-lg transition-all duration-200 ${
                 currentPage === 'cash-operation' 
-                  ? 'bg-white text-red-600 shadow-lg transform scale-105 border-yellow-300' 
-                  : 'text-white hover:bg-white hover:text-red-600 hover:shadow-md border-transparent hover:border-yellow-300'
+                  ? 'bg-white text-red-600 shadow-lg' 
+                  : 'text-white hover:bg-white hover:text-red-600 hover:shadow-md'
               }`}
             >
-              <svg className="w-3 h-3 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" />
               </svg>
               Caixa
@@ -255,13 +257,13 @@ const Header = ({ user, currentPage, setCurrentPage, logout, hasPermission }) =>
             
             <button
               onClick={() => setCurrentPage('history')}
-              className={`px-3 py-2 rounded-lg text-xs font-bold transition-all duration-200 border-2 ${
+              className={`w-full flex items-center px-3 py-3 text-sm font-bold rounded-lg transition-all duration-200 ${
                 currentPage === 'history' 
-                  ? 'bg-white text-red-600 shadow-lg transform scale-105 border-yellow-300' 
-                  : 'text-white hover:bg-white hover:text-red-600 hover:shadow-md border-transparent hover:border-yellow-300'
+                  ? 'bg-white text-red-600 shadow-lg' 
+                  : 'text-white hover:bg-white hover:text-red-600 hover:shadow-md'
               }`}
             >
-              <svg className="w-3 h-3 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
               </svg>
               Histórico
@@ -269,15 +271,19 @@ const Header = ({ user, currentPage, setCurrentPage, logout, hasPermission }) =>
 
             {hasPermission(['admin', 'manager']) && (
               <>
+                <div className="border-t-2 border-yellow-300 my-2 pt-2">
+                  <div className="text-xs font-bold text-yellow-100 px-3 mb-2">GERENCIAMENTO</div>
+                </div>
+
                 <button
                   onClick={() => setCurrentPage('products')}
-                  className={`px-3 py-2 rounded-lg text-xs font-bold transition-all duration-200 border-2 ${
+                  className={`w-full flex items-center px-3 py-3 text-sm font-bold rounded-lg transition-all duration-200 ${
                     currentPage === 'products' 
-                      ? 'bg-white text-red-600 shadow-lg transform scale-105 border-yellow-300' 
-                      : 'text-white hover:bg-white hover:text-red-600 hover:shadow-md border-transparent hover:border-yellow-300'
+                      ? 'bg-white text-red-600 shadow-lg' 
+                      : 'text-white hover:bg-white hover:text-red-600 hover:shadow-md'
                   }`}
                 >
-                  <svg className="w-3 h-3 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg className="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
                   </svg>
                   Produtos
@@ -285,13 +291,13 @@ const Header = ({ user, currentPage, setCurrentPage, logout, hasPermission }) =>
                 
                 <button
                   onClick={() => setCurrentPage('clients')}
-                  className={`px-3 py-2 rounded-lg text-xs font-bold transition-all duration-200 border-2 ${
+                  className={`w-full flex items-center px-3 py-3 text-sm font-bold rounded-lg transition-all duration-200 ${
                     currentPage === 'clients' 
-                      ? 'bg-white text-red-600 shadow-lg transform scale-105 border-yellow-300' 
-                      : 'text-white hover:bg-white hover:text-red-600 hover:shadow-md border-transparent hover:border-yellow-300'
+                      ? 'bg-white text-red-600 shadow-lg' 
+                      : 'text-white hover:bg-white hover:text-red-600 hover:shadow-md'
                   }`}
                 >
-                  <svg className="w-3 h-3 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg className="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
                   </svg>
                   Clientes
@@ -299,13 +305,13 @@ const Header = ({ user, currentPage, setCurrentPage, logout, hasPermission }) =>
                 
                 <button
                   onClick={() => setCurrentPage('billing')}
-                  className={`px-3 py-2 rounded-lg text-xs font-bold transition-all duration-200 border-2 ${
+                  className={`w-full flex items-center px-3 py-3 text-sm font-bold rounded-lg transition-all duration-200 ${
                     currentPage === 'billing' 
-                      ? 'bg-white text-red-600 shadow-lg transform scale-105 border-yellow-300' 
-                      : 'text-white hover:bg-white hover:text-red-600 hover:shadow-md border-transparent hover:border-yellow-300'
+                      ? 'bg-white text-red-600 shadow-lg' 
+                      : 'text-white hover:bg-white hover:text-red-600 hover:shadow-md'
                   }`}
                 >
-                  <svg className="w-3 h-3 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg className="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
                   </svg>
                   Cobranças
@@ -313,13 +319,13 @@ const Header = ({ user, currentPage, setCurrentPage, logout, hasPermission }) =>
                 
                 <button
                   onClick={() => setCurrentPage('pending-charges')}
-                  className={`px-3 py-2 rounded-lg text-xs font-bold transition-all duration-200 border-2 ${
+                  className={`w-full flex items-center px-3 py-3 text-sm font-bold rounded-lg transition-all duration-200 ${
                     currentPage === 'pending-charges' 
-                      ? 'bg-black text-yellow-400 shadow-lg transform scale-105 border-yellow-300' 
-                      : 'text-white hover:bg-black hover:text-yellow-400 hover:shadow-md border-transparent hover:border-yellow-300'
+                      ? 'bg-black text-yellow-400 shadow-lg' 
+                      : 'text-white hover:bg-black hover:text-yellow-400 hover:shadow-md'
                   }`}
                 >
-                  <svg className="w-3 h-3 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg className="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                   </svg>
                   Pendências
@@ -327,13 +333,13 @@ const Header = ({ user, currentPage, setCurrentPage, logout, hasPermission }) =>
                 
                 <button
                   onClick={() => setCurrentPage('users')}
-                  className={`px-3 py-2 rounded-lg text-xs font-bold transition-all duration-200 border-2 ${
+                  className={`w-full flex items-center px-3 py-3 text-sm font-bold rounded-lg transition-all duration-200 ${
                     currentPage === 'users' 
-                      ? 'bg-white text-red-600 shadow-lg transform scale-105 border-yellow-300' 
-                      : 'text-white hover:bg-white hover:text-red-600 hover:shadow-md border-transparent hover:border-yellow-300'
+                      ? 'bg-white text-red-600 shadow-lg' 
+                      : 'text-white hover:bg-white hover:text-red-600 hover:shadow-md'
                   }`}
                 >
-                  <svg className="w-3 h-3 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg className="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z" />
                   </svg>
                   Usuários
@@ -342,37 +348,31 @@ const Header = ({ user, currentPage, setCurrentPage, logout, hasPermission }) =>
             )}
 
             {hasPermission(['admin']) && (
-              <button
-                onClick={() => setCurrentPage('activity-logs')}
-                className={`px-3 py-2 rounded-lg text-xs font-bold transition-all duration-200 border-2 ${
-                  currentPage === 'activity-logs' 
-                    ? 'bg-blue-600 text-white shadow-lg transform scale-105 border-yellow-300' 
-                    : 'text-white hover:bg-blue-600 hover:text-white hover:shadow-md border-transparent hover:border-yellow-300'
-                }`}
-              >
-                <svg className="w-3 h-3 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                </svg>
-                Atividades
-              </button>
+              <>
+                <div className="border-t-2 border-yellow-300 my-2 pt-2">
+                  <div className="text-xs font-bold text-yellow-100 px-3 mb-2">ADMINISTRAÇÃO</div>
+                </div>
+
+                <button
+                  onClick={() => setCurrentPage('activity-logs')}
+                  className={`w-full flex items-center px-3 py-3 text-sm font-bold rounded-lg transition-all duration-200 ${
+                    currentPage === 'activity-logs' 
+                      ? 'bg-blue-600 text-white shadow-lg' 
+                      : 'text-white hover:bg-blue-600 hover:text-white hover:shadow-md'
+                  }`}
+                >
+                  <svg className="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                  </svg>
+                  Atividades
+                </button>
+              </>
             )}
           </nav>
 
-          {/* Mobile menu button */}
-          <div className="lg:hidden flex items-center">
-            <button
-              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-              className="bg-white bg-opacity-20 rounded-lg px-3 py-2 backdrop-blur-sm border-2 border-yellow-300"
-            >
-              <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-              </svg>
-            </button>
-          </div>
-
-          {/* User info and logout */}
-          <div className="hidden md:flex items-center space-x-4">
-            <div className="text-right bg-white bg-opacity-20 rounded-lg px-3 py-1 backdrop-blur-sm border-2 border-yellow-300">
+          {/* User info and logout at bottom */}
+          <div className="absolute bottom-0 left-0 right-0 p-4 border-t-2 border-yellow-300">
+            <div className="bg-white bg-opacity-20 rounded-lg px-3 py-2 backdrop-blur-sm border-2 border-yellow-300 mb-3">
               <div className="text-white text-sm font-bold">
                 {user?.username}
               </div>
@@ -382,127 +382,49 @@ const Header = ({ user, currentPage, setCurrentPage, logout, hasPermission }) =>
             </div>
             <button
               onClick={logout}
-              className="bg-black hover:bg-gray-800 text-yellow-400 px-3 py-2 rounded-lg text-xs font-bold transition-all duration-200 flex items-center border-2 border-yellow-300 shadow-lg"
+              className="w-full bg-black hover:bg-gray-800 text-yellow-400 px-3 py-2 rounded-lg text-sm font-bold transition-all duration-200 flex items-center justify-center border-2 border-yellow-300 shadow-lg"
             >
-              <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
               </svg>
               Sair
             </button>
           </div>
         </div>
+      </div>
 
-        {/* Mobile Navigation Menu */}
-        {isMobileMenuOpen && (
-          <div className="lg:hidden">
-            <div className="px-2 pt-2 pb-3 space-y-1 bg-white bg-opacity-10 backdrop-blur-sm rounded-lg mt-2 border-2 border-yellow-300">
-              <button
-                onClick={() => {setCurrentPage('home'); setIsMobileMenuOpen(false);}}
-                className={`block px-3 py-2 rounded-md text-sm font-bold w-full text-left ${
-                  currentPage === 'home' ? 'bg-white text-red-600' : 'text-white hover:bg-white hover:text-red-600'
-                }`}
-              >
-                🏠 Home
-              </button>
-              
-              <button
-                onClick={() => {setCurrentPage('cash-operation'); setIsMobileMenuOpen(false);}}
-                className={`block px-3 py-2 rounded-md text-sm font-bold w-full text-left ${
-                  currentPage === 'cash-operation' ? 'bg-white text-red-600' : 'text-white hover:bg-white hover:text-red-600'
-                }`}
-              >
-                💰 Caixa
-              </button>
-              
-              <button
-                onClick={() => {setCurrentPage('history'); setIsMobileMenuOpen(false);}}
-                className={`block px-3 py-2 rounded-md text-sm font-bold w-full text-left ${
-                  currentPage === 'history' ? 'bg-white text-red-600' : 'text-white hover:bg-white hover:text-red-600'
-                }`}
-              >
-                📋 Histórico
-              </button>
+      {/* Top Header - simplified */}
+      <header className="bg-gradient-to-r from-yellow-500 via-orange-500 to-red-500 shadow-2xl border-b-4 border-yellow-300 ml-2">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex justify-between items-center h-16">
+            {/* Center - Page Title */}
+            <div className="flex-1 text-center">
+              <h1 className="text-xl font-bold text-white">
+                {currentPage === 'home' && 'Dashboard Principal'}
+                {currentPage === 'cash-operation' && 'Operações de Caixa'}
+                {currentPage === 'history' && 'Histórico de Transações'}
+                {currentPage === 'products' && 'Gerenciamento de Produtos'}
+                {currentPage === 'clients' && 'Gerenciamento de Clientes'}
+                {currentPage === 'billing' && 'Sistema de Cobranças'}
+                {currentPage === 'pending-charges' && 'Cobranças Pendentes'}
+                {currentPage === 'users' && 'Gerenciamento de Usuários'}
+                {currentPage === 'activity-logs' && 'Logs de Atividade'}
+              </h1>
+            </div>
 
-              {hasPermission(['admin', 'manager']) && (
-                <>
-                  <button
-                    onClick={() => {setCurrentPage('products'); setIsMobileMenuOpen(false);}}
-                    className={`block px-3 py-2 rounded-md text-sm font-bold w-full text-left ${
-                      currentPage === 'products' ? 'bg-white text-red-600' : 'text-white hover:bg-white hover:text-red-600'
-                    }`}
-                  >
-                    📦 Produtos
-                  </button>
-                  
-                  <button
-                    onClick={() => {setCurrentPage('clients'); setIsMobileMenuOpen(false);}}
-                    className={`block px-3 py-2 rounded-md text-sm font-bold w-full text-left ${
-                      currentPage === 'clients' ? 'bg-white text-red-600' : 'text-white hover:bg-white hover:text-red-600'
-                    }`}
-                  >
-                    👥 Clientes
-                  </button>
-                  
-                  <button
-                    onClick={() => {setCurrentPage('billing'); setIsMobileMenuOpen(false);}}
-                    className={`block px-3 py-2 rounded-md text-sm font-bold w-full text-left ${
-                      currentPage === 'billing' ? 'bg-white text-red-600' : 'text-white hover:bg-white hover:text-red-600'
-                    }`}
-                  >
-                    🧾 Cobranças
-                  </button>
-                  
-                  <button
-                    onClick={() => {setCurrentPage('pending-charges'); setIsMobileMenuOpen(false);}}
-                    className={`block px-3 py-2 rounded-md text-sm font-bold w-full text-left ${
-                      currentPage === 'pending-charges' ? 'bg-black text-yellow-400' : 'text-white hover:bg-black hover:text-yellow-400'
-                    }`}
-                  >
-                    ⚠️ Pendências
-                  </button>
-                  
-                  <button
-                    onClick={() => {setCurrentPage('users'); setIsMobileMenuOpen(false);}}
-                    className={`block px-3 py-2 rounded-md text-sm font-bold w-full text-left ${
-                      currentPage === 'users' ? 'bg-white text-red-600' : 'text-white hover:bg-white hover:text-red-600'
-                    }`}
-                  >
-                    👤 Usuários
-                  </button>
-                </>
-              )}
-
-              {hasPermission(['admin']) && (
-                <button
-                  onClick={() => {setCurrentPage('activity-logs'); setIsMobileMenuOpen(false);}}
-                  className={`block px-3 py-2 rounded-md text-sm font-bold w-full text-left ${
-                    currentPage === 'activity-logs' ? 'bg-blue-600 text-white' : 'text-white hover:bg-blue-600 hover:text-white'
-                  }`}
-                >
-                  📊 Atividades
-                </button>
-              )}
-
-              {/* Mobile user info and logout */}
-              <div className="border-t border-yellow-300 pt-3 mt-3">
-                <div className="px-3 py-2 text-white text-sm">
-                  <div className="font-bold">{user?.username}</div>
-                  <div className="text-yellow-200 text-xs">
-                    {user?.role === 'admin' ? 'Administrador' : user?.role === 'manager' ? 'Gerente' : 'Vendedor'}
-                  </div>
-                </div>
-                <button
-                  onClick={logout}
-                  className="block px-3 py-2 rounded-md text-sm font-bold w-full text-left bg-black text-yellow-400 hover:bg-gray-800 mt-2"
-                >
-                  🚪 Sair
-                </button>
+            {/* Right - Current date/time */}
+            <div className="text-right bg-white bg-opacity-20 rounded-lg px-3 py-1 backdrop-blur-sm border-2 border-yellow-300">
+              <div className="text-white text-sm font-bold">
+                {new Date().toLocaleDateString('pt-BR')}
+              </div>
+              <div className="text-yellow-200 text-xs font-medium">
+                {new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
               </div>
             </div>
           </div>
-        )}
-      </div>
-    </header>
+        </div>
+      </header>
+    </>
   );
 };
 
