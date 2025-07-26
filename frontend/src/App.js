@@ -14,7 +14,7 @@ const toUpperCase = (e) => {
 };
 
 // Splash Screen Component
-const SplashScreen = ({ onSplashComplete }) => {
+const SplashScreen = ({ onSplashComplete, setToken, setUser, setIsAuthenticated }) => {
   const [showLogin, setShowLogin] = useState(false);
 
   useEffect(() => {
@@ -42,12 +42,14 @@ const SplashScreen = ({ onSplashComplete }) => {
         // Login aparece por cima da imagem
         <div className="login-over-image">
           <LoginPage 
-            setToken={(token) => {
-              localStorage.setItem('token', token);
-              onSplashComplete();
-            }} 
-            setUser={() => {}} 
-            setIsAuthenticated={() => {}}
+            setToken={setToken}
+            setUser={setUser}
+            setIsAuthenticated={(auth) => {
+              setIsAuthenticated(auth);
+              if (auth) {
+                onSplashComplete();
+              }
+            }}
             toUpperCase={toUpperCase}
           />
         </div>
