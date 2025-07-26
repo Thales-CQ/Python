@@ -1462,7 +1462,7 @@ const ProductsPage = ({ user, token, toUpperCase }) => {
 
       if (response.ok) {
         setShowCreateForm(false);
-        setCreateData({ code: '', name: '', price: '', description: '' });
+        setCreateData({ code: '', name: '', price: '', description: '', quantity: '' });
         fetchProducts();
         setMessage('Produto criado com sucesso!');
         setTimeout(() => setMessage(''), 5000);
