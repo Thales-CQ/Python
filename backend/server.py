@@ -412,6 +412,12 @@ async def create_transaction(transaction: TransactionCreate, current_user: User 
 @api_router.get("/transactions")
 async def get_transactions(current_user: User = Depends(get_current_user)):
     transactions = await db.transactions.find().sort("created_at", -1).to_list(1000)
+    
+    # Handle legacy transactions without user_name field
+    for transaction in transactions:
+        if 'user_name' not in transaction:
+            transaction['user_name'] = 'Sistema'
+    
     return [Transaction(**transaction) for transaction in transactions]
 
 @api_router.get("/transactions/summary")
