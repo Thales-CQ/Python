@@ -78,6 +78,7 @@ class UserRole(str, Enum):
 class TransactionType(str, Enum):
     ENTRADA = "entrada"
     SAIDA = "saida"
+    PAGAMENTO_CLIENTE = "pagamento_cliente"
 
 class PaymentMethod(str, Enum):
     DINHEIRO = "dinheiro"
@@ -98,6 +99,7 @@ class ActivityType(str, Enum):
     BILL_PAID = "bill_paid"
     BILL_CANCELLED = "bill_cancelled"
     PAYMENT_CANCELLED = "payment_cancelled"
+    CLIENT_PAYMENT_RECEIVED = "client_payment_received"
     LOGIN = "login"
 
 class BillStatus(str, Enum):
@@ -174,6 +176,10 @@ class Transaction(BaseModel):
     product_id: Optional[str] = None
     product_code: Optional[str] = None
     product_name: Optional[str] = None
+    client_id: Optional[str] = None
+    client_name: Optional[str] = None
+    client_cpf: Optional[str] = None
+    installment_id: Optional[str] = None  # For client payments
     user_id: str
     user_name: str
     cancelled: bool = False
@@ -195,6 +201,11 @@ class TransactionCreate(BaseModel):
     @validator('description', pre=True)
     def uppercase_description(cls, v):
         return to_upper_case(v)
+
+class ClientPaymentCreate(BaseModel):
+    client_id: str
+    product_id: str
+    payment_method: PaymentMethod
 
 class Client(BaseModel):
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
@@ -252,6 +263,9 @@ class Bill(BaseModel):
     client_id: str
     client_name: str
     client_cpf: str
+    product_id: Optional[str] = None
+    product_code: Optional[str] = None
+    product_name: Optional[str] = None
     total_amount: float
     description: str
     installments: int
@@ -268,7 +282,8 @@ class Bill(BaseModel):
 
 class BillCreate(BaseModel):
     client_id: str
-    total_amount: float
+    product_id: Optional[str] = None
+    total_amount: Optional[float] = None
     description: str
     installments: int
     
@@ -287,6 +302,11 @@ class ActivityLog(BaseModel):
     user_name: str
     details: Optional[dict] = None
     timestamp: datetime = Field(default_factory=datetime.utcnow)
+
+class ClientWithPendingBills(BaseModel):
+    client: Client
+    pending_bills: List[dict]
+    oldest_overdue: Optional[dict] = None
 
 # Authentication functions
 def create_access_token(data: dict, expires_delta: Optional[timedelta] = None):
@@ -545,6 +565,170 @@ async def create_transaction(transaction: TransactionCreate, current_user: User 
     
     return Transaction(**transaction_dict)
 
+@api_router.post("/transactions/client-payment")
+async def create_client_payment(payment: ClientPaymentCreate, current_user: User = Depends(get_current_user)):
+    """Create a payment from client for a specific product"""
+    # Get client info
+    client = await db.clients.find_one({"id": payment.client_id})
+    if not client:
+        raise HTTPException(status_code=404, detail="Cliente não encontrado")
+    
+    # Get product info
+    product = await db.products.find_one({"id": payment.product_id})
+    if not product:
+        raise HTTPException(status_code=404, detail="Produto não encontrado")
+    
+    # Find the oldest overdue installment for this client and product
+    pipeline = [
+        {"$match": {"status": "pending", "cancelled": False}},
+        {"$lookup": {
+            "from": "bills",
+            "localField": "bill_id",
+            "foreignField": "id",
+            "as": "bill"
+        }},
+        {"$unwind": "$bill"},
+        {"$match": {
+            "bill.cancelled": False,
+            "bill.client_id": payment.client_id,
+            "bill.product_id": payment.product_id
+        }},
+        {"$sort": {"due_date": 1}}
+    ]
+    
+    installments = await db.bill_installments.aggregate(pipeline).to_list(1000)
+    
+    if not installments:
+        raise HTTPException(status_code=404, detail="Nenhuma parcela pendente encontrada para este cliente e produto")
+    
+    # Get the oldest installment
+    oldest_installment = installments[0]
+    
+    # Update installment as paid
+    await db.bill_installments.update_one(
+        {"id": oldest_installment["id"]},
+        {"$set": {
+            "status": "paid",
+            "paid_date": datetime.utcnow(),
+            "payment_method": payment.payment_method,
+            "paid_by": current_user.id
+        }}
+    )
+    
+    # Create transaction record
+    transaction_dict = {
+        "id": str(uuid.uuid4()),
+        "type": "pagamento_cliente",
+        "amount": oldest_installment["amount"],
+        "description": f"PAGAMENTO - {product['name']} - PARCELA {oldest_installment['installment_number']}",
+        "payment_method": payment.payment_method,
+        "product_id": payment.product_id,
+        "product_code": product["code"],
+        "product_name": product["name"],
+        "client_id": payment.client_id,
+        "client_name": client["name"],
+        "client_cpf": client["cpf"],
+        "installment_id": oldest_installment["id"],
+        "user_id": current_user.id,
+        "user_name": current_user.username,
+        "cancelled": False,
+        "created_at": datetime.utcnow()
+    }
+    
+    await db.transactions.insert_one(transaction_dict)
+    
+    # Log activity
+    await log_activity(
+        ActivityType.CLIENT_PAYMENT_RECEIVED,
+        f"Pagamento recebido de {client['name']} - {product['name']} - Parcela {oldest_installment['installment_number']} - R$ {oldest_installment['amount']:.2f}",
+        current_user.id,
+        current_user.username,
+        {
+            "client_name": client["name"],
+            "client_cpf": client["cpf"],
+            "product_name": product["name"],
+            "installment_number": oldest_installment["installment_number"],
+            "amount": oldest_installment["amount"],
+            "payment_method": payment.payment_method
+        }
+    )
+    
+    return {
+        "message": "Pagamento registrado com sucesso",
+        "transaction": Transaction(**transaction_dict),
+        "installment_paid": oldest_installment["installment_number"],
+        "amount": oldest_installment["amount"]
+    }
+
+@api_router.get("/clients/{client_id}/pending-bills")
+async def get_client_pending_bills(client_id: str, current_user: User = Depends(get_current_user)):
+    """Get all pending bills for a specific client grouped by product"""
+    # Get client info
+    client = await db.clients.find_one({"id": client_id})
+    if not client:
+        raise HTTPException(status_code=404, detail="Cliente não encontrado")
+    
+    # Get pending installments for this client
+    pipeline = [
+        {"$match": {"status": "pending", "cancelled": False}},
+        {"$lookup": {
+            "from": "bills",
+            "localField": "bill_id",
+            "foreignField": "id",
+            "as": "bill"
+        }},
+        {"$unwind": "$bill"},
+        {"$match": {
+            "bill.cancelled": False,
+            "bill.client_id": client_id
+        }},
+        {"$lookup": {
+            "from": "products",
+            "localField": "bill.product_id",
+            "foreignField": "id",
+            "as": "product"
+        }},
+        {"$sort": {"due_date": 1}}
+    ]
+    
+    installments = await db.bill_installments.aggregate(pipeline).to_list(1000)
+    
+    # Group by product
+    products_with_bills = {}
+    for installment in installments:
+        product_id = installment["bill"].get("product_id")
+        if product_id:
+            if product_id not in products_with_bills:
+                product_info = installment.get("product", [{}])[0] if installment.get("product") else {}
+                products_with_bills[product_id] = {
+                    "product_id": product_id,
+                    "product_code": product_info.get("code", "N/A"),
+                    "product_name": product_info.get("name", "N/A"),
+                    "product_price": product_info.get("price", 0),
+                    "pending_installments": [],
+                    "oldest_overdue": None
+                }
+            
+            installment_info = {
+                "installment_id": installment["id"],
+                "installment_number": installment["installment_number"],
+                "amount": installment["amount"],
+                "due_date": installment["due_date"],
+                "is_overdue": installment["due_date"] < datetime.utcnow()
+            }
+            
+            products_with_bills[product_id]["pending_installments"].append(installment_info)
+            
+            # Set oldest overdue if not set and this is overdue
+            if (installment_info["is_overdue"] and 
+                products_with_bills[product_id]["oldest_overdue"] is None):
+                products_with_bills[product_id]["oldest_overdue"] = installment_info
+    
+    return {
+        "client": Client(**client),
+        "products_with_bills": list(products_with_bills.values())
+    }
+
 @api_router.get("/transactions")
 async def get_transactions(
     current_user: User = Depends(get_current_user),
@@ -562,7 +746,8 @@ async def get_transactions(
         query["$or"] = [
             {"description": {"$regex": search.upper(), "$options": "i"}},
             {"user_name": {"$regex": search.upper(), "$options": "i"}},
-            {"product_name": {"$regex": search.upper(), "$options": "i"}}
+            {"product_name": {"$regex": search.upper(), "$options": "i"}},
+            {"client_name": {"$regex": search.upper(), "$options": "i"}}
         ]
     
     if month and year:
@@ -602,6 +787,18 @@ async def cancel_transaction(transaction_id: str, current_user: User = Depends(g
     if transaction.get("cancelled", False):
         raise HTTPException(status_code=400, detail="Transação já cancelada")
     
+    # If it's a client payment, we need to revert the installment payment
+    if transaction.get("type") == "pagamento_cliente" and transaction.get("installment_id"):
+        await db.bill_installments.update_one(
+            {"id": transaction["installment_id"]},
+            {"$set": {
+                "status": "pending",
+                "paid_date": None,
+                "payment_method": None,
+                "paid_by": None
+            }}
+        )
+    
     # Update transaction
     result = await db.transactions.update_one(
         {"id": transaction_id},
@@ -624,7 +821,8 @@ async def cancel_transaction(transaction_id: str, current_user: User = Depends(g
         {
             "transaction_id": transaction_id,
             "amount": transaction['amount'],
-            "original_user": transaction.get('user_name', 'N/A')
+            "original_user": transaction.get('user_name', 'N/A'),
+            "type": transaction.get('type', 'N/A')
         }
     )
     
@@ -641,7 +839,7 @@ async def get_transactions_summary(current_user: User = Depends(get_current_user
         "cancelled": False
     }).to_list(1000)
     
-    total_entrada = sum(t["amount"] for t in transactions if t["type"] == "entrada")
+    total_entrada = sum(t["amount"] for t in transactions if t["type"] in ["entrada", "pagamento_cliente"])
     total_saida = sum(t["amount"] for t in transactions if t["type"] == "saida")
     saldo = total_entrada - total_saida
     
@@ -676,6 +874,43 @@ async def get_clients(current_user: User = Depends(get_current_user)):
     clients = await db.clients.find().to_list(1000)
     return [Client(**client) for client in clients]
 
+@api_router.get("/clients/with-bills")
+async def get_clients_with_bills(current_user: User = Depends(get_current_user)):
+    """Get clients that have pending bills"""
+    # Get all clients with pending bills
+    pipeline = [
+        {"$match": {"status": "pending", "cancelled": False}},
+        {"$lookup": {
+            "from": "bills",
+            "localField": "bill_id",
+            "foreignField": "id",
+            "as": "bill"
+        }},
+        {"$unwind": "$bill"},
+        {"$match": {"bill.cancelled": False}},
+        {"$group": {
+            "_id": "$bill.client_id",
+            "total_pending": {"$sum": 1}
+        }},
+        {"$lookup": {
+            "from": "clients",
+            "localField": "_id",
+            "foreignField": "id",
+            "as": "client"
+        }},
+        {"$unwind": "$client"},
+        {"$project": {
+            "client_id": "$_id",
+            "client_name": "$client.name",
+            "client_cpf": "$client.cpf",
+            "total_pending": 1
+        }}
+    ]
+    
+    clients_with_bills = await db.bill_installments.aggregate(pipeline).to_list(1000)
+    
+    return clients_with_bills
+
 # Bills
 @api_router.post("/bills")
 async def create_bill(bill: BillCreate, current_user: User = Depends(get_current_user)):
@@ -687,16 +922,36 @@ async def create_bill(bill: BillCreate, current_user: User = Depends(get_current
     if not client:
         raise HTTPException(status_code=404, detail="Cliente não encontrado")
     
+    # Handle product selection
+    product_code = None
+    product_name = None
+    total_amount = bill.total_amount
+    
+    if bill.product_id:
+        product = await db.products.find_one({"id": bill.product_id})
+        if not product:
+            raise HTTPException(status_code=404, detail="Produto não encontrado")
+        
+        product_code = product["code"]
+        product_name = product["name"]
+        total_amount = product["price"]  # Use product price
+    
+    if not total_amount:
+        raise HTTPException(status_code=400, detail="Valor total deve ser informado")
+    
     # Create bill
     bill_id = str(uuid.uuid4())
-    installment_amount = bill.total_amount / bill.installments
+    installment_amount = total_amount / bill.installments
     
     bill_dict = {
         "id": bill_id,
         "client_id": bill.client_id,
         "client_name": client["name"],
         "client_cpf": client["cpf"],
-        "total_amount": bill.total_amount,
+        "product_id": bill.product_id,
+        "product_code": product_code,
+        "product_name": product_name,
+        "total_amount": total_amount,
         "description": bill.description,
         "installments": bill.installments,
         "installment_amount": installment_amount,
@@ -725,15 +980,17 @@ async def create_bill(bill: BillCreate, current_user: User = Depends(get_current
     await db.bill_installments.insert_many(installments)
     
     # Log activity
+    product_info = f" - {product_name}" if product_name else ""
     await log_activity(
         ActivityType.BILL_CREATED,
-        f"Boleto criado para {client['name']} - R$ {bill.total_amount:.2f} em {bill.installments}x",
+        f"Boleto criado para {client['name']}{product_info} - R$ {total_amount:.2f} em {bill.installments}x",
         current_user.id,
         current_user.username,
         {
             "client_name": client["name"],
             "client_cpf": client["cpf"],
-            "total_amount": bill.total_amount,
+            "product_name": product_name,
+            "total_amount": total_amount,
             "installments": bill.installments
         }
     )
@@ -792,6 +1049,7 @@ async def pay_installment(installment_id: str, payment: BillPayment, current_use
         {
             "client_name": bill["client_name"],
             "client_cpf": bill["client_cpf"],
+            "product_name": bill.get("product_name"),
             "installment_number": installment["installment_number"],
             "amount": installment["amount"],
             "payment_method": payment.payment_method
@@ -840,6 +1098,7 @@ async def cancel_installment_payment(installment_id: str, current_user: User = D
         {
             "client_name": bill["client_name"],
             "client_cpf": bill["client_cpf"],
+            "product_name": bill.get("product_name"),
             "installment_number": installment["installment_number"],
             "amount": installment["amount"]
         }
@@ -890,6 +1149,7 @@ async def cancel_bill(bill_id: str, current_user: User = Depends(get_current_use
         {
             "client_name": bill["client_name"],
             "client_cpf": bill["client_cpf"],
+            "product_name": bill.get("product_name"),
             "total_amount": bill["total_amount"]
         }
     )
@@ -924,6 +1184,7 @@ async def get_pending_bills(current_user: User = Depends(get_current_user)):
             "bill_id": installment["bill_id"],
             "client_name": installment["bill"]["client_name"],
             "client_cpf": installment["bill"]["client_cpf"],
+            "product_name": installment["bill"].get("product_name"),
             "installment_number": installment["installment_number"],
             "amount": installment["amount"],
             "due_date": installment["due_date"],
@@ -978,7 +1239,7 @@ async def generate_transactions_pdf(
     story.append(Spacer(1, 20))
     
     # Summary
-    total_entrada = sum(t["amount"] for t in transactions if t["type"] == "entrada")
+    total_entrada = sum(t["amount"] for t in transactions if t["type"] in ["entrada", "pagamento_cliente"])
     total_saida = sum(t["amount"] for t in transactions if t["type"] == "saida")
     saldo = total_entrada - total_saida
     
@@ -1007,29 +1268,34 @@ async def generate_transactions_pdf(
     
     # Transactions table
     if transactions:
-        table_data = [["Data", "Tipo", "Valor", "Descrição", "Pagamento", "Usuário"]]
+        table_data = [["Data", "Tipo", "Valor", "Descrição", "Pagamento", "Cliente", "Usuário"]]
         
         for transaction in transactions:
+            tipo = transaction["type"].upper()
+            if tipo == "PAGAMENTO_CLIENTE":
+                tipo = "PAG.CLIENTE"
+            
             table_data.append([
-                transaction["created_at"].strftime("%d/%m/%Y %H:%M"),
-                transaction["type"].upper(),
+                transaction["created_at"].strftime("%d/%m/%Y"),
+                tipo,
                 f"R$ {transaction['amount']:.2f}",
-                transaction["description"][:30] + "..." if len(transaction["description"]) > 30 else transaction["description"],
+                (transaction["description"][:25] + "..." if len(transaction["description"]) > 25 else transaction["description"]),
                 transaction["payment_method"].upper(),
-                transaction.get("user_name", "SISTEMA")
+                transaction.get("client_name", "")[:15] or "-",
+                transaction.get("user_name", "SISTEMA")[:10]
             ])
         
-        trans_table = Table(table_data, colWidths=[1.2*inch, 0.8*inch, 1*inch, 2*inch, 1*inch, 1*inch])
+        trans_table = Table(table_data, colWidths=[0.8*inch, 0.8*inch, 0.8*inch, 1.8*inch, 0.8*inch, 1*inch, 0.8*inch])
         trans_table.setStyle(TableStyle([
             ('BACKGROUND', (0, 0), (-1, 0), colors.grey),
             ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
             ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
             ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
-            ('FONTSIZE', (0, 0), (-1, 0), 10),
+            ('FONTSIZE', (0, 0), (-1, 0), 8),
             ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
             ('BACKGROUND', (0, 1), (-1, -1), colors.beige),
             ('GRID', (0, 0), (-1, -1), 1, colors.black),
-            ('FONTSIZE', (0, 1), (-1, -1), 8),
+            ('FONTSIZE', (0, 1), (-1, -1), 7),
         ]))
         
         story.append(trans_table)
