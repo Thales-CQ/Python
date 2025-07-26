@@ -551,3 +551,5 @@ const HomePage = ({ user, token }) => {
     </div>
   );
 };
+
+export default App;
