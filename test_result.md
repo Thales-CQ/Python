@@ -417,7 +417,8 @@ metadata:
 
 test_plan:
   current_focus:
-    - "All critical security issues resolved"
+    - "Enhanced User Management Functions"
+    - "Sales Menu Visual Issue"
   stuck_tasks: []
   test_all: false
   test_priority: "high_first"
