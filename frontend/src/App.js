@@ -419,6 +419,43 @@ const Header = ({ user, currentPage, setCurrentPage, logout, hasPermission }) =>
                   </svg>
                   Clientes
                 </button>
+
+                {/* Menu específico para vendas */}
+                {user?.role === 'vendas' && (
+                  <>
+                    <div className="border-t-2 border-yellow-300 my-3 pt-3">
+                      <div className="text-xs font-bold text-yellow-100 px-3 mb-2">VENDAS</div>
+                    </div>
+
+                    <button
+                      onClick={() => setCurrentPage('sales')}
+                      className={`w-full flex items-center px-3 py-3 text-sm font-bold rounded-lg transition-all duration-200 menu-item-enter ${
+                        currentPage === 'sales' 
+                          ? 'bg-white text-red-600 shadow-lg transform scale-105' 
+                          : 'text-white hover:bg-white hover:text-red-600 hover:shadow-md hover:transform hover:scale-105'
+                      }`}
+                    >
+                      <svg className="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
+                      </svg>
+                      Realizar Venda
+                    </button>
+                    
+                    <button
+                      onClick={() => setCurrentPage('my-reports')}
+                      className={`w-full flex items-center px-3 py-3 text-sm font-bold rounded-lg transition-all duration-200 menu-item-enter ${
+                        currentPage === 'my-reports' 
+                          ? 'bg-white text-red-600 shadow-lg transform scale-105' 
+                          : 'text-white hover:bg-white hover:text-red-600 hover:shadow-md hover:transform hover:scale-105'
+                      }`}
+                    >
+                      <svg className="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                      </svg>
+                      Meus Relatórios
+                    </button>
+                  </>
+                )}
                 
                 {(hasPermission(['admin', 'manager']) || hasPermission(['reception'], 'bills')) && (
                   <>
