@@ -816,9 +816,46 @@ class CaixaAPITester:
         print("\n❌ Cancellation Feature Tests")
         self.test_cancellation_features()
 
-        # Activity Logging Tests
-        print("\n📊 Activity Logging Tests")
-        self.test_activity_logs()
+    def test_dashboard_stats(self):
+        """Test enhanced dashboard stats endpoint"""
+        if not self.admin_token:
+            self.log_test("Dashboard Stats", False, "No admin token")
+            return
+
+        print("   Testing dashboard stats endpoint...")
+        success, stats = self.make_request('GET', 'dashboard/stats', token=self.admin_token)
+        if success:
+            # Check if all required fields are present
+            required_fields = ['total_entrada', 'total_saida', 'saldo', 'total_transactions', 
+                             'today_transactions', 'current_datetime', 'recent_transactions']
+            
+            missing_fields = [field for field in required_fields if field not in stats]
+            
+            if not missing_fields:
+                self.log_test("Dashboard Stats Structure", True, 
+                             f"All required fields present: {required_fields}")
+                
+                # Test data types and values
+                entrada = stats.get('total_entrada', 0)
+                saida = stats.get('total_saida', 0)
+                saldo = stats.get('saldo', 0)
+                
+                # Verify saldo calculation
+                calculated_saldo = entrada - saida
+                saldo_correct = abs(saldo - calculated_saldo) < 0.01  # Allow for floating point precision
+                
+                self.log_test("Dashboard Stats Calculations", saldo_correct,
+                             f"Entrada: R${entrada:.2f}, Saída: R${saida:.2f}, Saldo: R${saldo:.2f}")
+                
+                # Check recent transactions
+                recent_transactions = stats.get('recent_transactions', [])
+                self.log_test("Dashboard Recent Transactions", isinstance(recent_transactions, list),
+                             f"Found {len(recent_transactions)} recent transactions")
+                
+            else:
+                self.log_test("Dashboard Stats Structure", False, f"Missing fields: {missing_fields}")
+        else:
+            self.log_test("Dashboard Stats", False, str(stats))
 
         return True
 
