@@ -3300,7 +3300,8 @@ const UsersPage = ({ user, token, toUpperCase }) => {
                     'bg-green-100 text-green-800'
                   }`}>
                     {userItem.role === 'admin' ? 'Administrador' :
-                     userItem.role === 'manager' ? 'Gerente' : 'Recepção'}
+                     userItem.role === 'manager' ? 'Gerente' :
+                     userItem.role === 'vendas' ? 'Vendas' : 'Recepção'}
                   </span>
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">
