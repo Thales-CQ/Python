@@ -1008,6 +1008,529 @@ class CaixaAPITester:
 
         return True
 
+    def test_role_change_salesperson_to_reception(self):
+        """Test that role has been changed from salesperson to reception"""
+        if not self.admin_token:
+            self.log_test("Role Change: Salesperson to Reception", False, "No admin token")
+            return
+
+        print("   Testing creation of reception user...")
+        # Test creating a user with reception role
+        reception_data = {
+            'username': 'test_reception',
+            'email': 'reception@test.com',
+            'password': 'reception123',
+            'role': 'reception'  # Changed from salesperson to reception
+        }
+        
+        success, data = self.make_request('POST', 'register', reception_data, self.admin_token)
+        if success:
+            self.log_test("Create Reception User", True, "Reception role accepted")
+            self.test_users['reception'] = reception_data
+        else:
+            self.log_test("Create Reception User", False, str(data))
+
+        print("   Testing reception user login...")
+        # Test reception user login
+        if 'reception' in self.test_users:
+            success, data = self.make_request('POST', 'login', {
+                'username': self.test_users['reception']['username'],
+                'password': self.test_users['reception']['password']
+            })
+            
+            if success and 'access_token' in data:
+                self.reception_token = data['access_token']
+                user_role = data.get('user', {}).get('role', 'N/A')
+                self.log_test("Reception User Login", True, f"Role: {user_role}")
+                
+                # Verify role is 'reception' not 'salesperson'
+                role_correct = user_role == 'reception'
+                self.log_test("Role Changed to Reception", role_correct, 
+                             f"User role is '{user_role}' (should be 'reception')")
+            else:
+                self.log_test("Reception User Login", False, str(data))
+
+        print("   Testing backwards compatibility with existing salesperson users...")
+        # Test that existing salesperson users still work (backwards compatibility)
+        salesperson_data = {
+            'username': 'test_salesperson_legacy',
+            'email': 'salesperson_legacy@test.com',
+            'password': 'sales123',
+            'role': 'salesperson'  # Legacy role should still work
+        }
+        
+        success, data = self.make_request('POST', 'register', salesperson_data, self.admin_token)
+        if success:
+            self.log_test("Backwards Compatibility: Salesperson Role", True, "Legacy salesperson role still works")
+        else:
+            # Check if it's because salesperson is no longer supported
+            error_msg = str(data)
+            if 'salesperson' in error_msg.lower():
+                self.log_test("Backwards Compatibility: Salesperson Role", False, 
+                             "Salesperson role no longer supported - may need migration")
+            else:
+                self.log_test("Backwards Compatibility: Salesperson Role", False, str(data))
+
+    def test_product_quantity_system(self):
+        """Test product quantity system (finite/infinite)"""
+        if not self.admin_token:
+            self.log_test("Product Quantity System", False, "No admin token")
+            return
+
+        print("   Testing product with infinite quantity (null)...")
+        # Test creating product with infinite quantity (null/None)
+        infinite_product = {
+            'code': 'INFINITE001',
+            'name': 'Infinite Quantity Product',
+            'price': 99.99,
+            'description': 'Product with infinite quantity',
+            'quantity': None  # Infinite quantity
+        }
+
+        success, data = self.make_request('POST', 'products', infinite_product, self.admin_token)
+        if success:
+            quantity_value = data.get('quantity')
+            is_infinite = quantity_value is None
+            self.log_test("Create Product with Infinite Quantity", is_infinite,
+                         f"Quantity field: {quantity_value} (should be null for infinite)")
+        else:
+            self.log_test("Create Product with Infinite Quantity", False, str(data))
+
+        print("   Testing product with finite quantity...")
+        # Test creating product with finite quantity
+        finite_product = {
+            'code': 'FINITE001',
+            'name': 'Finite Quantity Product',
+            'price': 149.99,
+            'description': 'Product with finite quantity',
+            'quantity': 50  # Finite quantity
+        }
+
+        success, data = self.make_request('POST', 'products', finite_product, self.admin_token)
+        if success:
+            quantity_value = data.get('quantity')
+            is_finite = isinstance(quantity_value, int) and quantity_value == 50
+            self.log_test("Create Product with Finite Quantity", is_finite,
+                         f"Quantity field: {quantity_value} (should be 50)")
+        else:
+            self.log_test("Create Product with Finite Quantity", False, str(data))
+
+        print("   Testing product quantity update...")
+        # Test updating product quantity
+        if success:  # If finite product was created successfully
+            product_id = data.get('id')
+            update_data = {'quantity': 25}  # Update to 25
+            
+            success, update_result = self.make_request('PUT', f'products/{product_id}', 
+                                                     update_data, self.admin_token)
+            self.log_test("Update Product Quantity", success,
+                         "Product quantity updated successfully" if success else str(update_result))
+
+        print("   Testing product list includes quantity field...")
+        # Verify products list includes quantity field
+        success, products = self.make_request('GET', 'products', token=self.admin_token)
+        if success and products:
+            has_quantity_field = all('quantity' in product for product in products)
+            self.log_test("Products List Includes Quantity Field", has_quantity_field,
+                         f"All {len(products)} products have quantity field")
+        else:
+            self.log_test("Products List Includes Quantity Field", False, 
+                         "Could not retrieve products" if not success else "No products found")
+
+    def test_advanced_specific_permissions(self):
+        """Test advanced specific permissions system for reception users"""
+        if not self.admin_token:
+            self.log_test("Advanced Specific Permissions", False, "No admin token")
+            return
+
+        # First create a reception user if not exists
+        if not hasattr(self, 'reception_token') or not self.reception_token:
+            reception_data = {
+                'username': 'test_reception_perms',
+                'email': 'reception_perms@test.com',
+                'password': 'reception123',
+                'role': 'reception'
+            }
+            
+            success, data = self.make_request('POST', 'register', reception_data, self.admin_token)
+            if success:
+                # Login to get token
+                success, login_data = self.make_request('POST', 'login', {
+                    'username': reception_data['username'],
+                    'password': reception_data['password']
+                })
+                if success:
+                    self.reception_token = login_data['access_token']
+                    self.reception_user_id = login_data['user']['id']
+
+        if not hasattr(self, 'reception_token') or not self.reception_token:
+            self.log_test("Advanced Specific Permissions", False, "Could not create/login reception user")
+            return
+
+        print("   Testing default reception permissions...")
+        # Test default reception permissions (should have basic permissions)
+        success, perm_result = self.make_request('POST', 'check-permission', 
+                                               {'permission': 'cash_operations'}, 
+                                               token=self.reception_token)
+        if success:
+            has_basic_permission = perm_result.get('has_permission', False)
+            self.log_test("Reception Default Permission (cash_operations)", has_basic_permission,
+                         f"Reception has cash_operations permission: {has_basic_permission}")
+        else:
+            self.log_test("Reception Default Permission (cash_operations)", False, str(perm_result))
+
+        print("   Testing reception without specific bills permission...")
+        # Test reception without bills permission (should not have access)
+        success, perm_result = self.make_request('POST', 'check-permission', 
+                                               {'permission': 'bills'}, 
+                                               token=self.reception_token)
+        if success:
+            has_bills_permission = perm_result.get('has_permission', False)
+            self.log_test("Reception Without Bills Permission", not has_bills_permission,
+                         f"Reception should NOT have bills permission: {not has_bills_permission}")
+        else:
+            self.log_test("Reception Without Bills Permission", False, str(perm_result))
+
+        print("   Testing admin granting specific bills permission...")
+        # Admin grants specific bills permission to reception
+        if hasattr(self, 'reception_user_id'):
+            success, data = self.make_request('PUT', f'users/{self.reception_user_id}', {
+                'permissions': {'bills': True}
+            }, token=self.admin_token)
+            self.log_test("Admin Grant Bills Permission", success,
+                         "Admin granted bills permission to reception" if success else str(data))
+
+            if success:
+                print("   Testing reception with granted bills permission...")
+                # Test reception now has bills permission
+                success, perm_result = self.make_request('POST', 'check-permission', 
+                                                       {'permission': 'bills'}, 
+                                                       token=self.reception_token)
+                if success:
+                    has_bills_permission = perm_result.get('has_permission', False)
+                    self.log_test("Reception With Granted Bills Permission", has_bills_permission,
+                                 f"Reception now has bills permission: {has_bills_permission}")
+                else:
+                    self.log_test("Reception With Granted Bills Permission", False, str(perm_result))
+
+        print("   Testing admin has all permissions...")
+        # Test admin has all permissions
+        success, perm_result = self.make_request('POST', 'check-permission', 
+                                               {'permission': 'bills'}, 
+                                               token=self.admin_token)
+        if success:
+            admin_has_permission = perm_result.get('has_permission', False)
+            self.log_test("Admin Has All Permissions", admin_has_permission,
+                         f"Admin has bills permission: {admin_has_permission}")
+        else:
+            self.log_test("Admin Has All Permissions", False, str(perm_result))
+
+        print("   Testing manager permissions...")
+        # Test manager has management permissions
+        if hasattr(self, 'manager_token') and self.manager_token:
+            success, perm_result = self.make_request('POST', 'check-permission', 
+                                                   {'permission': 'products'}, 
+                                                   token=self.manager_token)
+            if success:
+                manager_has_permission = perm_result.get('has_permission', False)
+                self.log_test("Manager Has Management Permissions", manager_has_permission,
+                             f"Manager has products permission: {manager_has_permission}")
+            else:
+                self.log_test("Manager Has Management Permissions", False, str(perm_result))
+
+    def test_force_password_change_system(self):
+        """Test force password change system"""
+        if not self.admin_token:
+            self.log_test("Force Password Change System", False, "No admin token")
+            return
+
+        # Create a test user for password change testing
+        test_user_data = {
+            'username': 'test_password_change',
+            'email': 'password_change@test.com',
+            'password': 'initial123',
+            'role': 'reception'
+        }
+        
+        success, user_data = self.make_request('POST', 'register', test_user_data, self.admin_token)
+        if not success:
+            self.log_test("Create User for Password Change Test", False, str(user_data))
+            return
+
+        # Get user ID
+        success, users = self.make_request('GET', 'users', token=self.admin_token)
+        if not success:
+            self.log_test("Get Users for Password Change Test", False, str(users))
+            return
+
+        test_user = next((u for u in users if u['username'] == test_user_data['username']), None)
+        if not test_user:
+            self.log_test("Find Test User for Password Change", False, "Test user not found")
+            return
+
+        test_user_id = test_user['id']
+
+        print("   Testing admin forcing password change...")
+        # Admin forces password change
+        success, data = self.make_request('PUT', f'users/{test_user_id}', {
+            'require_password_change': True
+        }, token=self.admin_token)
+        self.log_test("Admin Force Password Change", success,
+                     "Admin set require_password_change to true" if success else str(data))
+
+        print("   Testing login blocked when password change required...")
+        # Test that login is blocked when password change is required
+        success, login_data = self.make_request('POST', 'login', {
+            'username': test_user_data['username'],
+            'password': test_user_data['password']
+        }, expected_status=401)  # Should fail with 401
+        
+        if success:
+            error_msg = login_data.get('detail', '')
+            password_change_blocked = 'alterar a senha' in error_msg or 'password' in error_msg.lower()
+            self.log_test("Login Blocked When Password Change Required", password_change_blocked,
+                         f"Login correctly blocked: {error_msg}")
+        else:
+            self.log_test("Login Blocked When Password Change Required", False, 
+                         "Login should have been blocked but wasn't")
+
+        print("   Testing password change resets requirement...")
+        # Change password (should reset require_password_change)
+        success, data = self.make_request('PUT', f'users/{test_user_id}/password', {
+            'new_password': 'newpassword123'
+        }, token=self.admin_token)
+        self.log_test("Change Password Resets Requirement", success,
+                     "Password changed successfully" if success else str(data))
+
+        print("   Testing login works after password change...")
+        # Test login works after password change
+        if success:
+            success, login_data = self.make_request('POST', 'login', {
+                'username': test_user_data['username'],
+                'password': 'newpassword123'
+            })
+            
+            if success and 'access_token' in login_data:
+                require_change = login_data.get('user', {}).get('require_password_change', True)
+                self.log_test("Login Works After Password Change", not require_change,
+                             f"require_password_change reset to: {require_change}")
+            else:
+                self.log_test("Login Works After Password Change", False, str(login_data))
+
+    def test_enhanced_user_management_functions(self):
+        """Test enhanced user management functions"""
+        if not self.admin_token:
+            self.log_test("Enhanced User Management", False, "No admin token")
+            return
+
+        # Create test users for management testing
+        manager_data = {
+            'username': 'test_manager_mgmt',
+            'email': 'manager_mgmt@test.com',
+            'password': 'manager123',
+            'role': 'manager'
+        }
+        
+        reception_data = {
+            'username': 'test_reception_mgmt',
+            'email': 'reception_mgmt@test.com',
+            'password': 'reception123',
+            'role': 'reception'
+        }
+
+        # Create manager and reception users
+        success, manager_user = self.make_request('POST', 'register', manager_data, self.admin_token)
+        if not success:
+            self.log_test("Create Manager for Management Test", False, str(manager_user))
+            return
+
+        success, reception_user = self.make_request('POST', 'register', reception_data, self.admin_token)
+        if not success:
+            self.log_test("Create Reception for Management Test", False, str(reception_user))
+            return
+
+        # Get user IDs
+        success, users = self.make_request('GET', 'users', token=self.admin_token)
+        if not success:
+            self.log_test("Get Users for Management Test", False, str(users))
+            return
+
+        manager_user_obj = next((u for u in users if u['username'] == manager_data['username']), None)
+        reception_user_obj = next((u for u in users if u['username'] == reception_data['username']), None)
+
+        if not manager_user_obj or not reception_user_obj:
+            self.log_test("Find Test Users for Management", False, "Test users not found")
+            return
+
+        manager_id = manager_user_obj['id']
+        reception_id = reception_user_obj['id']
+
+        print("   Testing admin can reset any user password...")
+        # Test admin can reset any user password
+        success, data = self.make_request('PUT', f'users/{reception_id}/password', {
+            'new_password': 'admin_reset123'
+        }, token=self.admin_token)
+        self.log_test("Admin Reset User Password", success,
+                     "Admin successfully reset reception password" if success else str(data))
+
+        print("   Testing admin can manage user permissions...")
+        # Test admin can manage user permissions
+        success, data = self.make_request('PUT', f'users/{reception_id}', {
+            'permissions': {'reports': True, 'products': True}
+        }, token=self.admin_token)
+        self.log_test("Admin Manage User Permissions", success,
+                     "Admin successfully set user permissions" if success else str(data))
+
+        print("   Testing admin can deactivate users...")
+        # Test admin can deactivate users
+        success, data = self.make_request('PUT', f'users/{reception_id}', {
+            'active': False
+        }, token=self.admin_token)
+        self.log_test("Admin Deactivate User", success,
+                     "Admin successfully deactivated user" if success else str(data))
+
+        print("   Testing admin can reactivate users...")
+        # Test admin can reactivate users
+        success, data = self.make_request('PUT', f'users/{reception_id}', {
+            'active': True
+        }, token=self.admin_token)
+        self.log_test("Admin Reactivate User", success,
+                     "Admin successfully reactivated user" if success else str(data))
+
+        print("   Testing admin can delete users...")
+        # Test admin can delete users (but not the main admin)
+        success, data = self.make_request('DELETE', f'users/{reception_id}', token=self.admin_token)
+        self.log_test("Admin Delete User", success,
+                     "Admin successfully deleted user" if success else str(data))
+
+        print("   Testing admin cannot delete main admin...")
+        # Test admin cannot delete the main admin user
+        success, admin_users = self.make_request('GET', 'users', token=self.admin_token)
+        if success:
+            main_admin = next((u for u in admin_users if u['username'] == 'ADMIN'), None)
+            if main_admin:
+                success, data = self.make_request('DELETE', f'users/{main_admin["id"]}', 
+                                                token=self.admin_token, expected_status=403)
+                self.log_test("Admin Cannot Delete Main Admin", success,
+                             "Main admin deletion correctly blocked" if success else str(data))
+
+    def test_manager_permission_restrictions(self):
+        """Test manager permission restrictions"""
+        if not self.admin_token:
+            self.log_test("Manager Permission Restrictions", False, "No admin token")
+            return
+
+        # Create manager user for testing
+        manager_data = {
+            'username': 'test_manager_restrictions',
+            'email': 'manager_restrictions@test.com',
+            'password': 'manager123',
+            'role': 'manager'
+        }
+        
+        success, manager_user = self.make_request('POST', 'register', manager_data, self.admin_token)
+        if not success:
+            self.log_test("Create Manager for Restrictions Test", False, str(manager_user))
+            return
+
+        # Login as manager
+        success, login_data = self.make_request('POST', 'login', {
+            'username': manager_data['username'],
+            'password': manager_data['password']
+        })
+        
+        if not success or 'access_token' not in login_data:
+            self.log_test("Manager Login for Restrictions Test", False, str(login_data))
+            return
+
+        manager_token = login_data['access_token']
+
+        print("   Testing manager can create reception users...")
+        # Test manager can create reception users
+        reception_data = {
+            'username': 'manager_created_reception',
+            'email': 'manager_reception@test.com',
+            'password': 'reception123',
+            'role': 'reception'
+        }
+        
+        success, data = self.make_request('POST', 'register', reception_data, manager_token)
+        self.log_test("Manager Can Create Reception Users", success,
+                     "Manager successfully created reception user" if success else str(data))
+
+        print("   Testing manager cannot create other managers...")
+        # Test manager cannot create other managers
+        another_manager_data = {
+            'username': 'manager_created_manager',
+            'email': 'manager_manager@test.com',
+            'password': 'manager123',
+            'role': 'manager'
+        }
+        
+        success, data = self.make_request('POST', 'register', another_manager_data, 
+                                        manager_token, expected_status=403)
+        self.log_test("Manager Cannot Create Other Managers", success,
+                     "Manager creation correctly blocked" if success else str(data))
+
+        print("   Testing manager cannot create admin users...")
+        # Test manager cannot create admin users
+        admin_data = {
+            'username': 'manager_created_admin',
+            'email': 'manager_admin@test.com',
+            'password': 'admin123',
+            'role': 'admin'
+        }
+        
+        success, data = self.make_request('POST', 'register', admin_data, 
+                                        manager_token, expected_status=403)
+        self.log_test("Manager Cannot Create Admin Users", success,
+                     "Admin creation correctly blocked" if success else str(data))
+
+        # Get users to test editing restrictions
+        success, users = self.make_request('GET', 'users', token=self.admin_token)
+        if not success:
+            self.log_test("Get Users for Manager Edit Test", False, str(users))
+            return
+
+        # Find admin and another manager to test editing restrictions
+        admin_user = next((u for u in users if u['role'] == 'admin' and u['username'] == 'ADMIN'), None)
+        reception_user = next((u for u in users if u['username'] == reception_data['username']), None)
+
+        if admin_user:
+            print("   Testing manager cannot edit admin users...")
+            # Test manager cannot edit admin users
+            success, data = self.make_request('PUT', f'users/{admin_user["id"]}', {
+                'active': False
+            }, manager_token, expected_status=403)
+            self.log_test("Manager Cannot Edit Admin Users", success,
+                         "Admin editing correctly blocked" if success else str(data))
+
+        if reception_user:
+            print("   Testing manager can edit reception users...")
+            # Test manager can edit reception users
+            success, data = self.make_request('PUT', f'users/{reception_user["id"]}', {
+                'permissions': {'bills': True}
+            }, manager_token)
+            self.log_test("Manager Can Edit Reception Users", success,
+                         "Manager successfully edited reception user" if success else str(data))
+
+            print("   Testing manager can change reception passwords...")
+            # Test manager can change reception passwords
+            success, data = self.make_request('PUT', f'users/{reception_user["id"]}/password', {
+                'new_password': 'manager_changed123'
+            }, manager_token)
+            self.log_test("Manager Can Change Reception Passwords", success,
+                         "Manager successfully changed reception password" if success else str(data))
+
+        if admin_user:
+            print("   Testing manager cannot change admin passwords...")
+            # Test manager cannot change admin passwords
+            success, data = self.make_request('PUT', f'users/{admin_user["id"]}/password', {
+                'new_password': 'should_not_work123'
+            }, manager_token, expected_status=403)
+            self.log_test("Manager Cannot Change Admin Passwords", success,
+                         "Admin password change correctly blocked" if success else str(data))
+
     def print_summary(self):
         """Print test summary"""
         print("\n" + "=" * 60)
