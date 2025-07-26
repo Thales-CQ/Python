@@ -607,8 +607,12 @@ async def update_user(user_id: str, user_update: UserUpdate, current_user: User 
         raise HTTPException(status_code=404, detail="Usuário não encontrado")
     
     # Check permissions for managers
-    if current_user.role == UserRole.MANAGER and user["role"] != "salesperson":
-        raise HTTPException(status_code=403, detail="Gerentes só podem modificar vendedores")
+    if current_user.role == UserRole.MANAGER and user["role"] not in ["reception", "salesperson"]:
+        raise HTTPException(status_code=403, detail="Gerentes só podem modificar recepção")
+    
+    # Managers cannot edit other managers or admins
+    if current_user.role == UserRole.MANAGER and user["role"] in ["manager", "admin"]:
+        raise HTTPException(status_code=403, detail="Gerentes não podem editar outros gerentes ou administradores")
     
     # Update user
     update_data = {k: v for k, v in user_update.dict().items() if v is not None}
