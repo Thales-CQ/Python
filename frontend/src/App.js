@@ -392,7 +392,7 @@ const Header = ({ user, currentPage, setCurrentPage, logout, hasPermission }) =>
       </div>
 
       {/* Top Header - simplified */}
-      <header className="bg-gradient-to-r from-yellow-500 via-orange-500 to-red-500 shadow-2xl border-b-4 border-yellow-300 ml-2">
+      <header className="bg-gradient-to-r from-yellow-500 via-orange-500 to-red-500 shadow-2xl border-b-4 border-yellow-300 content-with-sidebar">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             {/* Center - Page Title */}
