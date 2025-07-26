@@ -83,6 +83,7 @@ class UserRole(str, Enum):
     ADMIN = "admin"
     MANAGER = "manager"
     RECEPTION = "reception"  # Changed from salesperson to reception
+    VENDAS = "vendas"  # New sales role
 
 class TransactionType(str, Enum):
     ENTRADA = "entrada"
