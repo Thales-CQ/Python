@@ -4335,7 +4335,7 @@ const AllReportsPage = ({ user, token }) => {
   const totalValue = Array.isArray(reports) ? reports.reduce((sum, report) => sum + report.total_value, 0) : 0;
 
   // Group by vendedor for summary
-  const vendedorStats = reports.reduce((acc, report) => {
+  const vendedorStats = Array.isArray(reports) ? reports.reduce((acc, report) => {
     const vendedorId = report.vendedor_id;
     if (!acc[vendedorId]) {
       acc[vendedorId] = {
@@ -4347,7 +4347,7 @@ const AllReportsPage = ({ user, token }) => {
     acc[vendedorId].sales += 1;
     acc[vendedorId].value += report.total_value;
     return acc;
-  }, {});
+  }, {}) : {};
 
   const months = [
     { value: 1, label: 'Janeiro' }, { value: 2, label: 'Fevereiro' }, { value: 3, label: 'Março' },
