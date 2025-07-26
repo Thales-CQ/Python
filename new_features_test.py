@@ -11,7 +11,7 @@ from datetime import datetime, timedelta
 import time
 
 class CashSystemTester:
-    def __init__(self, base_url="https://4b7a0316-949f-4a96-8246-8c7230b403be.preview.emergentagent.com"):
+    def __init__(self, base_url="https://cefc370c-9290-41bc-bb27-a556498755ba.preview.emergentagent.com"):
         self.base_url = base_url
         self.token = None
         self.tests_run = 0
