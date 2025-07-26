@@ -145,7 +145,17 @@
   @apply text-blue-100 hover:bg-blue-700 hover:text-white hover:shadow-md transition-all duration-200;
 }
 
-/* Mobile responsive helpers */
+/* Mobile responsive helpers - Enhanced */
+@media (max-width: 1024px) {
+  .desktop-only {
+    @apply hidden;
+  }
+  
+  .mobile-nav {
+    @apply block;
+  }
+}
+
 @media (max-width: 768px) {
   .mobile-hidden {
     @apply hidden;
@@ -153,6 +163,119 @@
   
   .mobile-full {
     @apply w-full;
+  }
+  
+  .mobile-grid-1 {
+    @apply grid-cols-1;
+  }
+  
+  .mobile-text-sm {
+    @apply text-sm;
+  }
+  
+  .mobile-px-2 {
+    @apply px-2;
+  }
+  
+  .mobile-py-1 {
+    @apply py-1;
+  }
+}
+
+@media (max-width: 640px) {
+  .mobile-xs-hidden {
+    @apply hidden;
+  }
+  
+  .mobile-xs-full {
+    @apply w-full;
+  }
+  
+  .mobile-xs-text-xs {
+    @apply text-xs;
+  }
+}
+
+/* Responsive navigation */
+.nav-responsive {
+  @apply flex-wrap;
+}
+
+@media (max-width: 1200px) {
+  .nav-responsive {
+    @apply space-x-0.5;
+  }
+  
+  .nav-responsive button {
+    @apply px-2 py-2 text-xs;
+  }
+  
+  .nav-responsive svg {
+    @apply w-3 h-3;
+  }
+}
+
+/* Responsive cards */
+.stats-cards-responsive {
+  @apply grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6;
+}
+
+@media (max-width: 768px) {
+  .stats-cards-responsive {
+    @apply gap-3;
+  }
+  
+  .stats-card {
+    @apply p-4;
+  }
+  
+  .stats-card .text-2xl {
+    @apply text-xl;
+  }
+}
+
+/* Responsive tables */
+.table-responsive-mobile {
+  @apply overflow-x-auto;
+}
+
+@media (max-width: 768px) {
+  .table-responsive-mobile table {
+    @apply text-xs;
+  }
+  
+  .table-responsive-mobile th,
+  .table-responsive-mobile td {
+    @apply px-2 py-2;
+  }
+}
+
+/* Logo area responsive */
+.logo-area {
+  @apply w-48 flex items-center;
+}
+
+@media (max-width: 1024px) {
+  .logo-area {
+    @apply w-32;
+  }
+  
+  .logo-area .text-sm {
+    @apply text-xs;
+  }
+  
+  .logo-area .text-xs {
+    @apply text-xs;
+  }
+}
+
+@media (max-width: 768px) {
+  .logo-area {
+    @apply w-24;
+  }
+  
+  .logo-area .ml-3 {
+    @apply ml-2;
   }
 }
 
