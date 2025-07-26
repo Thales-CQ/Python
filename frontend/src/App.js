@@ -755,6 +755,53 @@ function App() {
       }
     };
 
+    const handleClientPayment = async (e) => {
+      e.preventDefault();
+      setLoading(true);
+      setMessage('');
+
+      try {
+        const response = await fetch(`${API_URL}/api/transactions/client-payment`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`,
+          },
+          body: JSON.stringify({
+            client_id: selectedClient,
+            product_id: selectedClientProduct,
+            payment_method: clientPaymentMethod,
+          }),
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          setMessage(`Pagamento registrado! Parcela ${data.installment_paid} paga - R$ ${data.amount.toFixed(2)}`);
+          setSelectedClient('');
+          setSelectedClientProduct('');
+          setClientProducts([]);
+          setShowClientPayment(false);
+          setTimeout(() => setMessage(''), 5000);
+        } else {
+          const errorData = await response.json();
+          setMessage(`Erro: ${errorData.detail}`);
+        }
+      } catch (err) {
+        setMessage('Erro de conexão');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    const handleClientChange = (clientId) => {
+      setSelectedClient(clientId);
+      setSelectedClientProduct('');
+      setClientProducts([]);
+      if (clientId) {
+        fetchClientProducts(clientId);
+      }
+    };
+
     return (
       <div className="max-w-2xl mx-auto">
         <div className="bg-white rounded-lg shadow p-6">
