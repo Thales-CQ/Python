@@ -843,6 +843,10 @@ class CaixaAPITester:
         print("\n📊 Performance Endpoints Tests (Priority)")
         self.test_performance_endpoints()
 
+        # VENDAS ROLE PERMISSIONS TESTS - From Current Review Request
+        print("\n🎯 VENDAS ROLE PERMISSIONS TESTS (CURRENT REVIEW REQUEST)")
+        self.test_vendas_role_permissions()
+
         return True
 
     def test_dashboard_stats(self):
