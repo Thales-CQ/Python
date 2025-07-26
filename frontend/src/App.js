@@ -90,6 +90,35 @@ function App() {
 
   const handleSplashComplete = () => {
     setShowSplash(false);
+    // Force recheck authentication after splash complete
+    const token = localStorage.getItem('token');
+    if (token) {
+      validateToken(token);
+    }
+  };
+
+  const validateToken = async (token) => {
+    try {
+      const response = await fetch(`${API_URL}/api/me`, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      
+      if (response.ok) {
+        const userData = await response.json();
+        setUser(userData);
+        setIsAuthenticated(true);
+      } else {
+        localStorage.removeItem('token');
+        setToken(null);
+        setIsAuthenticated(false);
+      }
+    } catch (err) {
+      localStorage.removeItem('token');
+      setToken(null);
+      setIsAuthenticated(false);
+    }
   };
 
   const handleLogout = () => {
