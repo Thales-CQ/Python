@@ -824,6 +824,13 @@ class CaixaAPITester:
         print("\n📊 Activity Logging Tests")
         self.test_activity_logs()
 
+        # Enhanced Features Tests
+        print("\n🔧 Enhanced Features Tests")
+        self.test_enhanced_installment_payment()
+        self.test_enhanced_error_messages()
+
+        return True
+
     def test_dashboard_stats(self):
         """Test enhanced dashboard stats endpoint"""
         if not self.admin_token:
