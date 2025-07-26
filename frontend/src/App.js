@@ -52,7 +52,11 @@ function App() {
     const start = e.target.selectionStart;
     const end = e.target.selectionEnd;
     e.target.value = e.target.value.toUpperCase();
-    e.target.setSelectionRange(start, end);
+    
+    // Only set selection range for input types that support it
+    if (e.target.type !== 'email' && e.target.type !== 'password' && e.target.type !== 'number') {
+      e.target.setSelectionRange(start, end);
+    }
   };
 
   // Check if user has permission for a specific action
