@@ -26,3 +26,5 @@ typer>=0.9.0
 python-jose[cryptography]>=3.3.0
 passlib[bcrypt]>=1.7.4
 python-multipart>=0.0.9
+reportlab>=4.4.3
+validate-docbr>=1.11.1
