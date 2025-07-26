@@ -342,6 +342,18 @@ backend:
           agent: "testing"
           comment: "✅ PERFORMANCE ENDPOINTS FULLY TESTED: All 3 priority endpoints working correctly: 1) GET /api/performance/dashboard (line 2143) ✅ Returns proper structure with overview, salesperson_performance, product_performance, payment_methods, monthly_comparison 2) GET /api/performance/top-performers (line 2317) ✅ Returns array with vendedor_id, name, total_sales, total_revenue 3) GET /api/sales/my-reports (line 2093) ✅ Returns total_sales, total_revenue, product_stats, sales with proper filtering. All endpoints have correct permissions (admin/manager only for dashboard/top-performers, vendas only for my-reports). Filters working (month/year/limit parameters). Returns empty data when no sales exist, which is expected behavior. 75.7% test success rate (56/74 tests passed)."
 
+  - task: "Vendas Role Permissions for Client Management and Sales"
+    implemented: true
+    working: true
+    file: "server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+        - working: true
+          agent: "testing"
+          comment: "🎯 VENDAS PERMISSIONS FULLY TESTED: Comprehensive testing completed with 100% success rate (11/11 tests passed). VERIFIED WORKING: ✅ Vendas can CREATE clients (POST /api/clients) - Line 1459 permission added ✅ Vendas can UPDATE clients (PUT /api/clients/{id}) - Line 1547 permission added ✅ Vendas can CREATE sales (POST /api/sales) - Already had permission ✅ Vendas can VIEW clients/products - No restrictions (correct). SECURITY VERIFIED: ✅ Vendas CANNOT create products (403) ✅ Vendas CANNOT access performance dashboard (403) ✅ Vendas CANNOT manage users (403) ✅ Vendas CANNOT create bills (403). All requested permissions from review request implemented correctly and security maintained."
+
 frontend:
   - task: "Error Messages Display"
     implemented: true
