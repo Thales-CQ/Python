@@ -364,7 +364,7 @@ const Header = ({ user, currentPage, setCurrentPage, logout, hasPermission }) =>
               </>
             )}
 
-            {hasPermission(['admin']) && (
+            {(hasPermission(['admin']) || hasPermission(['reception'], 'reports')) && (
               <>
                 <div className="border-t-2 border-yellow-300 my-3 pt-3">
                   <div className="text-xs font-bold text-yellow-100 px-3 mb-2">ADMINISTRAÇÃO</div>
