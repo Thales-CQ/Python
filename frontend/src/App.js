@@ -1413,7 +1413,8 @@ const ProductsPage = ({ user, token, toUpperCase }) => {
     code: '',
     name: '',
     price: '',
-    description: ''
+    description: '',
+    quantity: ''
   });
   const [message, setMessage] = useState('');
 
