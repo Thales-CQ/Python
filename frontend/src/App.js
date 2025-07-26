@@ -1306,21 +1306,29 @@ function App() {
                   <td className="px-6 py-4 whitespace-nowrap">
                     <span className={`px-2 py-1 text-xs font-medium rounded-full ${
                       transaction.cancelled ? 'bg-red-100 text-red-800' :
-                      transaction.type === 'entrada' 
-                        ? 'bg-green-100 text-green-800' 
-                        : 'bg-red-100 text-red-800'
+                      transaction.type === 'entrada' ? 'bg-green-100 text-green-800' :
+                      transaction.type === 'pagamento_cliente' ? 'bg-blue-100 text-blue-800' :
+                      'bg-red-100 text-red-800'
                     }`}>
-                      {transaction.cancelled ? 'CANCELADA' : transaction.type.toUpperCase()}
+                      {transaction.cancelled ? 'CANCELADA' : 
+                       transaction.type === 'entrada' ? 'ENTRADA' :
+                       transaction.type === 'pagamento_cliente' ? 'PAG.CLIENTE' :
+                       'SAÍDA'}
                     </span>
                   </td>
                   <td className={`px-6 py-4 whitespace-nowrap text-sm font-medium ${
                     transaction.cancelled ? 'text-gray-500 line-through' :
-                    transaction.type === 'entrada' ? 'text-green-600' : 'text-red-600'
+                    transaction.type === 'entrada' || transaction.type === 'pagamento_cliente' ? 'text-green-600' : 'text-red-600'
                   }`}>
                     R$ {transaction.amount.toFixed(2)}
                   </td>
                   <td className="px-6 py-4 text-sm text-gray-900">
                     {transaction.description}
+                    {transaction.client_name && (
+                      <div className="text-xs text-gray-500">
+                        Cliente: {transaction.client_name} - {transaction.client_cpf}
+                      </div>
+                    )}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                     {transaction.payment_method.toUpperCase()}
