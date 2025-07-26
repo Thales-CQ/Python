@@ -865,6 +865,131 @@ class CaixaAPITester:
         else:
             self.log_test("Dashboard Stats", False, str(stats))
 
+    def test_enhanced_installment_payment(self):
+        """Test the new enhanced installment payment endpoint"""
+        if not self.admin_token:
+            self.log_test("Enhanced Installment Payment", False, "No admin token")
+            return
+
+        # First create a client and bill for testing
+        client_data = {
+            'name': 'Installment Test Client',
+            'email': 'installment@test.com',
+            'phone': '11999999999',
+            'address': 'Test Address 123',
+            'cpf': '11144477735'  # Valid CPF
+        }
+
+        success, client = self.make_request('POST', 'clients', client_data, self.admin_token)
+        if not success:
+            self.log_test("Create Client for Installment Test", False, str(client))
+            return
+
+        # Create a bill with installments
+        bill_data = {
+            'client_id': client['id'],
+            'total_amount': 300.0,
+            'description': 'Test Bill for Enhanced Payment',
+            'installments': 3
+        }
+
+        success, bill = self.make_request('POST', 'bills', bill_data, self.admin_token)
+        if not success:
+            self.log_test("Create Bill for Installment Test", False, str(bill))
+            return
+
+        # Get the installments
+        success, installments = self.make_request('GET', f'bills/{bill["id"]}/installments', token=self.admin_token)
+        if not success or not installments:
+            self.log_test("Get Installments for Payment Test", False, str(installments))
+            return
+
+        # Test the new enhanced installment payment endpoint
+        first_installment = installments[0]
+        payment_data = {'payment_method': 'dinheiro'}
+        
+        success, payment_result = self.make_request('POST', f'bills/installments/{first_installment["id"]}/pay', 
+                                                   payment_data, self.admin_token)
+        
+        if success:
+            self.log_test("Enhanced Installment Payment Endpoint", True, 
+                         f"Installment {first_installment['installment_number']} paid successfully")
+            
+            # Verify the payment was recorded
+            if 'transaction' in payment_result:
+                transaction = payment_result['transaction']
+                self.log_test("Payment Transaction Created", True,
+                             f"Transaction ID: {transaction.get('id', 'N/A')}, Amount: R${transaction.get('amount', 0):.2f}")
+        else:
+            self.log_test("Enhanced Installment Payment Endpoint", False, str(payment_result))
+
+    def test_enhanced_error_messages(self):
+        """Test enhanced error messages and validation"""
+        if not self.admin_token:
+            self.log_test("Enhanced Error Messages", False, "No admin token")
+            return
+
+        print("   Testing enhanced CPF validation error...")
+        # Test invalid CPF error message
+        invalid_client_data = {
+            'name': 'Invalid CPF Test',
+            'email': 'invalid@test.com',
+            'phone': '11999999999',
+            'address': 'Test Address',
+            'cpf': '12345678901'  # Invalid CPF
+        }
+
+        success, error_response = self.make_request('POST', 'clients', invalid_client_data, 
+                                                   self.admin_token, expected_status=422)
+        if success:
+            # Check if error message contains "CPF inválido"
+            error_detail = str(error_response)
+            cpf_error_found = 'CPF inválido' in error_detail or 'cpf' in error_detail.lower()
+            self.log_test("CPF Invalid Error Message", cpf_error_found,
+                         f"Error contains CPF validation message: {cpf_error_found}")
+        else:
+            self.log_test("CPF Invalid Error Message", False, str(error_response))
+
+        print("   Testing enhanced email validation error...")
+        # Test invalid email error message
+        invalid_email_data = {
+            'name': 'Invalid Email Test',
+            'email': 'invalid-email-format',
+            'phone': '11999999999',
+            'address': 'Test Address',
+            'cpf': '11144477735'  # Valid CPF
+        }
+
+        success, error_response = self.make_request('POST', 'clients', invalid_email_data, 
+                                                   self.admin_token, expected_status=422)
+        if success:
+            # Check if error message contains "Email inválido"
+            error_detail = str(error_response)
+            email_error_found = 'Email inválido' in error_detail or 'email' in error_detail.lower()
+            self.log_test("Email Invalid Error Message", email_error_found,
+                         f"Error contains email validation message: {email_error_found}")
+        else:
+            self.log_test("Email Invalid Error Message", False, str(error_response))
+
+        print("   Testing password validation error...")
+        # Test short password error
+        short_password_data = {
+            'username': 'test_short_pass',
+            'email': 'shortpass@test.com',
+            'password': '123',  # Too short
+            'role': 'salesperson'
+        }
+
+        success, error_response = self.make_request('POST', 'register', short_password_data, 
+                                                   self.admin_token, expected_status=422)
+        if success:
+            error_detail = str(error_response)
+            password_error_found = 'senha' in error_detail.lower() or 'password' in error_detail.lower()
+            self.log_test("Password Length Error Message", password_error_found,
+                         f"Error contains password validation message: {password_error_found}")
+        else:
+            self.log_test("Password Length Error Message", False, str(error_response))
+
         return True
 
     def print_summary(self):
