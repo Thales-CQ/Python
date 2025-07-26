@@ -335,6 +335,12 @@ backend:
         - working: true
           agent: "testing"
           comment: "🎯 VENDAS PERMISSIONS FULLY TESTED: Comprehensive testing completed with 100% success rate (11/11 tests passed). VERIFIED WORKING: ✅ Vendas can CREATE clients (POST /api/clients) - Line 1459 permission added ✅ Vendas can UPDATE clients (PUT /api/clients/{id}) - Line 1547 permission added ✅ Vendas can CREATE sales (POST /api/sales) - Already had permission ✅ Vendas can VIEW clients/products - No restrictions (correct). SECURITY VERIFIED: ✅ Vendas CANNOT create products (403) ✅ Vendas CANNOT access performance dashboard (403) ✅ Vendas CANNOT manage users (403) ✅ Vendas CANNOT create bills (403). All requested permissions working correctly while maintaining security restrictions."
+        - working: false
+          agent: "user"
+          comment: "USER REPORTED: Veronica (vendas user) realizou 3 vendas hoje mas nenhuma apareceu no relatório 'Meus Relatórios'. Cada vendedor deve ver apenas suas próprias vendas."
+        - working: true
+          agent: "testing"
+          comment: "🎯 VERONICA SALES REPORTING ISSUE RESOLVED: Root cause identified and fixed. PROBLEM: MongoDB ObjectId serialization error in GET /api/sales/my-reports endpoint causing 500 errors. SOLUTION: Implemented MongoDB aggregation pipeline with $lookup for clients/products and proper data conversion to remove ObjectId issues (lines 2114-2157 in server.py). VERIFICATION: ✅ VERONICA can access /api/sales/my-reports without 500 error ✅ She sees all her sales with proper client/product details ✅ Sales correctly filtered by vendedor_id ✅ Sales isolation between vendas users working ✅ Permission restrictions maintained ✅ Month/year filtering functional. Each vendedor now sees ONLY their own sales as required."
 
   - task: "Performance Dashboard Endpoints"
     implemented: true
