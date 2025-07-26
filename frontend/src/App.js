@@ -3003,9 +3003,15 @@ const UsersPage = ({ user, token, toUpperCase }) => {
         fetchUsers();
         setMessage('Usuário excluído com sucesso!');
         setTimeout(() => setMessage(''), 3000);
+      } else {
+        // Handle error response
+        const errorData = await response.json();
+        setMessage(`Erro ao excluir usuário: ${errorData.detail || 'Erro desconhecido'}`);
+        setTimeout(() => setMessage(''), 5000);
       }
     } catch (err) {
-      setMessage('Erro ao excluir usuário');
+      setMessage('Erro ao excluir usuário: Falha na conexão');
+      setTimeout(() => setMessage(''), 5000);
     }
   };
 
