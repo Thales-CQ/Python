@@ -2797,7 +2797,7 @@ const UsersPage = ({ user, token, toUpperCase }) => {
     username: '',
     email: '',
     password: '',
-    role: 'reception'
+    role: 'vendas'
   });
   const [message, setMessage] = useState('');
 
