@@ -264,6 +264,37 @@ class ProductUpdate(BaseModel):
             raise ValueError('Preço deve ser maior que zero')
         return v
 
+class Sale(BaseModel):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    client_id: str
+    vendedor_id: str
+    product_id: str
+    quantity: int
+    unit_price: float
+    total_value: float
+    payment_method: str  # "dinheiro", "pix", "boleto", "cartao"
+    sale_date: datetime = Field(default_factory=datetime.utcnow)
+    status: str = "completed"  # "completed", "pending", "cancelled"
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+
+class SaleCreate(BaseModel):
+    client_id: str
+    product_id: str
+    quantity: int
+    payment_method: str
+
+class SaleReport(BaseModel):
+    sale_id: str
+    client_name: str
+    client_cpf: str
+    product_name: str
+    quantity: int
+    unit_price: float
+    total_value: float
+    payment_method: str
+    sale_date: datetime
+    vendedor_name: str
+
 class Transaction(BaseModel):
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
     type: TransactionType
