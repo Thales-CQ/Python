@@ -1679,6 +1679,175 @@ class CaixaAPITester:
             self.log_test("Manager Cannot Change Admin Passwords", success,
                          "Admin password change correctly blocked" if success else str(data))
 
+    def test_performance_endpoints(self):
+        """Test performance endpoints as specified in review request"""
+        if not self.admin_token:
+            self.log_test("Performance Endpoints", False, "No admin token")
+            return
+
+        print("   🎯 TESTING PERFORMANCE ENDPOINTS (PRIORITY FROM REVIEW REQUEST)")
+        
+        # Test 1: GET /api/performance/dashboard (linha 2143 em server.py)
+        print("   Testing GET /api/performance/dashboard...")
+        success, dashboard_data = self.make_request('GET', 'performance/dashboard', token=self.admin_token)
+        if success:
+            # Check expected structure from review request
+            expected_fields = ['overview', 'salesperson_performance', 'product_performance', 'payment_methods', 'monthly_comparison']
+            missing_fields = [field for field in expected_fields if field not in dashboard_data]
+            
+            if not missing_fields:
+                self.log_test("Performance Dashboard Structure", True, 
+                             f"All expected fields present: {expected_fields}")
+                
+                # Test overview section
+                overview = dashboard_data.get('overview', {})
+                overview_fields = ['total_sales_revenue', 'total_transactions', 'cash_balance']
+                overview_complete = all(field in overview for field in overview_fields)
+                self.log_test("Performance Dashboard Overview", overview_complete,
+                             f"Overview contains: {list(overview.keys())}")
+                
+                # Test salesperson performance section
+                salesperson_perf = dashboard_data.get('salesperson_performance', [])
+                self.log_test("Performance Dashboard Salesperson Data", isinstance(salesperson_perf, list),
+                             f"Found {len(salesperson_perf)} salesperson records")
+                
+            else:
+                self.log_test("Performance Dashboard Structure", False, f"Missing fields: {missing_fields}")
+        else:
+            self.log_test("Performance Dashboard Access", False, str(dashboard_data))
+
+        # Test 2: GET /api/performance/top-performers (linha 2317 em server.py)
+        print("   Testing GET /api/performance/top-performers...")
+        success, top_performers_data = self.make_request('GET', 'performance/top-performers', token=self.admin_token)
+        if success:
+            self.log_test("Top Performers Endpoint", True, 
+                         f"Retrieved {len(top_performers_data) if isinstance(top_performers_data, list) else 0} top performers")
+            
+            # Check structure - should return array with vendedor_id, name, total_sales, total_revenue, etc.
+            if isinstance(top_performers_data, list) and top_performers_data:
+                first_performer = top_performers_data[0]
+                expected_performer_fields = ['vendedor_id', 'name', 'total_sales', 'total_revenue']
+                performer_structure_ok = all(field in first_performer for field in expected_performer_fields)
+                self.log_test("Top Performers Structure", performer_structure_ok,
+                             f"First performer contains: {list(first_performer.keys())}")
+            else:
+                self.log_test("Top Performers Structure", True, "No performers data (expected if no sales exist)")
+        else:
+            self.log_test("Top Performers Access", False, str(top_performers_data))
+
+        # Test 3: GET /api/sales/my-reports (linha 2093 em server.py) - Need vendas user
+        print("   Testing GET /api/sales/my-reports (requires vendas user)...")
+        
+        # First create a vendas user if not exists
+        vendas_user_data = {
+            'username': 'TEST_VENDAS_PERF',
+            'email': 'vendas_perf@test.com',
+            'password': 'vendas123',
+            'role': 'vendas'
+        }
+        
+        success, vendas_user = self.make_request('POST', 'register', vendas_user_data, self.admin_token)
+        if success:
+            # Login as vendas user
+            success, login_data = self.make_request('POST', 'login', {
+                'username': vendas_user_data['username'],
+                'password': vendas_user_data['password']
+            })
+            
+            if success and 'access_token' in login_data:
+                vendas_token = login_data['access_token']
+                
+                # Test my-reports endpoint
+                success, reports_data = self.make_request('GET', 'sales/my-reports', token=vendas_token)
+                if success:
+                    # Check expected structure: total_sales, total_revenue, product_stats, sales
+                    expected_report_fields = ['total_sales', 'total_revenue', 'product_stats', 'sales']
+                    missing_report_fields = [field for field in expected_report_fields if field not in reports_data]
+                    
+                    if not missing_report_fields:
+                        self.log_test("Sales My-Reports Structure", True,
+                                     f"All expected fields present: {expected_report_fields}")
+                        
+                        # Check data types
+                        total_sales = reports_data.get('total_sales', 0)
+                        total_revenue = reports_data.get('total_revenue', 0)
+                        product_stats = reports_data.get('product_stats', {})
+                        sales = reports_data.get('sales', [])
+                        
+                        self.log_test("Sales My-Reports Data Types", 
+                                     isinstance(total_sales, int) and isinstance(total_revenue, (int, float)) and 
+                                     isinstance(product_stats, dict) and isinstance(sales, list),
+                                     f"Sales: {total_sales}, Revenue: {total_revenue}, Products: {len(product_stats)}, Sales list: {len(sales)}")
+                    else:
+                        self.log_test("Sales My-Reports Structure", False, f"Missing fields: {missing_report_fields}")
+                else:
+                    self.log_test("Sales My-Reports Access", False, str(reports_data))
+            else:
+                self.log_test("Vendas User Login for Reports", False, str(login_data))
+        else:
+            self.log_test("Create Vendas User for Reports", False, str(vendas_user))
+
+        # Test 4: Test filters on performance endpoints
+        print("   Testing performance endpoints with filters...")
+        
+        # Test dashboard with month/year filters
+        success, filtered_dashboard = self.make_request('GET', 'performance/dashboard?month=1&year=2025', token=self.admin_token)
+        self.log_test("Performance Dashboard with Filters", success,
+                     "Dashboard accepts month/year parameters" if success else str(filtered_dashboard))
+        
+        # Test top-performers with limit parameter
+        success, limited_performers = self.make_request('GET', 'performance/top-performers?limit=5', token=self.admin_token)
+        self.log_test("Top Performers with Limit", success,
+                     "Top performers accepts limit parameter" if success else str(limited_performers))
+
+        # Test 5: Test permissions (admin and manager only)
+        print("   Testing performance endpoints permissions...")
+        
+        # Create reception user to test permission denial
+        reception_user_data = {
+            'username': 'TEST_RECEPTION_PERF',
+            'email': 'reception_perf@test.com',
+            'password': 'reception123',
+            'role': 'reception'
+        }
+        
+        success, reception_user = self.make_request('POST', 'register', reception_user_data, self.admin_token)
+        if success:
+            # Login as reception user
+            success, login_data = self.make_request('POST', 'login', {
+                'username': reception_user_data['username'],
+                'password': reception_user_data['password']
+            })
+            
+            if success and 'access_token' in login_data:
+                reception_token = login_data['access_token']
+                
+                # Test that reception cannot access performance dashboard
+                success, denied_data = self.make_request('GET', 'performance/dashboard', 
+                                                       token=reception_token, expected_status=403)
+                self.log_test("Reception Cannot Access Performance Dashboard", success,
+                             "Reception correctly denied access" if success else str(denied_data))
+                
+                # Test that reception cannot access top performers
+                success, denied_data = self.make_request('GET', 'performance/top-performers', 
+                                                       token=reception_token, expected_status=403)
+                self.log_test("Reception Cannot Access Top Performers", success,
+                             "Reception correctly denied access" if success else str(denied_data))
+
+        # Test 6: Test manager access (should work)
+        if hasattr(self, 'manager_token') and self.manager_token:
+            print("   Testing manager access to performance endpoints...")
+            
+            success, manager_dashboard = self.make_request('GET', 'performance/dashboard', token=self.manager_token)
+            self.log_test("Manager Can Access Performance Dashboard", success,
+                         "Manager has access to performance dashboard" if success else str(manager_dashboard))
+            
+            success, manager_performers = self.make_request('GET', 'performance/top-performers', token=self.manager_token)
+            self.log_test("Manager Can Access Top Performers", success,
+                         "Manager has access to top performers" if success else str(manager_performers))
+
+        print("   ✅ Performance endpoints testing completed")
+
     def print_summary(self):
         """Print test summary"""
         print("\n" + "=" * 60)
