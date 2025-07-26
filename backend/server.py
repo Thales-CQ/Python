@@ -2111,16 +2111,35 @@ async def get_my_sales_reports(
             end_date = datetime(year, month + 1, 1)
         query["created_at"] = {"$gte": start_date, "$lt": end_date}
     
-    # Get sales
-    sales = await db.sales.find(query).sort("created_at", -1).to_list(1000)
+    # Get sales with client and product info
+    pipeline = [
+        {"$match": query},
+        {"$lookup": {
+            "from": "clients",
+            "localField": "client_id",
+            "foreignField": "id",
+            "as": "client"
+        }},
+        {"$lookup": {
+            "from": "products", 
+            "localField": "product_id",
+            "foreignField": "id",
+            "as": "product"
+        }},
+        {"$unwind": "$client"},
+        {"$unwind": "$product"},
+        {"$sort": {"created_at": -1}}
+    ]
+    
+    sales_raw = await db.sales.aggregate(pipeline).to_list(1000)
     
     # Calculate statistics
-    total_sales = len(sales)
-    total_revenue = sum(sale["total_value"] for sale in sales)
+    total_sales = len(sales_raw)
+    total_revenue = sum(sale["total_value"] for sale in sales_raw)
     
     # Group by product
     product_stats = {}
-    for sale in sales:
+    for sale in sales_raw:
         product_id = sale["product_id"]
         if product_id not in product_stats:
             product_stats[product_id] = {
@@ -2131,6 +2150,23 @@ async def get_my_sales_reports(
         product_stats[product_id]["quantity"] += sale["quantity"]
         product_stats[product_id]["revenue"] += sale["total_value"]
         product_stats[product_id]["sales_count"] += 1
+    
+    # Convert sales to clean format (remove MongoDB ObjectId issues)
+    sales = []
+    for sale in sales_raw:
+        sales.append({
+            "sale_id": sale["id"],
+            "client_name": sale["client"]["name"],
+            "client_cpf": sale["client"]["cpf"],
+            "product_name": sale["product"]["name"],
+            "quantity": sale["quantity"],
+            "unit_price": sale["unit_price"],
+            "total_value": sale["total_value"], 
+            "payment_method": sale["payment_method"],
+            "sale_date": sale.get("sale_date", sale.get("created_at")),
+            "vendedor_id": sale["vendedor_id"],
+            "created_at": sale["created_at"]
+        })
     
     return {
         "total_sales": total_sales,
