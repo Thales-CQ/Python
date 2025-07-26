@@ -3048,6 +3048,15 @@ const UsersPage = ({ user, token, toUpperCase }) => {
                       >
                         Nova Senha
                       </button>
+                      {user.role === 'admin' && userItem.role === 'reception' && (
+                        <button
+                          onClick={() => handleManagePermissions(userItem)}
+                          className="bg-orange-600 text-white px-3 py-1 rounded-md text-xs font-medium hover:bg-orange-700"
+                          title="Gerenciar permissões especiais"
+                        >
+                          Permissões
+                        </button>
+                      )}
                       {user.role === 'admin' && (
                         <button
                           onClick={() => handleDeleteUser(userItem.id, userItem.username)}
