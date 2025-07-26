@@ -219,6 +219,7 @@ class ProductCreate(BaseModel):
     name: str
     price: float
     description: Optional[str] = None
+    quantity: Optional[int] = None  # None = infinite, integer = finite quantity
     
     @validator('code', 'name', 'description', pre=True)
     def uppercase_fields(cls, v):
