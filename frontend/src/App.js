@@ -112,18 +112,6 @@ function App() {
     handleLogout();
   };
 
-  // Utility function for uppercase input
-  const toUpperCase = (e) => {
-    const start = e.target.selectionStart;
-    const end = e.target.selectionEnd;
-    e.target.value = e.target.value.toUpperCase();
-    
-    // Only set selection range for input types that support it
-    if (e.target.type !== 'email' && e.target.type !== 'password' && e.target.type !== 'number') {
-      e.target.setSelectionRange(start, end);
-    }
-  };
-
   // Check if user has permission for a specific action
   const hasPermission = (requiredRoles, specificPermission = null) => {
     if (!user) return false;
