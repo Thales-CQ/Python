@@ -1986,6 +1986,315 @@ async def pay_all_bill_installments(bill_id: str, payment: BillPayment, current_
         "total_amount": total_amount
     }
 
+# Sales Endpoints
+@api_router.post("/sales")
+async def create_sale(sale: SaleCreate, current_user: User = Depends(get_current_user)):
+    """Create a new sale"""
+    if current_user.role not in [UserRole.ADMIN, UserRole.MANAGER, UserRole.VENDAS]:
+        raise HTTPException(status_code=403, detail="Sem permissão para criar vendas")
+    
+    # Get client
+    client = await db.clients.find_one({"id": sale.client_id})
+    if not client:
+        raise HTTPException(status_code=404, detail="Cliente não encontrado")
+    
+    # Get product
+    product = await db.products.find_one({"id": sale.product_id})
+    if not product:
+        raise HTTPException(status_code=404, detail="Produto não encontrado")
+    
+    # Check product quantity if finite
+    if product.get("quantity") is not None and product["quantity"] < sale.quantity:
+        raise HTTPException(status_code=400, detail="Quantidade insuficiente em estoque")
+    
+    # Calculate total
+    unit_price = product["price"]
+    total_value = unit_price * sale.quantity
+    
+    # Create sale record
+    sale_data = Sale(
+        client_id=sale.client_id,
+        vendedor_id=current_user.id,
+        product_id=sale.product_id,
+        quantity=sale.quantity,
+        unit_price=unit_price,
+        total_value=total_value,
+        payment_method=sale.payment_method
+    )
+    
+    await db.sales.insert_one(sale_data.dict())
+    
+    # Update product quantity if finite
+    if product.get("quantity") is not None:
+        await db.products.update_one(
+            {"id": sale.product_id},
+            {"$inc": {"quantity": -sale.quantity}}
+        )
+    
+    # If payment method is boleto, create bill automatically
+    if sale.payment_method.lower() == "boleto":
+        from datetime import timedelta
+        
+        bill_data = {
+            "id": str(uuid.uuid4()),
+            "client_id": sale.client_id,
+            "client_name": client["name"],
+            "client_cpf": client["cpf"],
+            "client_email": client.get("email", ""),
+            "product_id": sale.product_id,
+            "product_name": product["name"],
+            "total_amount": total_value,
+            "installments": 1,
+            "installment_value": total_value,
+            "due_date": datetime.utcnow() + timedelta(days=30),
+            "created_at": datetime.utcnow(),
+            "created_by": current_user.id,
+            "cancelled": False,
+            "sale_id": sale_data.id  # Link to sale
+        }
+        
+        await db.bills.insert_one(bill_data)
+        
+        # Create installment
+        installment_data = {
+            "id": str(uuid.uuid4()),
+            "bill_id": bill_data["id"],
+            "installment_number": 1,
+            "amount": total_value,
+            "due_date": bill_data["due_date"],
+            "paid": False,
+            "paid_at": None,
+            "paid_amount": 0.0,
+            "created_at": datetime.utcnow()
+        }
+        
+        await db.bill_installments.insert_one(installment_data)
+    
+    # Log activity
+    await log_activity(
+        ActivityType.SALE_CREATED,
+        f"Venda realizada: {product['name']} para {client['name']} - R$ {total_value:.2f}",
+        current_user.id,
+        current_user.username,
+        {
+            "client_id": sale.client_id,
+            "client_name": client["name"],
+            "product_id": sale.product_id,
+            "product_name": product["name"],
+            "quantity": sale.quantity,
+            "total_value": total_value,
+            "payment_method": sale.payment_method
+        }
+    )
+    
+    return {"message": "Venda realizada com sucesso", "sale_id": sale_data.id, "total_value": total_value}
+
+@api_router.get("/sales/my-reports")
+async def get_my_sales_reports(
+    current_user: User = Depends(get_current_user),
+    month: Optional[int] = Query(None),
+    year: Optional[int] = Query(None)
+):
+    """Get sales reports for the current salesperson"""
+    if current_user.role not in [UserRole.VENDAS]:
+        raise HTTPException(status_code=403, detail="Apenas vendedores podem acessar seus relatórios")
+    
+    # Build query for the current salesperson
+    query = {"vendedor_id": current_user.id}
+    
+    if month and year:
+        start_date = datetime(year, month, 1)
+        if month == 12:
+            end_date = datetime(year + 1, 1, 1)
+        else:
+            end_date = datetime(year, month + 1, 1)
+        query["sale_date"] = {"$gte": start_date, "$lt": end_date}
+    
+    # Get sales with client and product info
+    pipeline = [
+        {"$match": query},
+        {"$lookup": {
+            "from": "clients",
+            "localField": "client_id", 
+            "foreignField": "id",
+            "as": "client"
+        }},
+        {"$lookup": {
+            "from": "products",
+            "localField": "product_id",
+            "foreignField": "id", 
+            "as": "product"
+        }},
+        {"$unwind": "$client"},
+        {"$unwind": "$product"},
+        {"$sort": {"sale_date": -1}}
+    ]
+    
+    sales = await db.sales.aggregate(pipeline).to_list(1000)
+    
+    reports = []
+    for sale in sales:
+        reports.append({
+            "sale_id": sale["id"],
+            "client_name": sale["client"]["name"],
+            "client_cpf": sale["client"]["cpf"],
+            "product_name": sale["product"]["name"],
+            "quantity": sale["quantity"],
+            "unit_price": sale["unit_price"],
+            "total_value": sale["total_value"],
+            "payment_method": sale["payment_method"],
+            "sale_date": sale["sale_date"],
+            "day": sale["sale_date"].day,
+            "month": sale["sale_date"].month,
+            "year": sale["sale_date"].year
+        })
+    
+    return reports
+
+@api_router.get("/sales/reports/all")
+async def get_all_sales_reports(
+    current_user: User = Depends(get_current_user),
+    vendedor_id: Optional[str] = Query(None),
+    month: Optional[int] = Query(None),
+    year: Optional[int] = Query(None),
+    payment_method: Optional[str] = Query(None)
+):
+    """Get sales reports for all salespersons (admin/manager only)"""
+    if current_user.role not in [UserRole.ADMIN, UserRole.MANAGER]:
+        raise HTTPException(status_code=403, detail="Sem permissão para acessar relatórios gerais")
+    
+    # Build query
+    query = {}
+    
+    if vendedor_id:
+        query["vendedor_id"] = vendedor_id
+    
+    if month and year:
+        start_date = datetime(year, month, 1)
+        if month == 12:
+            end_date = datetime(year + 1, 1, 1)
+        else:
+            end_date = datetime(year, month + 1, 1)
+        query["sale_date"] = {"$gte": start_date, "$lt": end_date}
+    
+    if payment_method:
+        query["payment_method"] = payment_method
+    
+    # Get sales with client, product, and salesperson info
+    pipeline = [
+        {"$match": query},
+        {"$lookup": {
+            "from": "clients",
+            "localField": "client_id",
+            "foreignField": "id",
+            "as": "client"
+        }},
+        {"$lookup": {
+            "from": "products", 
+            "localField": "product_id",
+            "foreignField": "id",
+            "as": "product"
+        }},
+        {"$lookup": {
+            "from": "users",
+            "localField": "vendedor_id",
+            "foreignField": "id", 
+            "as": "vendedor"
+        }},
+        {"$unwind": "$client"},
+        {"$unwind": "$product"},
+        {"$unwind": "$vendedor"},
+        {"$sort": {"sale_date": -1}}
+    ]
+    
+    sales = await db.sales.aggregate(pipeline).to_list(1000)
+    
+    reports = []
+    for sale in sales:
+        reports.append({
+            "sale_id": sale["id"],
+            "client_name": sale["client"]["name"],
+            "client_cpf": sale["client"]["cpf"],
+            "product_name": sale["product"]["name"],
+            "quantity": sale["quantity"],
+            "unit_price": sale["unit_price"],
+            "total_value": sale["total_value"], 
+            "payment_method": sale["payment_method"],
+            "sale_date": sale["sale_date"],
+            "vendedor_name": sale["vendedor"]["username"],
+            "vendedor_id": sale["vendedor_id"],
+            "day": sale["sale_date"].day,
+            "month": sale["sale_date"].month,
+            "year": sale["sale_date"].year
+        })
+    
+    return reports
+
+@api_router.get("/sales/performance")
+async def get_sales_performance(
+    current_user: User = Depends(get_current_user),
+    year: Optional[int] = Query(None)
+):
+    """Get sales performance metrics (admin/manager only)"""
+    if current_user.role not in [UserRole.ADMIN, UserRole.MANAGER]:
+        raise HTTPException(status_code=403, detail="Sem permissão para acessar métricas de desempenho")
+    
+    current_year = year or datetime.utcnow().year
+    
+    # Performance by salesperson and month
+    pipeline = [
+        {"$match": {
+            "sale_date": {
+                "$gte": datetime(current_year, 1, 1),
+                "$lt": datetime(current_year + 1, 1, 1)
+            }
+        }},
+        {"$group": {
+            "_id": {
+                "vendedor_id": "$vendedor_id",
+                "month": {"$month": "$sale_date"}
+            },
+            "total_sales": {"$sum": 1},
+            "total_value": {"$sum": "$total_value"}
+        }},
+        {"$lookup": {
+            "from": "users",
+            "localField": "_id.vendedor_id",
+            "foreignField": "id",
+            "as": "vendedor"
+        }},
+        {"$unwind": "$vendedor"},
+        {"$sort": {"_id.month": 1}}
+    ]
+    
+    performance_data = await db.sales.aggregate(pipeline).to_list(1000)
+    
+    # Organize data by salesperson
+    performance_by_salesperson = {}
+    for data in performance_data:
+        vendedor_id = data["_id"]["vendedor_id"]
+        vendedor_name = data["vendedor"]["username"]
+        month = data["_id"]["month"]
+        
+        if vendedor_id not in performance_by_salesperson:
+            performance_by_salesperson[vendedor_id] = {
+                "vendedor_name": vendedor_name,
+                "monthly_data": [0] * 12,  # 12 months
+                "monthly_values": [0.0] * 12,
+                "total_sales": 0,
+                "total_value": 0.0
+            }
+        
+        performance_by_salesperson[vendedor_id]["monthly_data"][month - 1] = data["total_sales"]
+        performance_by_salesperson[vendedor_id]["monthly_values"][month - 1] = data["total_value"]
+        performance_by_salesperson[vendedor_id]["total_sales"] += data["total_sales"]
+        performance_by_salesperson[vendedor_id]["total_value"] += data["total_value"]
+    
+    return {
+        "year": current_year,
+        "performance": performance_by_salesperson
+    }
+
 # Generate PDF Reports
 @api_router.get("/reports/transactions/pdf")
 async def generate_transactions_pdf(
