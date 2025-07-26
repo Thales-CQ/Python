@@ -4634,18 +4634,25 @@ const AllReportsPage = ({ user, token }) => {
 
 // Performance Page with Charts (for admin/manager)
 const PerformancePage = ({ user, token }) => {
-  const [performanceData, setPerformanceData] = useState(null);
+  const [dashboardData, setDashboardData] = useState(null);
+  const [topPerformers, setTopPerformers] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth() + 1);
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
 
   useEffect(() => {
-    fetchPerformanceData();
-  }, [selectedYear]);
+    fetchDashboardData();
+    fetchTopPerformers();
+  }, [selectedMonth, selectedYear]);
 
-  const fetchPerformanceData = async () => {
+  const fetchDashboardData = async () => {
     setLoading(true);
     try {
-      const response = await fetch(`${API_URL}/api/sales/performance?year=${selectedYear}`, {
+      const params = new URLSearchParams();
+      if (selectedMonth) params.append('month', selectedMonth);
+      if (selectedYear) params.append('year', selectedYear);
+
+      const response = await fetch(`${API_URL}/api/performance/dashboard?${params}`, {
         headers: {
           'Authorization': `Bearer ${token}`
         }
@@ -4653,15 +4660,39 @@ const PerformancePage = ({ user, token }) => {
 
       if (response.ok) {
         const data = await response.json();
-        setPerformanceData(data);
+        setDashboardData(data);
       } else {
-        setPerformanceData(null);
+        setDashboardData(null);
       }
     } catch (err) {
-      console.error('Error fetching performance data:', err);
-      setPerformanceData(null);
+      console.error('Error fetching dashboard data:', err);
+      setDashboardData(null);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchTopPerformers = async () => {
+    try {
+      const params = new URLSearchParams();
+      if (selectedMonth) params.append('month', selectedMonth);
+      if (selectedYear) params.append('year', selectedYear);
+
+      const response = await fetch(`${API_URL}/api/performance/top-performers?${params}`, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setTopPerformers(data);
+      } else {
+        setTopPerformers([]);
+      }
+    } catch (err) {
+      console.error('Error fetching top performers:', err);
+      setTopPerformers([]);
     }
   };
 
@@ -4673,31 +4704,232 @@ const PerformancePage = ({ user, token }) => {
     );
   }
 
-  if (!performanceData || !performanceData.performance) {
+  if (!dashboardData) {
     return (
       <div className="text-center py-12">
         <h1 className="text-2xl font-bold text-gray-900 mb-4">Dashboard de Performance</h1>
-        <p className="text-gray-500">Nenhum dado de performance encontrado para {selectedYear}</p>
+        <p className="text-gray-500">Nenhum dado de performance encontrado</p>
       </div>
     );
   }
 
-  const { year, performance } = performanceData;
-  const vendedorList = Object.entries(performance);
+  const { overview, salesperson_performance, product_performance, payment_methods, monthly_comparison } = dashboardData;
 
-  // Calculate totals and rankings
-  const totalSalesAllVendors = vendedorList.reduce((sum, [_, data]) => sum + data.total_sales, 0);
-  const totalValueAllVendors = vendedorList.reduce((sum, [_, data]) => sum + data.total_value, 0);
+  return (
+    <div className="space-y-6">
+      <div className="bg-white rounded-lg shadow p-6">
+        <h1 className="text-2xl font-bold text-gray-900 mb-6">Dashboard de Performance</h1>
+        
+        {/* Filtros */}
+        <div className="flex flex-wrap gap-4 mb-6">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Mês</label>
+            <select 
+              value={selectedMonth} 
+              onChange={(e) => setSelectedMonth(parseInt(e.target.value))}
+              className="border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            >
+              <option value="">Todos os meses</option>
+              {Array.from({length: 12}, (_, i) => (
+                <option key={i+1} value={i+1}>
+                  {new Date(2024, i).toLocaleDateString('pt-BR', { month: 'long' })}
+                </option>
+              ))}
+            </select>
+          </div>
+          
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Ano</label>
+            <select 
+              value={selectedYear} 
+              onChange={(e) => setSelectedYear(parseInt(e.target.value))}
+              className="border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            >
+              <option value={2024}>2024</option>
+              <option value={2025}>2025</option>
+            </select>
+          </div>
+        </div>
 
-  // Sort vendedores by total sales for ranking
-  const rankedVendedores = vendedorList.sort((a, b) => b[1].total_sales - a[1].total_sales);
+        {/* Cards de Resumo */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+          <div className="bg-blue-50 border border-blue-200 rounded-lg p-6">
+            <h3 className="text-lg font-semibold text-blue-900 mb-2">Total de Vendas</h3>
+            <p className="text-3xl font-bold text-blue-600">{overview.total_sales}</p>
+          </div>
+          
+          <div className="bg-green-50 border border-green-200 rounded-lg p-6">
+            <h3 className="text-lg font-semibold text-green-900 mb-2">Receita de Vendas</h3>
+            <p className="text-3xl font-bold text-green-600">R$ {overview.total_sales_revenue.toFixed(2)}</p>
+          </div>
+          
+          <div className="bg-purple-50 border border-purple-200 rounded-lg p-6">
+            <h3 className="text-lg font-semibold text-purple-900 mb-2">Saldo em Caixa</h3>
+            <p className="text-3xl font-bold text-purple-600">R$ {overview.cash_balance.toFixed(2)}</p>
+          </div>
+          
+          <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-6">
+            <h3 className="text-lg font-semibold text-yellow-900 mb-2">Crescimento</h3>
+            <p className={`text-3xl font-bold ${overview.revenue_growth >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+              {overview.revenue_growth >= 0 ? '+' : ''}{overview.revenue_growth.toFixed(1)}%
+            </p>
+          </div>
+        </div>
 
-  const months = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
+        {/* Comparação Mensal */}
+        <div className="bg-gray-50 rounded-lg p-6 mb-8">
+          <h3 className="text-lg font-semibold text-gray-900 mb-4">Comparação Mensal</h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="bg-white rounded-lg p-4">
+              <h4 className="font-medium text-gray-700 mb-2">Mês Atual</h4>
+              <p className="text-2xl font-bold text-blue-600">R$ {monthly_comparison.current_month.revenue.toFixed(2)}</p>
+              <p className="text-sm text-gray-500">{monthly_comparison.current_month.sales_count} vendas</p>
+            </div>
+            <div className="bg-white rounded-lg p-4">
+              <h4 className="font-medium text-gray-700 mb-2">Mês Anterior</h4>
+              <p className="text-2xl font-bold text-gray-600">R$ {monthly_comparison.previous_month.revenue.toFixed(2)}</p>
+              <p className="text-sm text-gray-500">{monthly_comparison.previous_month.sales_count} vendas</p>
+            </div>
+          </div>
+        </div>
 
-  // Create monthly comparison chart data
-  const MonthlyChart = ({ vendedorData, title, dataKey }) => {
-    const maxValue = Math.max(...vendedorList.map(([_, data]) => Math.max(...data[dataKey])));
-    
+        {/* Top Performers */}
+        <div className="bg-white rounded-lg border border-gray-200 mb-8">
+          <div className="px-6 py-4 border-b border-gray-200">
+            <h3 className="text-lg font-semibold text-gray-900">Top Vendedores</h3>
+          </div>
+          <div className="overflow-x-auto">
+            <table className="min-w-full divide-y divide-gray-200">
+              <thead className="bg-gray-50">
+                <tr>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Posição</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Vendedor</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Vendas</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Receita</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Média por Venda</th>
+                </tr>
+              </thead>
+              <tbody className="bg-white divide-y divide-gray-200">
+                {topPerformers.map((performer, index) => (
+                  <tr key={performer.vendedor_id} className={index === 0 ? 'bg-yellow-50' : ''}>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="flex items-center">
+                        {index === 0 && <span className="text-yellow-500 mr-2">🏆</span>}
+                        <span className="text-sm font-medium text-gray-900">{index + 1}º</span>
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="text-sm font-medium text-gray-900">{performer.name}</div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="text-sm text-gray-900">{performer.total_sales}</div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="text-sm text-gray-900">R$ {performer.total_revenue.toFixed(2)}</div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="text-sm text-gray-900">R$ {performer.average_sale_value.toFixed(2)}</div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        {/* Performance por Vendedor */}
+        <div className="bg-white rounded-lg border border-gray-200 mb-8">
+          <div className="px-6 py-4 border-b border-gray-200">
+            <h3 className="text-lg font-semibold text-gray-900">Performance por Vendedor</h3>
+          </div>
+          <div className="overflow-x-auto">
+            <table className="min-w-full divide-y divide-gray-200">
+              <thead className="bg-gray-50">
+                <tr>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Vendedor</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Vendas</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Receita</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Produtos Vendidos</th>
+                </tr>
+              </thead>
+              <tbody className="bg-white divide-y divide-gray-200">
+                {Object.entries(salesperson_performance).map(([vendedor_id, data]) => (
+                  <tr key={vendedor_id}>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="text-sm font-medium text-gray-900">{data.name}</div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="text-sm text-gray-900">{data.sales_count}</div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="text-sm text-gray-900">R$ {data.revenue.toFixed(2)}</div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="text-sm text-gray-900">{data.products_sold}</div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        {/* Performance por Produto */}
+        <div className="bg-white rounded-lg border border-gray-200 mb-8">
+          <div className="px-6 py-4 border-b border-gray-200">
+            <h3 className="text-lg font-semibold text-gray-900">Performance por Produto</h3>
+          </div>
+          <div className="overflow-x-auto">
+            <table className="min-w-full divide-y divide-gray-200">
+              <thead className="bg-gray-50">
+                <tr>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Produto</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Vendas</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Quantidade</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Receita</th>
+                </tr>
+              </thead>
+              <tbody className="bg-white divide-y divide-gray-200">
+                {Object.entries(product_performance).map(([product_id, data]) => (
+                  <tr key={product_id}>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="text-sm font-medium text-gray-900">{data.name}</div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="text-sm text-gray-900">{data.sales_count}</div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="text-sm text-gray-900">{data.quantity_sold}</div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="text-sm text-gray-900">R$ {data.revenue.toFixed(2)}</div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        {/* Métodos de Pagamento */}
+        <div className="bg-white rounded-lg border border-gray-200">
+          <div className="px-6 py-4 border-b border-gray-200">
+            <h3 className="text-lg font-semibold text-gray-900">Métodos de Pagamento</h3>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 p-6">
+            {Object.entries(payment_methods).map(([method, data]) => (
+              <div key={method} className="bg-gray-50 rounded-lg p-4">
+                <h4 className="font-medium text-gray-700 mb-2">{method.toUpperCase()}</h4>
+                <p className="text-lg font-bold text-gray-900">{data.count} vendas</p>
+                <p className="text-sm text-gray-600">R$ {data.revenue.toFixed(2)}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
     return (
       <div className="bg-white shadow rounded-lg p-6">
         <h3 className="text-lg font-medium text-gray-900 mb-4">{title}</h3>
