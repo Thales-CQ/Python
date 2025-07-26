@@ -3125,79 +3125,150 @@ const UsersPage = ({ user, token, toUpperCase }) => {
           <tbody className="bg-white divide-y divide-gray-200">
             {users.map((userItem) => (
               <tr key={userItem.id}>
-                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                  {userItem.username}
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                  {userItem.email}
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap">
-                  <span className={`px-2 py-1 text-xs font-medium rounded-full ${
-                    userItem.role === 'admin' ? 'bg-red-100 text-red-800' :
-                    userItem.role === 'manager' ? 'bg-blue-100 text-blue-800' :
-                    'bg-green-100 text-green-800'
-                  }`}>
-                    {userItem.role === 'admin' ? 'Administrador' :
-                     userItem.role === 'manager' ? 'Gerente' : 'Recepção'}
-                  </span>
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap">
-                  <span className={`px-2 py-1 text-xs font-medium rounded-full ${
-                    userItem.active ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
-                  }`}>
-                    {userItem.active ? 'Ativo' : 'Inativo'}
-                  </span>
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                  {new Date(userItem.created_at).toLocaleDateString('pt-BR')}
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm space-x-2">
-                  {userItem.username !== 'ADMIN' && (
-                    <>
-                      <button
-                        onClick={() => handleToggleUser(userItem.id, userItem.active)}
-                        className={`px-3 py-1 rounded-md text-xs font-medium ${
-                          userItem.active 
-                            ? 'bg-yellow-600 text-white hover:bg-yellow-700' 
-                            : 'bg-green-600 text-white hover:bg-green-700'
-                        }`}
+                {editingUser?.id === userItem.id ? (
+                  /* Editing mode */
+                  <>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                      <input
+                        type="text"
+                        value={editingUser.username}
+                        onChange={(e) => setEditingUser({...editingUser, username: e.target.value})}
+                        onInput={toUpperCase}
+                        className="w-full px-2 py-1 border border-gray-300 rounded text-sm"
+                        placeholder="Nome de usuário"
+                      />
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                      <input
+                        type="email"
+                        value={editingUser.email}
+                        onChange={(e) => setEditingUser({...editingUser, email: e.target.value})}
+                        onInput={toUpperCase}
+                        className="w-full px-2 py-1 border border-gray-300 rounded text-sm"
+                        placeholder="Email"
+                      />
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <select
+                        value={editingUser.role}
+                        onChange={(e) => setEditingUser({...editingUser, role: e.target.value})}
+                        className="px-2 py-1 border border-gray-300 rounded text-sm"
                       >
-                        {userItem.active ? 'Desativar' : 'Ativar'}
+                        <option value="reception">Recepção</option>
+                        {user.role === 'admin' && <option value="manager">Gerente</option>}
+                        {user.role === 'admin' && <option value="admin">Administrador</option>}
+                      </select>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <span className={`px-2 py-1 text-xs font-medium rounded-full ${
+                        userItem.active ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+                      }`}>
+                        {userItem.active ? 'Ativo' : 'Inativo'}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                      {new Date(userItem.created_at).toLocaleDateString('pt-BR')}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm space-x-2">
+                      <button
+                        onClick={handleUpdateUser}
+                        className="bg-green-600 text-white px-3 py-1 rounded-md text-xs font-medium hover:bg-green-700"
+                      >
+                        Salvar
                       </button>
                       <button
-                        onClick={() => handleResetPassword(userItem.id, userItem.username)}
-                        className="bg-blue-600 text-white px-3 py-1 rounded-md text-xs font-medium hover:bg-blue-700"
-                        title="Alterar Senha"
+                        onClick={() => setEditingUser(null)}
+                        className="bg-gray-600 text-white px-3 py-1 rounded-md text-xs font-medium hover:bg-gray-700"
                       >
-                        Senha
+                        Cancelar
                       </button>
-                      <button
-                        onClick={() => handleForcePasswordChange(userItem.id, userItem.username)}
-                        className="bg-purple-600 text-white px-3 py-1 rounded-md text-xs font-medium hover:bg-purple-700"
-                        title="Forçar nova senha no próximo login"
-                      >
-                        Nova Senha
-                      </button>
-                      {user.role === 'admin' && userItem.role === 'reception' && (
-                        <button
-                          onClick={() => handleManagePermissions(userItem)}
-                          className="bg-orange-600 text-white px-3 py-1 rounded-md text-xs font-medium hover:bg-orange-700"
-                          title="Gerenciar permissões especiais"
-                        >
-                          Permissões
-                        </button>
+                    </td>
+                  </>
+                ) : (
+                  /* Display mode */
+                  <>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                      {userItem.username}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                      {userItem.email}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <span className={`px-2 py-1 text-xs font-medium rounded-full ${
+                        userItem.role === 'admin' ? 'bg-red-100 text-red-800' :
+                        userItem.role === 'manager' ? 'bg-blue-100 text-blue-800' :
+                        'bg-green-100 text-green-800'
+                      }`}>
+                        {userItem.role === 'admin' ? 'Administrador' :
+                         userItem.role === 'manager' ? 'Gerente' : 'Recepção'}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <span className={`px-2 py-1 text-xs font-medium rounded-full ${
+                        userItem.active ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+                      }`}>
+                        {userItem.active ? 'Ativo' : 'Inativo'}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                      {new Date(userItem.created_at).toLocaleDateString('pt-BR')}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm space-x-2">
+                      {userItem.username !== 'ADMIN' && (
+                        <>
+                          <button
+                            onClick={() => handleEditUser(userItem)}
+                            className="bg-blue-600 text-white px-3 py-1 rounded-md text-xs font-medium hover:bg-blue-700"
+                            title="Editar dados básicos"
+                          >
+                            Editar
+                          </button>
+                          <button
+                            onClick={() => handleToggleUser(userItem.id, userItem.active)}
+                            className={`px-3 py-1 rounded-md text-xs font-medium ${
+                              userItem.active 
+                                ? 'bg-yellow-600 text-white hover:bg-yellow-700' 
+                                : 'bg-green-600 text-white hover:bg-green-700'
+                            }`}
+                          >
+                            {userItem.active ? 'Desativar' : 'Ativar'}
+                          </button>
+                          <button
+                            onClick={() => handleResetPassword(userItem.id, userItem.username)}
+                            className="bg-indigo-600 text-white px-3 py-1 rounded-md text-xs font-medium hover:bg-indigo-700"
+                            title="Alterar Senha"
+                          >
+                            Senha
+                          </button>
+                          <button
+                            onClick={() => handleForcePasswordChange(userItem.id, userItem.username)}
+                            className="bg-purple-600 text-white px-3 py-1 rounded-md text-xs font-medium hover:bg-purple-700"
+                            title="Forçar nova senha no próximo login"
+                          >
+                            Nova Senha
+                          </button>
+                          {user.role === 'admin' && userItem.role === 'reception' && (
+                            <button
+                              onClick={() => handleManagePermissions(userItem)}
+                              className="bg-orange-600 text-white px-3 py-1 rounded-md text-xs font-medium hover:bg-orange-700"
+                              title="Gerenciar permissões especiais"
+                            >
+                              Permissões
+                            </button>
+                          )}
+                          {user.role === 'admin' && (
+                            <button
+                              onClick={() => handleDeleteUser(userItem.id, userItem.username)}
+                              className="bg-red-600 text-white px-3 py-1 rounded-md text-xs font-medium hover:bg-red-700"
+                            >
+                              Excluir
+                            </button>
+                          )}
+                        </>
                       )}
-                      {user.role === 'admin' && (
-                        <button
-                          onClick={() => handleDeleteUser(userItem.id, userItem.username)}
-                          className="bg-red-600 text-white px-3 py-1 rounded-md text-xs font-medium hover:bg-red-700"
-                        >
-                          Excluir
-                        </button>
-                      )}
-                    </>
-                  )}
-                </td>
+                    </td>
+                  </>
+                )}
               </tr>
             ))}
           </tbody>
