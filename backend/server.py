@@ -515,10 +515,10 @@ async def register(user: UserCreate, current_user: User = Depends(get_current_us
     if current_user.role not in [UserRole.ADMIN, UserRole.MANAGER]:
         raise HTTPException(status_code=403, detail="Sem permissão para criar usuários")
     
-    # Manager role restrictions: can only create reception users
+    # Manager role restrictions: can only create reception and vendas users
     if current_user.role == UserRole.MANAGER:
-        if user.role not in [UserRole.RECEPTION]:
-            raise HTTPException(status_code=403, detail="Gerentes só podem criar usuários de recepção")
+        if user.role not in [UserRole.RECEPTION, UserRole.VENDAS]:
+            raise HTTPException(status_code=403, detail="Gerentes só podem criar usuários de recepção e vendas")
     
     # Check if user exists
     existing_user = await db.users.find_one({"username": user.username})
