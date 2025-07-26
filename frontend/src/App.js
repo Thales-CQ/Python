@@ -134,7 +134,14 @@ function App() {
 
   // Show splash screen
   if (showSplash) {
-    return <SplashScreen onSplashComplete={handleSplashComplete} />;
+    return (
+      <SplashScreen 
+        onSplashComplete={handleSplashComplete}
+        setToken={setToken}
+        setUser={setUser}
+        setIsAuthenticated={setIsAuthenticated}
+      />
+    );
   }
 
   // Show loading
