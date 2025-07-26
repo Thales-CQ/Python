@@ -2698,7 +2698,7 @@ const UsersPage = ({ user, token, toUpperCase }) => {
 
       if (response.ok) {
         setShowCreateForm(false);
-        setCreateData({ username: '', email: '', password: '', role: 'salesperson' });
+        setCreateData({ username: '', email: '', password: '', role: 'reception' });
         fetchUsers();
         setMessage('Usuário criado com sucesso!');
         setTimeout(() => setMessage(''), 5000);
