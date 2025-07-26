@@ -1497,6 +1497,7 @@ const ProductsPage = ({ user, token, toUpperCase }) => {
           name: editingProduct.name,
           price: parseFloat(editingProduct.price),
           description: editingProduct.description,
+          quantity: editingProduct.quantity ? parseInt(editingProduct.quantity) : null,
           active: editingProduct.active
         }),
       });
