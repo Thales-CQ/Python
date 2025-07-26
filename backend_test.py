@@ -763,6 +763,253 @@ class CaixaAPITester:
         else:
             self.log_test("Get Transaction Summary", False, str(summary))
 
+    def test_sales_reporting_issue(self):
+        """PRIORITY TEST: Investigate Veronica's sales reporting issue"""
+        print("🎯 INVESTIGATING VERONICA SALES REPORTING ISSUE")
+        print("   Problem: Vendas user 'Veronica' not seeing own sales in 'Meus Relatórios'")
+        
+        # Step 1: Create vendas user "Veronica"
+        print("   Step 1: Creating vendas user 'VERONICA'...")
+        veronica_data = {
+            'username': 'VERONICA',
+            'email': 'veronica@vendas.com',
+            'password': '123456',
+            'role': 'vendas'
+        }
+        
+        success, data = self.make_request('POST', 'register', veronica_data, self.admin_token)
+        if success:
+            self.log_test("Create Vendas User 'VERONICA'", True, "User created successfully")
+        else:
+            self.log_test("Create Vendas User 'VERONICA'", False, str(data))
+            return
+        
+        # Step 2: Login as Veronica and get token
+        print("   Step 2: Login as VERONICA...")
+        success, login_data = self.make_request('POST', 'login', {
+            'username': 'VERONICA',
+            'password': '123456'
+        })
+        
+        if success and 'access_token' in login_data:
+            veronica_token = login_data['access_token']
+            veronica_user_id = login_data['user']['id']
+            self.log_test("VERONICA Login", True, f"User ID: {veronica_user_id}")
+        else:
+            self.log_test("VERONICA Login", False, str(login_data))
+            return
+        
+        # Step 3: Create clients for sales
+        print("   Step 3: Creating clients for sales...")
+        clients_data = [
+            {
+                'name': 'Cliente Veronica 1',
+                'email': 'cliente1@veronica.com',
+                'phone': '11999999991',
+                'address': 'Endereço Cliente 1',
+                'cpf': '11144477735'
+            },
+            {
+                'name': 'Cliente Veronica 2', 
+                'email': 'cliente2@veronica.com',
+                'phone': '11999999992',
+                'address': 'Endereço Cliente 2',
+                'cpf': '22255588846'
+            }
+        ]
+        
+        created_clients = []
+        for i, client_data in enumerate(clients_data):
+            success, client = self.make_request('POST', 'clients', client_data, veronica_token)
+            if success:
+                created_clients.append(client)
+                self.log_test(f"Create Client {i+1} as VERONICA", True, f"Client: {client['name']}")
+            else:
+                self.log_test(f"Create Client {i+1} as VERONICA", False, str(client))
+        
+        # Step 4: Create products for sales
+        print("   Step 4: Creating products for sales...")
+        products_data = [
+            {
+                'code': 'PROD_VERONICA_001',
+                'name': 'Produto Veronica 1',
+                'price': 100.00,
+                'description': 'Produto para teste Veronica'
+            },
+            {
+                'code': 'PROD_VERONICA_002',
+                'name': 'Produto Veronica 2',
+                'price': 200.00,
+                'description': 'Segundo produto para teste Veronica'
+            }
+        ]
+        
+        created_products = []
+        for i, product_data in enumerate(products_data):
+            success, product = self.make_request('POST', 'products', product_data, self.admin_token)
+            if success:
+                created_products.append(product)
+                self.log_test(f"Create Product {i+1} for VERONICA", True, f"Product: {product['name']}")
+            else:
+                self.log_test(f"Create Product {i+1} for VERONICA", False, str(product))
+        
+        # Step 5: Create sales as Veronica
+        print("   Step 5: Creating sales as VERONICA...")
+        if created_clients and created_products:
+            sales_data = [
+                {
+                    'client_id': created_clients[0]['id'],
+                    'product_id': created_products[0]['id'],
+                    'quantity': 2,
+                    'payment_method': 'dinheiro'
+                },
+                {
+                    'client_id': created_clients[1]['id'] if len(created_clients) > 1 else created_clients[0]['id'],
+                    'product_id': created_products[1]['id'] if len(created_products) > 1 else created_products[0]['id'],
+                    'quantity': 1,
+                    'payment_method': 'pix'
+                },
+                {
+                    'client_id': created_clients[0]['id'],
+                    'product_id': created_products[0]['id'],
+                    'quantity': 3,
+                    'payment_method': 'cartao'
+                }
+            ]
+            
+            created_sales = []
+            for i, sale_data in enumerate(sales_data):
+                success, sale = self.make_request('POST', 'sales', sale_data, veronica_token)
+                if success:
+                    created_sales.append(sale)
+                    self.log_test(f"Create Sale {i+1} as VERONICA", True, 
+                                 f"Sale ID: {sale.get('id', 'N/A')}, vendedor_id: {sale.get('vendedor_id', 'N/A')}")
+                    
+                    # CRITICAL: Verify vendedor_id is set correctly
+                    if sale.get('vendedor_id') == veronica_user_id:
+                        self.log_test(f"Sale {i+1} vendedor_id Correct", True, 
+                                     f"vendedor_id matches Veronica's user ID: {veronica_user_id}")
+                    else:
+                        self.log_test(f"Sale {i+1} vendedor_id Incorrect", False, 
+                                     f"Expected: {veronica_user_id}, Got: {sale.get('vendedor_id', 'N/A')}")
+                else:
+                    self.log_test(f"Create Sale {i+1} as VERONICA", False, str(sale))
+        
+        # Step 6: Test "Meus Relatórios" endpoint
+        print("   Step 6: Testing 'Meus Relatórios' endpoint...")
+        success, my_reports = self.make_request('GET', 'sales/my-reports', token=veronica_token)
+        
+        if success:
+            self.log_test("Access 'Meus Relatórios' Endpoint", True, "Endpoint accessible")
+            
+            # Check if reports contain Veronica's sales
+            if isinstance(my_reports, dict):
+                sales_list = my_reports.get('sales', [])
+                total_sales = my_reports.get('total_sales', 0)
+                total_revenue = my_reports.get('total_revenue', 0)
+                
+                self.log_test("My Reports Structure", True, 
+                             f"total_sales: {total_sales}, total_revenue: {total_revenue}, sales count: {len(sales_list)}")
+                
+                if len(sales_list) > 0:
+                    self.log_test("VERONICA Sees Own Sales", True, 
+                                 f"Found {len(sales_list)} sales in 'Meus Relatórios'")
+                    
+                    # Verify all sales belong to Veronica
+                    all_sales_belong_to_veronica = all(
+                        sale.get('vendedor_id') == veronica_user_id for sale in sales_list
+                    )
+                    self.log_test("All Sales Belong to VERONICA", all_sales_belong_to_veronica,
+                                 f"All {len(sales_list)} sales have correct vendedor_id")
+                    
+                    # Show sample sale data
+                    if sales_list:
+                        sample_sale = sales_list[0]
+                        self.log_test("Sample Sale Data", True,
+                                     f"ID: {sample_sale.get('sale_id', 'N/A')}, "
+                                     f"Client: {sample_sale.get('client_name', 'N/A')}, "
+                                     f"Product: {sample_sale.get('product_name', 'N/A')}, "
+                                     f"Value: R${sample_sale.get('total_value', 0):.2f}")
+                else:
+                    self.log_test("VERONICA Sees Own Sales", False, 
+                                 "❌ CRITICAL ISSUE: No sales found in 'Meus Relatórios' despite creating sales")
+                    
+                    # Debug: Check if sales exist in database
+                    print("   🔍 DEBUGGING: Checking if sales exist in database...")
+                    success, all_sales = self.make_request('GET', 'sales', token=self.admin_token)
+                    if success:
+                        veronica_sales_in_db = [s for s in all_sales if s.get('vendedor_id') == veronica_user_id]
+                        self.log_test("VERONICA Sales in Database", len(veronica_sales_in_db) > 0,
+                                     f"Found {len(veronica_sales_in_db)} sales with vendedor_id={veronica_user_id}")
+                        
+                        if veronica_sales_in_db:
+                            sample_db_sale = veronica_sales_in_db[0]
+                            self.log_test("Sample DB Sale", True,
+                                         f"vendedor_id: {sample_db_sale.get('vendedor_id')}, "
+                                         f"created_at: {sample_db_sale.get('created_at', 'N/A')}")
+            else:
+                self.log_test("My Reports Structure", False, f"Expected dict, got: {type(my_reports)}")
+        else:
+            self.log_test("Access 'Meus Relatórios' Endpoint", False, str(my_reports))
+        
+        # Step 7: Test isolation between vendas users
+        print("   Step 7: Testing isolation between vendas users...")
+        # Create another vendas user
+        another_vendas_data = {
+            'username': 'OUTRO_VENDAS',
+            'email': 'outro@vendas.com',
+            'password': '123456',
+            'role': 'vendas'
+        }
+        
+        success, data = self.make_request('POST', 'register', another_vendas_data, self.admin_token)
+        if success:
+            # Login as other vendas user
+            success, other_login = self.make_request('POST', 'login', {
+                'username': 'OUTRO_VENDAS',
+                'password': '123456'
+            })
+            
+            if success and 'access_token' in other_login:
+                other_token = other_login['access_token']
+                other_user_id = other_login['user']['id']
+                
+                # Create a sale as other user
+                if created_clients and created_products:
+                    success, other_sale = self.make_request('POST', 'sales', {
+                        'client_id': created_clients[0]['id'],
+                        'product_id': created_products[0]['id'],
+                        'quantity': 1,
+                        'payment_method': 'dinheiro'
+                    }, other_token)
+                    
+                    if success:
+                        self.log_test("Create Sale as Other Vendas User", True, 
+                                     f"vendedor_id: {other_sale.get('vendedor_id')}")
+                        
+                        # Test that other user sees only their own sales
+                        success, other_reports = self.make_request('GET', 'sales/my-reports', token=other_token)
+                        if success:
+                            other_sales_list = other_reports.get('sales', [])
+                            only_own_sales = all(
+                                sale.get('vendedor_id') == other_user_id for sale in other_sales_list
+                            )
+                            self.log_test("Other Vendas User Sees Only Own Sales", only_own_sales,
+                                         f"Other user sees {len(other_sales_list)} sales, all with correct vendedor_id")
+                            
+                            # Test that Veronica still sees only her sales
+                            success, veronica_reports_again = self.make_request('GET', 'sales/my-reports', token=veronica_token)
+                            if success:
+                                veronica_sales_again = veronica_reports_again.get('sales', [])
+                                still_only_veronica = all(
+                                    sale.get('vendedor_id') == veronica_user_id for sale in veronica_sales_again
+                                )
+                                self.log_test("VERONICA Still Sees Only Own Sales", still_only_veronica,
+                                             f"Veronica sees {len(veronica_sales_again)} sales after other user created sale")
+        
+        print("   ✅ VERONICA SALES REPORTING INVESTIGATION COMPLETED")
+        return True
+
     def run_all_tests(self):
         """Run all tests in sequence"""
         print("🚀 Starting Comprehensive Backend API Tests")
