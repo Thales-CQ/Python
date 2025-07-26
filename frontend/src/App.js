@@ -34,14 +34,10 @@ const SplashScreen = ({ onSplashComplete }) => {
         // Login aparece por cima da imagem
         <div className="login-over-image">
           <LoginPage 
-            setToken={(token) => {
-              localStorage.setItem('token', token);
-              // Recarregar a página para que o App detecte o token
-              window.location.reload();
-            }}
-            setUser={() => {}}
-            setIsAuthenticated={() => {
-              // Login bem-sucedido, a página vai recarregar
+            setIsAuthenticated={(isAuth) => {
+              if (isAuth) {
+                onSplashComplete();
+              }
             }}
             toUpperCase={toUpperCase}
           />
