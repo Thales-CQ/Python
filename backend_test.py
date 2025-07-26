@@ -646,7 +646,7 @@ class CaixaAPITester:
         self.log_test("Get Pending Bills", success, f"Found {len(data) if isinstance(data, list) else 0} pending bills" if success else str(data))
 
     def test_activity_logs(self):
-        """Test activity logging system"""
+        """Test activity logging system with enhanced filtering"""
         if not self.admin_token:
             self.log_test("Activity Logs", False, "No admin token")
             return
@@ -670,6 +670,35 @@ class CaixaAPITester:
                          f"Found activity types: {found_activities}")
         else:
             self.log_test("Get Activity Logs", False, str(logs))
+
+        # Test activity log filtering by date
+        print("   Testing activity log filtering by date...")
+        today = datetime.now().strftime('%Y-%m-%d')
+        success, filtered_logs = self.make_request('GET', f'activity-logs?start_date={today}', token=self.admin_token)
+        if success:
+            self.log_test("Filter Activity Logs by Date", True, f"Found {len(filtered_logs)} logs for today")
+        else:
+            self.log_test("Filter Activity Logs by Date", False, str(filtered_logs))
+
+        # Test activity log filtering by user name
+        print("   Testing activity log filtering by user name...")
+        success, filtered_logs = self.make_request('GET', 'activity-logs?user_name=ADMIN', token=self.admin_token)
+        if success:
+            admin_logs = [log for log in filtered_logs if 'ADMIN' in log.get('user_name', '')]
+            self.log_test("Filter Activity Logs by User Name", len(admin_logs) > 0, 
+                         f"Found {len(admin_logs)} logs for ADMIN user")
+        else:
+            self.log_test("Filter Activity Logs by User Name", False, str(filtered_logs))
+
+        # Test activity log filtering by activity type
+        print("   Testing activity log filtering by activity type...")
+        success, filtered_logs = self.make_request('GET', 'activity-logs?activity_type=login', token=self.admin_token)
+        if success:
+            login_logs = [log for log in filtered_logs if log.get('activity_type') == 'login']
+            self.log_test("Filter Activity Logs by Activity Type", len(login_logs) > 0,
+                         f"Found {len(login_logs)} login activity logs")
+        else:
+            self.log_test("Filter Activity Logs by Activity Type", False, str(filtered_logs))
 
     def test_user_activation_deactivation(self):
         """Test user activation/deactivation"""
