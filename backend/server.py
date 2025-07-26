@@ -132,6 +132,7 @@ class User(BaseModel):
     role: UserRole
     permissions: Optional[dict] = Field(default_factory=dict)
     active: bool = True
+    require_password_change: bool = False  # Force password change on next login
     created_at: datetime = Field(default_factory=datetime.utcnow)
     created_by: Optional[str] = None
     
