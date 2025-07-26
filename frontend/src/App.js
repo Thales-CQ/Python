@@ -1770,6 +1770,9 @@ const ProductsPage = ({ user, token, toUpperCase }) => {
                     <td className="px-6 py-4 text-sm text-gray-900">
                       {product.description || '-'}
                     </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                      {product.quantity ? product.quantity : 'Infinita'}
+                    </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <span className={`px-2 py-1 text-xs font-medium rounded-full ${
                         product.active ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
