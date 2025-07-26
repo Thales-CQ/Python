@@ -121,6 +121,10 @@ function App() {
       if (response.ok) {
         const userData = await response.json();
         setUser(userData);
+        // Set initial page based on user role
+        if (userData.role === 'vendas') {
+          setCurrentPage('clients');
+        }
         setIsAuthenticated(true);
       } else {
         localStorage.removeItem('token');
