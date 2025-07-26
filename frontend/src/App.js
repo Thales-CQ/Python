@@ -2011,6 +2011,30 @@ function App() {
                 </select>
               </div>
               <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Produto (Opcional)</label>
+                <select
+                  value={billData.product_id || ''}
+                  onChange={(e) => {
+                    const productId = e.target.value;
+                    const product = products.find(p => p.id === productId);
+                    setBillData({
+                      ...billData, 
+                      product_id: productId,
+                      total_amount: product ? product.price.toString() : '',
+                      description: product ? product.name : ''
+                    });
+                  }}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                >
+                  <option value="">Selecione um produto</option>
+                  {products.map(product => (
+                    <option key={product.id} value={product.id}>
+                      {product.code} - {product.name} - R$ {product.price.toFixed(2)}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Valor Total (R$)</label>
                 <input
                   type="number"
@@ -2018,8 +2042,14 @@ function App() {
                   value={billData.total_amount}
                   onChange={(e) => setBillData({...billData, total_amount: e.target.value})}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  required
+                  required={!billData.product_id}
+                  disabled={!!billData.product_id}
                 />
+                {billData.product_id && (
+                  <p className="text-xs text-gray-500 mt-1">
+                    Valor do produto selecionado
+                  </p>
+                )}
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Número de Parcelas</label>
@@ -2033,7 +2063,7 @@ function App() {
                   ))}
                 </select>
               </div>
-              <div>
+              <div className="md:col-span-2">
                 <label className="block text-sm font-medium text-gray-700 mb-1">Descrição</label>
                 <input
                   type="text"
@@ -2044,6 +2074,15 @@ function App() {
                   required
                 />
               </div>
+              {billData.total_amount && billData.installments && (
+                <div className="md:col-span-2 bg-blue-50 border border-blue-200 rounded-lg p-4">
+                  <h4 className="font-medium text-blue-900 mb-2">Resumo da Cobrança:</h4>
+                  <div className="text-sm text-blue-800">
+                    <p>Valor Total: R$ {parseFloat(billData.total_amount || 0).toFixed(2)}</p>
+                    <p>Parcelas: {billData.installments}x de R$ {(parseFloat(billData.total_amount || 0) / parseInt(billData.installments)).toFixed(2)}</p>
+                  </div>
+                </div>
+              )}
               <div className="md:col-span-2 flex space-x-2">
                 <button
                   type="submit"
