@@ -202,6 +202,8 @@ function App() {
         {currentPage === 'clients' && <ClientsPage user={user} token={token} toUpperCase={toUpperCase} />}
         {currentPage === 'sales' && user?.role === 'vendas' && <SalesPage user={user} token={token} toUpperCase={toUpperCase} />}
         {currentPage === 'my-reports' && user?.role === 'vendas' && <MyReportsPage user={user} token={token} />}
+        {currentPage === 'all-reports' && hasPermission(['admin', 'manager']) && <AllReportsPage user={user} token={token} />}
+        {currentPage === 'performance' && hasPermission(['admin', 'manager']) && <PerformancePage user={user} token={token} />}
         {currentPage === 'billing' && (hasPermission(['admin', 'manager']) || hasPermission(['reception'], 'bills')) && <BillingPage user={user} token={token} toUpperCase={toUpperCase} />}
         {currentPage === 'pending-charges' && (hasPermission(['admin', 'manager']) || hasPermission(['reception'], 'bills')) && <PendingChargesPage user={user} token={token} />}
         {currentPage === 'activity-logs' && (hasPermission(['admin']) || hasPermission(['reception'], 'reports')) && <ActivityLogsPage user={user} token={token} toUpperCase={toUpperCase} />}
