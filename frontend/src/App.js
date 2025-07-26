@@ -1,6 +1,18 @@
 import React, { useState, useEffect } from 'react';
 import './App.css';
 
+// Utility function for uppercase input
+const toUpperCase = (e) => {
+  const start = e.target.selectionStart;
+  const end = e.target.selectionEnd;
+  e.target.value = e.target.value.toUpperCase();
+  
+  // Only set selection range for input types that support it
+  if (e.target.type !== 'email' && e.target.type !== 'password' && e.target.type !== 'number') {
+    e.target.setSelectionRange(start, end);
+  }
+};
+
 // Splash Screen Component
 const SplashScreen = ({ onSplashComplete }) => {
   const [showLogin, setShowLogin] = useState(false);
