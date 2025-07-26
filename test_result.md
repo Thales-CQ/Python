@@ -251,15 +251,18 @@ backend:
 
   - task: "Enhanced User Management Functions"
     implemented: true
-    working: "NA"
+    working: true
     file: "server.py, App.js"
     stuck_count: 0
     priority: "high"
-    needs_retesting: true
+    needs_retesting: false
     status_history:
         - working: "NA"
           agent: "main"
           comment: "Added reset password, force password change, manage specific permissions functions. Managers can only manage reception users. Admin has full control. Added permission management UI"
+        - working: true
+          agent: "testing"
+          comment: "✅ TESTED: Enhanced user management functions working. Admin can reset passwords, manage permissions, activate/deactivate users, and delete users (except main admin). Password change endpoints work correctly. User update endpoints functional."
 
   - task: "Manager Permission Restrictions"
     implemented: true
