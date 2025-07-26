@@ -1723,6 +1723,15 @@ const ProductsPage = ({ user, token, toUpperCase }) => {
                       />
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
+                      <input
+                        type="number"
+                        value={editingProduct.quantity || ''}
+                        onChange={(e) => setEditingProduct({...editingProduct, quantity: e.target.value})}
+                        className="w-full px-2 py-1 border border-gray-300 rounded text-sm"
+                        placeholder="Infinita"
+                      />
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
                       <select
                         value={editingProduct.active}
                         onChange={(e) => setEditingProduct({...editingProduct, active: e.target.value === 'true'})}
