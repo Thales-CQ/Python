@@ -102,7 +102,7 @@
 # Testing Data - Main Agent and testing sub agent both should log testing data below this section
 #====================================================================================================
 
-user_problem_statement: Implementar melhorias no sistema de gestão de caixa incluindo mensagens de erro e validações, controle de acesso refinado, sistema completo de produtos e clientes, cobranças com filtros, página inicial reformulada, histórico de atividades com filtros, e nova interface com esquema de cores específico.
+user_problem_statement: Sistema de gestão de caixa aprimorado com: mudança de "vendedor" para "recepção", sistema de quantidade nos produtos (finita/infinita), permissões específicas avançadas para recepção (ex: acesso à cobrança), sistema de nova senha obrigatória no próximo login, mensagens de erro melhoradas, controle de acesso refinado, gestão completa de usuários, e restrições adequadas para gerentes.
 
 backend:
   - task: "Enhanced Error Messages and Validations"
