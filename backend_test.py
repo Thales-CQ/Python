@@ -836,6 +836,7 @@ class CaixaAPITester:
         self.test_advanced_specific_permissions()
         self.test_force_password_change_system()
         self.test_enhanced_user_management_functions()
+        self.test_user_deletion_comprehensive()  # Additional comprehensive deletion test
         self.test_manager_permission_restrictions()
 
         return True
