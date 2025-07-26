@@ -1726,7 +1726,7 @@ function App() {
 
     const fetchData = async () => {
       try {
-        const [clientsRes, billsRes, pendingRes] = await Promise.all([
+        const [clientsRes, billsRes, pendingRes, productsRes] = await Promise.all([
           fetch(`${API_URL}/api/clients`, {
             headers: { 'Authorization': `Bearer ${token}` },
           }),
@@ -1735,12 +1735,16 @@ function App() {
           }),
           fetch(`${API_URL}/api/bills/pending`, {
             headers: { 'Authorization': `Bearer ${token}` },
+          }),
+          fetch(`${API_URL}/api/products`, {
+            headers: { 'Authorization': `Bearer ${token}` },
           })
         ]);
 
         if (clientsRes.ok) setClients(await clientsRes.json());
         if (billsRes.ok) setBills(await billsRes.json());
         if (pendingRes.ok) setPendingBills(await pendingRes.json());
+        if (productsRes.ok) setProducts(await productsRes.json());
       } catch (err) {
         console.error('Erro ao buscar dados:', err);
       } finally {
