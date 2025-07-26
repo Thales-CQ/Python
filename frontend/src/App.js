@@ -147,7 +147,7 @@ function App() {
         user={user} 
         currentPage={currentPage} 
         setCurrentPage={setCurrentPage} 
-        logout={logout}
+        logout={handleLogout}
         hasPermission={hasPermission}
       />
       <main className="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8 content-with-sidebar page-transition">
