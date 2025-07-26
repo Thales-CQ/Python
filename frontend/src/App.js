@@ -2056,4 +2056,500 @@ const ClientsPage = ({ user, token, toUpperCase }) => {
   );
 };
 
+// Billing Page
+const BillingPage = ({ user, token, toUpperCase }) => {
+  const [clients, setClients] = useState([]);
+  const [products, setProducts] = useState([]);
+  const [bills, setBills] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [message, setMessage] = useState('');
+  const [createData, setCreateData] = useState({
+    client_id: '',
+    product_id: '',
+    total_amount: '',
+    description: '',
+    installments: '1'
+  });
+
+  useEffect(() => {
+    fetchInitialData();
+  }, []);
+
+  const fetchInitialData = async () => {
+    setLoading(true);
+    try {
+      const [clientsRes, productsRes, billsRes] = await Promise.all([
+        fetch(`${API_URL}/api/clients`, { headers: { 'Authorization': `Bearer ${token}` } }),
+        fetch(`${API_URL}/api/products`, { headers: { 'Authorization': `Bearer ${token}` } }),
+        fetch(`${API_URL}/api/bills`, { headers: { 'Authorization': `Bearer ${token}` } })
+      ]);
+
+      if (clientsRes.ok) {
+        const clientsData = await clientsRes.json();
+        setClients(clientsData);
+      }
+      if (productsRes.ok) {
+        const productsData = await productsRes.json();
+        setProducts(productsData);
+      }
+      if (billsRes.ok) {
+        const billsData = await billsRes.json();
+        setBills(billsData);
+      }
+    } catch (err) {
+      console.error('Erro ao carregar dados:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleCreateBill = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    setMessage('');
+
+    try {
+      const response = await fetch(`${API_URL}/api/bills`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          ...createData,
+          total_amount: parseFloat(createData.total_amount),
+          installments: parseInt(createData.installments)
+        }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        setMessage('Cobrança criada com sucesso!');
+        setCreateData({
+          client_id: '',
+          product_id: '',
+          total_amount: '',
+          description: '',
+          installments: '1'
+        });
+        fetchInitialData();
+        setTimeout(() => setMessage(''), 5000);
+      } else {
+        setMessage(`Erro: ${data.detail}`);
+      }
+    } catch (err) {
+      setMessage('Erro de conexão');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const selectedProduct = products.find(p => p.id === createData.product_id);
+
+  return (
+    <div className="space-y-6">
+      <div className="bg-white rounded-lg shadow p-6">
+        <h2 className="text-2xl font-bold text-gray-900 mb-6">Criar Nova Cobrança</h2>
+
+        {message && (
+          <div className={`mb-4 p-3 rounded ${
+            message.includes('Erro') ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'
+          }`}>
+            {message}
+          </div>
+        )}
+
+        <form onSubmit={handleCreateBill} className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Cliente *
+            </label>
+            <select
+              value={createData.client_id}
+              onChange={(e) => setCreateData({...createData, client_id: e.target.value})}
+              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              required
+            >
+              <option value="">Selecione um cliente</option>
+              {clients.map(client => (
+                <option key={client.id} value={client.id}>
+                  {client.name} - {client.cpf}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Produto (Opcional)
+            </label>
+            <select
+              value={createData.product_id}
+              onChange={(e) => {
+                const productId = e.target.value;
+                const product = products.find(p => p.id === productId);
+                setCreateData({
+                  ...createData, 
+                  product_id: productId,
+                  total_amount: product ? product.price.toString() : createData.total_amount
+                });
+              }}
+              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            >
+              <option value="">Selecione um produto</option>
+              {products.map(product => (
+                <option key={product.id} value={product.id}>
+                  {product.code} - {product.name} - R$ {product.price.toFixed(2)}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Valor Total (R$) *
+            </label>
+            <input
+              type="number"
+              step="0.01"
+              value={createData.total_amount}
+              onChange={(e) => setCreateData({...createData, total_amount: e.target.value})}
+              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              required
+            />
+            {selectedProduct && (
+              <p className="text-sm text-gray-500 mt-1">
+                Preço do produto: R$ {selectedProduct.price.toFixed(2)}
+              </p>
+            )}
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Número de Parcelas *
+            </label>
+            <select
+              value={createData.installments}
+              onChange={(e) => setCreateData({...createData, installments: e.target.value})}
+              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              required
+            >
+              {[1,2,3,4,5,6,7,8,9,10,11,12].map(num => (
+                <option key={num} value={num}>{num}x</option>
+              ))}
+            </select>
+            {createData.total_amount && createData.installments && (
+              <p className="text-sm text-gray-500 mt-1">
+                Valor por parcela: R$ {(parseFloat(createData.total_amount) / parseInt(createData.installments)).toFixed(2)}
+              </p>
+            )}
+          </div>
+
+          <div className="md:col-span-2">
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Descrição *
+            </label>
+            <textarea
+              value={createData.description}
+              onChange={(e) => setCreateData({...createData, description: e.target.value})}
+              onInput={toUpperCase}
+              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              rows="3"
+              required
+            />
+          </div>
+
+          <div className="md:col-span-2">
+            <button
+              type="submit"
+              disabled={loading}
+              className="w-full bg-blue-600 text-white py-3 px-4 rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 font-medium"
+            >
+              {loading ? 'Criando...' : 'Criar Cobrança'}
+            </button>
+          </div>
+        </form>
+      </div>
+
+      {/* Recent Bills */}
+      <div className="bg-white rounded-lg shadow">
+        <div className="px-6 py-4 border-b">
+          <h3 className="text-lg font-medium text-gray-900">Cobranças Recentes</h3>
+        </div>
+        <div className="overflow-x-auto">
+          <table className="w-full">
+            <thead className="bg-gray-50">
+              <tr>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Cliente
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Produto
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Valor Total
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Parcelas
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Data
+                </th>
+              </tr>
+            </thead>
+            <tbody className="bg-white divide-y divide-gray-200">
+              {bills.slice(0, 10).map((bill) => (
+                <tr key={bill.id}>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                    {bill.client_name}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                    {bill.product_name || 'Sem produto'}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                    R$ {bill.total_amount.toFixed(2)}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                    {bill.installments}x
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                    {new Date(bill.created_at).toLocaleDateString('pt-BR')}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// Pending Charges Page
+const PendingChargesPage = ({ user, token }) => {
+  const [pendingBills, setPendingBills] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [filters, setFilters] = useState({
+    month: new Date().getMonth() + 1,
+    year: new Date().getFullYear(),
+    clientName: ''
+  });
+  const [message, setMessage] = useState('');
+
+  useEffect(() => {
+    fetchPendingBills();
+  }, [filters]);
+
+  const fetchPendingBills = async () => {
+    setLoading(true);
+    try {
+      const params = new URLSearchParams();
+      if (filters.month) params.append('month', filters.month);
+      if (filters.year) params.append('year', filters.year);
+      if (filters.clientName) params.append('client_name', filters.clientName);
+
+      const response = await fetch(`${API_URL}/api/bills/pending?${params}`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setPendingBills(data);
+      }
+    } catch (err) {
+      console.error('Erro ao buscar cobranças pendentes:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handlePayInstallment = async (installmentId) => {
+    if (!window.confirm('Confirma o pagamento desta parcela?')) {
+      return;
+    }
+
+    setMessage('');
+    try {
+      const response = await fetch(`${API_URL}/api/bills/installments/${installmentId}/pay`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+        body: JSON.stringify({ payment_method: 'dinheiro' }),
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setMessage(`Pagamento registrado! Parcela ${data.installment_paid} paga - R$ ${data.amount.toFixed(2)}`);
+        fetchPendingBills();
+        setTimeout(() => setMessage(''), 5000);
+      } else {
+        const errorData = await response.json();
+        setMessage(`Erro: ${errorData.detail}`);
+      }
+    } catch (err) {
+      setMessage('Erro de conexão');
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center h-64">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-yellow-600"></div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-6">
+      <div className="bg-white rounded-lg shadow">
+        <div className="px-6 py-4 border-b">
+          <h2 className="text-xl font-bold text-gray-900">Cobranças Pendentes</h2>
+        </div>
+
+        {/* Filters */}
+        <div className="px-6 py-4 border-b bg-yellow-50">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Mês
+              </label>
+              <select
+                value={filters.month}
+                onChange={(e) => setFilters({...filters, month: e.target.value})}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-yellow-500"
+              >
+                <option value="1">Janeiro</option>
+                <option value="2">Fevereiro</option>
+                <option value="3">Março</option>
+                <option value="4">Abril</option>
+                <option value="5">Maio</option>
+                <option value="6">Junho</option>
+                <option value="7">Julho</option>
+                <option value="8">Agosto</option>
+                <option value="9">Setembro</option>
+                <option value="10">Outubro</option>
+                <option value="11">Novembro</option>
+                <option value="12">Dezembro</option>
+              </select>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Ano
+              </label>
+              <input
+                type="number"
+                value={filters.year}
+                onChange={(e) => setFilters({...filters, year: e.target.value})}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-yellow-500"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Nome do Cliente
+              </label>
+              <input
+                type="text"
+                value={filters.clientName}
+                onChange={(e) => setFilters({...filters, clientName: e.target.value})}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-yellow-500"
+                placeholder="DIGITE O NOME..."
+              />
+            </div>
+          </div>
+        </div>
+
+        {message && (
+          <div className={`mx-6 mt-4 p-3 rounded ${
+            message.includes('Erro') ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'
+          }`}>
+            {message}
+          </div>
+        )}
+
+        <div className="overflow-x-auto">
+          <table className="w-full">
+            <thead className="bg-gray-50">
+              <tr>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Cliente
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Produto
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Parcela
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Valor
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Vencimento
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Status
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Ações
+                </th>
+              </tr>
+            </thead>
+            <tbody className="bg-white divide-y divide-gray-200">
+              {pendingBills.map((bill) => (
+                <tr key={bill.id} className={bill.status === 'overdue' ? 'bg-red-50' : ''}>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                    <div>
+                      <p className="font-medium">{bill.client_name}</p>
+                      <p className="text-xs text-gray-500">{bill.client_cpf}</p>
+                    </div>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                    {bill.product_code ? `${bill.product_code} - ${bill.product_name}` : 'Sem produto'}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                    {bill.installment_number}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                    R$ {bill.amount.toFixed(2)}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                    {new Date(bill.due_date).toLocaleDateString('pt-BR')}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <span className={`px-2 py-1 text-xs font-medium rounded-full ${
+                      bill.status === 'overdue' 
+                        ? 'bg-red-100 text-red-800' 
+                        : 'bg-yellow-100 text-yellow-800'
+                    }`}>
+                      {bill.status === 'overdue' ? 'VENCIDA' : 'PENDENTE'}
+                    </span>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm space-x-2">
+                    <button
+                      onClick={() => handlePayInstallment(bill.id)}
+                      className="bg-green-600 text-white px-3 py-1 rounded-md hover:bg-green-700 text-xs font-medium"
+                    >
+                      Quitar Dívida
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+
+        {pendingBills.length === 0 && (
+          <div className="text-center py-8 text-gray-500">
+            <p>Nenhuma cobrança pendente encontrada para o período selecionado</p>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
+
 export default App;
