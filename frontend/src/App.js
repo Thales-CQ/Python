@@ -278,25 +278,27 @@ const Header = ({ user, currentPage, setCurrentPage, logout, hasPermission }) =>
               Histórico
             </button>
 
-            {(hasPermission(['admin', 'manager']) || hasPermission(['reception'], 'products')) && (
+            {(hasPermission(['admin', 'manager']) || hasPermission(['reception'], 'products') || hasPermission(['reception'], 'bills')) && (
               <>
                 <div className="border-t-2 border-yellow-300 my-3 pt-3">
                   <div className="text-xs font-bold text-yellow-100 px-3 mb-2">GERENCIAMENTO</div>
                 </div>
 
-                <button
-                  onClick={() => setCurrentPage('products')}
-                  className={`w-full flex items-center px-3 py-3 text-sm font-bold rounded-lg transition-all duration-200 menu-item-enter ${
-                    currentPage === 'products' 
-                      ? 'bg-white text-red-600 shadow-lg transform scale-105' 
-                      : 'text-white hover:bg-white hover:text-red-600 hover:shadow-md hover:transform hover:scale-105'
-                  }`}
-                >
-                  <svg className="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
-                  </svg>
-                  Produtos
-                </button>
+                {(hasPermission(['admin', 'manager']) || hasPermission(['reception'], 'products')) && (
+                  <button
+                    onClick={() => setCurrentPage('products')}
+                    className={`w-full flex items-center px-3 py-3 text-sm font-bold rounded-lg transition-all duration-200 menu-item-enter ${
+                      currentPage === 'products' 
+                        ? 'bg-white text-red-600 shadow-lg transform scale-105' 
+                        : 'text-white hover:bg-white hover:text-red-600 hover:shadow-md hover:transform hover:scale-105'
+                    }`}
+                  >
+                    <svg className="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+                    </svg>
+                    Produtos
+                  </button>
+                )}
                 
                 <button
                   onClick={() => setCurrentPage('clients')}
@@ -312,47 +314,53 @@ const Header = ({ user, currentPage, setCurrentPage, logout, hasPermission }) =>
                   Clientes
                 </button>
                 
-                <button
-                  onClick={() => setCurrentPage('billing')}
-                  className={`w-full flex items-center px-3 py-3 text-sm font-bold rounded-lg transition-all duration-200 menu-item-enter ${
-                    currentPage === 'billing' 
-                      ? 'bg-white text-red-600 shadow-lg transform scale-105' 
-                      : 'text-white hover:bg-white hover:text-red-600 hover:shadow-md hover:transform hover:scale-105'
-                  }`}
-                >
-                  <svg className="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
-                  </svg>
-                  Cobranças
-                </button>
+                {(hasPermission(['admin', 'manager']) || hasPermission(['reception'], 'bills')) && (
+                  <>
+                    <button
+                      onClick={() => setCurrentPage('billing')}
+                      className={`w-full flex items-center px-3 py-3 text-sm font-bold rounded-lg transition-all duration-200 menu-item-enter ${
+                        currentPage === 'billing' 
+                          ? 'bg-white text-red-600 shadow-lg transform scale-105' 
+                          : 'text-white hover:bg-white hover:text-red-600 hover:shadow-md hover:transform hover:scale-105'
+                      }`}
+                    >
+                      <svg className="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                      </svg>
+                      Cobranças
+                    </button>
+                    
+                    <button
+                      onClick={() => setCurrentPage('pending-charges')}
+                      className={`w-full flex items-center px-3 py-3 text-sm font-bold rounded-lg transition-all duration-200 menu-item-enter ${
+                        currentPage === 'pending-charges' 
+                          ? 'bg-black text-yellow-400 shadow-lg transform scale-105' 
+                          : 'text-white hover:bg-black hover:text-yellow-400 hover:shadow-md hover:transform hover:scale-105'
+                      }`}
+                    >
+                      <svg className="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      </svg>
+                      Pendências
+                    </button>
+                  </>
+                )}
                 
-                <button
-                  onClick={() => setCurrentPage('pending-charges')}
-                  className={`w-full flex items-center px-3 py-3 text-sm font-bold rounded-lg transition-all duration-200 menu-item-enter ${
-                    currentPage === 'pending-charges' 
-                      ? 'bg-black text-yellow-400 shadow-lg transform scale-105' 
-                      : 'text-white hover:bg-black hover:text-yellow-400 hover:shadow-md hover:transform hover:scale-105'
-                  }`}
-                >
-                  <svg className="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                  </svg>
-                  Pendências
-                </button>
-                
-                <button
-                  onClick={() => setCurrentPage('users')}
-                  className={`w-full flex items-center px-3 py-3 text-sm font-bold rounded-lg transition-all duration-200 menu-item-enter ${
-                    currentPage === 'users' 
-                      ? 'bg-white text-red-600 shadow-lg transform scale-105' 
-                      : 'text-white hover:bg-white hover:text-red-600 hover:shadow-md hover:transform hover:scale-105'
-                  }`}
-                >
-                  <svg className="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z" />
-                  </svg>
-                  Usuários
-                </button>
+                {hasPermission(['admin', 'manager']) && (
+                  <button
+                    onClick={() => setCurrentPage('users')}
+                    className={`w-full flex items-center px-3 py-3 text-sm font-bold rounded-lg transition-all duration-200 menu-item-enter ${
+                      currentPage === 'users' 
+                        ? 'bg-white text-red-600 shadow-lg transform scale-105' 
+                        : 'text-white hover:bg-white hover:text-red-600 hover:shadow-md hover:transform hover:scale-105'
+                    }`}
+                  >
+                    <svg className="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z" />
+                    </svg>
+                    Usuários
+                  </button>
+                )}
               </>
             )}
 
