@@ -1227,6 +1227,45 @@ async def pay_installment(
 
 @api_router.get("/dashboard/stats")
 async def get_dashboard_stats(current_user: User = Depends(get_current_user)):
+    """Get dashboard statistics for the homepage"""
+    # Get current month transactions
+    now = datetime.utcnow()
+    start_of_month = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+    
+    transactions = await db.transactions.find({
+        "created_at": {"$gte": start_of_month},
+        "cancelled": False
+    }).to_list(1000)
+    
+    # Get today's transactions
+    start_of_day = now.replace(hour=0, minute=0, second=0, microsecond=0)
+    today_transactions = await db.transactions.find({
+        "created_at": {"$gte": start_of_day},
+        "cancelled": False
+    }).to_list(1000)
+    
+    # Calculate totals
+    total_entrada = sum(t["amount"] for t in transactions if t["type"] in ["entrada", "pagamento_cliente"])
+    total_saida = sum(t["amount"] for t in transactions if t["type"] == "saida")
+    saldo = total_entrada - total_saida
+    
+    # Get recent transactions for preview (last 10)
+    recent_transactions = await db.transactions.find({
+        "cancelled": False
+    }).sort("created_at", -1).limit(10).to_list(10)
+    
+    return {
+        "total_entrada": total_entrada,
+        "total_saida": total_saida,
+        "saldo": saldo,
+        "total_transactions": len(transactions),
+        "today_transactions": len(today_transactions),
+        "current_datetime": now.isoformat(),
+        "recent_transactions": [Transaction(**t) for t in recent_transactions]
+    }
+
+@api_router.get("/transactions/summary")
+async def get_transactions_summary(current_user: User = Depends(get_current_user)):
     # Get current month transactions
     now = datetime.utcnow()
     start_of_month = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
