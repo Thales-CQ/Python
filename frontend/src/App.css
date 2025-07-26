@@ -12,8 +12,8 @@
   --primary-white: #ffffff;
 }
 
-/* Splash Screen Styles */
-.splash-screen {
+/* Splash Screen com Imagem Específica */
+.splash-screen-with-image {
   position: fixed;
   top: 0;
   left: 0;
@@ -23,33 +23,28 @@
   overflow: hidden;
 }
 
-.splash-background {
+.splash-image-background {
   position: absolute;
   top: 0;
   left: 0;
   width: 100%;
   height: 100%;
-  background: linear-gradient(135deg, 
-    #1e3a8a 0%,     /* Azul escuro */
-    #3b82f6 25%,    /* Azul */
-    #ef4444 50%,    /* Vermelho */
-    #f59e0b 75%,    /* Amarelo */
-    #1f2937 100%    /* Preto */
-  );
-  background-size: 400% 400%;
-  animation: gradientShift 8s ease infinite;
+  background-image: url('https://customer-assets.emergentagent.com/job_finflow-74/artifacts/lbap766t_ChatGPT%20Image%2026%20de%20jul.%20de%202025%2C%2016_28_44.png');
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
 }
 
-.splash-overlay {
+.splash-overlay-dark {
   position: absolute;
   top: 0;
   left: 0;
   width: 100%;
   height: 100%;
-  background: rgba(0, 0, 0, 0.3);
+  background: rgba(0, 0, 0, 0.4);
 }
 
-.splash-content {
+.splash-content-initial {
   position: relative;
   display: flex;
   flex-direction: column;
@@ -62,29 +57,21 @@
   animation: fadeInUp 1.5s ease-out;
 }
 
-.splash-logo {
-  margin-bottom: 2rem;
-  animation: logoFloat 3s ease-in-out infinite;
-}
-
-.logo-icon {
-  background: rgba(255, 255, 255, 0.1);
-  border-radius: 50%;
-  padding: 2rem;
-  border: 3px solid rgba(255, 255, 255, 0.3);
+.company-logo-area {
+  background: rgba(0, 0, 0, 0.6);
+  padding: 3rem 4rem;
+  border-radius: 20px;
+  border: 2px solid rgba(255, 255, 255, 0.3);
   backdrop-filter: blur(10px);
+  box-shadow: 0 25px 50px rgba(0, 0, 0, 0.3);
 }
 
-.splash-title {
-  margin-bottom: 3rem;
-}
-
-.system-title {
+.company-name {
   font-size: 3.5rem;
   font-weight: 900;
-  margin-bottom: 0.5rem;
-  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
-  background: linear-gradient(45deg, #ffffff, #fbbf24, #ffffff);
+  margin-bottom: 1rem;
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.7);
+  background: linear-gradient(45deg, #fbbf24, #f59e0b, #fbbf24);
   background-size: 200% 200%;
   -webkit-background-clip: text;
   background-clip: text;
@@ -92,44 +79,33 @@
   animation: textShine 2s ease-in-out infinite;
 }
 
-.company-title {
-  font-size: 2rem;
-  font-weight: 700;
-  margin-bottom: 1rem;
-  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
-  color: #f1f5f9;
-}
-
-.splash-subtitle {
-  font-size: 1.2rem;
+.company-subtitle {
+  font-size: 1.5rem;
   font-weight: 400;
-  opacity: 0.9;
   color: #e2e8f0;
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.7);
 }
 
-.loading-bar {
-  width: 300px;
-  height: 6px;
-  background: rgba(255, 255, 255, 0.2);
-  border-radius: 3px;
-  overflow: hidden;
-  margin-bottom: 2rem;
+.login-over-image {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100vh;
+  padding: 2rem;
+  animation: fadeInUp 1s ease-out;
 }
 
-.loading-progress {
-  height: 100%;
-  background: linear-gradient(90deg, #fbbf24, #f59e0b, #fbbf24);
-  background-size: 200% 100%;
-  border-radius: 3px;
-  animation: loadingBar 6s ease-in-out forwards, shimmer 1.5s ease-in-out infinite;
+.login-over-image .min-h-screen {
+  min-height: auto;
+  background: transparent;
 }
 
-.splash-version {
-  position: absolute;
-  bottom: 2rem;
-  font-size: 0.9rem;
-  opacity: 0.7;
-  color: #cbd5e1;
+.login-over-image .bg-white {
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  box-shadow: 0 25px 50px rgba(0, 0, 0, 0.3);
 }
 
 /* Splash Screen Animations */
