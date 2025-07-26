@@ -121,7 +121,7 @@ class CashSystemTester:
             "email": "JOAO@EMAIL.COM",
             "phone": "11999999999",
             "address": "RUA DAS FLORES, 123",
-            "cpf": "11144477735"  # Valid CPF format
+            "cpf": f"111444777{35 + int(time.time()) % 10}"  # Generate unique valid CPF
         }
         
         success, response = self.run_test(
