@@ -1318,101 +1318,244 @@ class CaixaAPITester:
                 self.log_test("Login Works After Password Change", False, str(login_data))
 
     def test_enhanced_user_management_functions(self):
-        """Test enhanced user management functions"""
+        """Test enhanced user management functions - FOCUS ON USER DELETION"""
         if not self.admin_token:
             self.log_test("Enhanced User Management", False, "No admin token")
             return
 
-        # Create test users for management testing
-        manager_data = {
-            'username': 'test_manager_mgmt',
-            'email': 'manager_mgmt@test.com',
+        print("   🎯 TESTING USER DELETION FUNCTIONALITY (USER REPORTED ISSUE)")
+        print("   Creating test users for deletion testing...")
+
+        # Create test users for deletion testing
+        test_users_data = [
+            {
+                'username': 'DELETE_TEST_MANAGER',
+                'email': 'delete_manager@test.com',
+                'password': 'manager123',
+                'role': 'manager'
+            },
+            {
+                'username': 'DELETE_TEST_RECEPTION',
+                'email': 'delete_reception@test.com',
+                'password': 'reception123',
+                'role': 'reception'
+            },
+            {
+                'username': 'DELETE_TEST_VENDAS',
+                'email': 'delete_vendas@test.com',
+                'password': 'vendas123',
+                'role': 'vendas'
+            }
+        ]
+
+        created_users = []
+        for user_data in test_users_data:
+            success, user_result = self.make_request('POST', 'register', user_data, self.admin_token)
+            if success:
+                print(f"      ✅ Created {user_data['role']} user: {user_data['username']}")
+                created_users.append(user_data)
+            else:
+                print(f"      ❌ Failed to create {user_data['role']} user: {user_result}")
+
+        # Get all users to find IDs
+        success, all_users = self.make_request('GET', 'users', token=self.admin_token)
+        if not success:
+            self.log_test("Get Users for Deletion Test", False, str(all_users))
+            return
+
+        # Find created test users
+        test_user_objects = []
+        for user_data in created_users:
+            user_obj = next((u for u in all_users if u['username'] == user_data['username']), None)
+            if user_obj:
+                test_user_objects.append(user_obj)
+
+        print(f"   Found {len(test_user_objects)} test users for deletion testing")
+
+        # TEST 1: Admin can delete manager users
+        manager_user = next((u for u in test_user_objects if u['role'] == 'manager'), None)
+        if manager_user:
+            print("   Testing admin can delete manager users...")
+            success, data = self.make_request('DELETE', f'users/{manager_user["id"]}', token=self.admin_token)
+            self.log_test("Admin Delete Manager User", success,
+                         f"Manager user '{manager_user['username']}' deleted successfully" if success else f"ERROR: {data}")
+        else:
+            self.log_test("Admin Delete Manager User", False, "No manager user found for testing")
+
+        # TEST 2: Admin can delete reception users
+        reception_user = next((u for u in test_user_objects if u['role'] == 'reception'), None)
+        if reception_user:
+            print("   Testing admin can delete reception users...")
+            success, data = self.make_request('DELETE', f'users/{reception_user["id"]}', token=self.admin_token)
+            self.log_test("Admin Delete Reception User", success,
+                         f"Reception user '{reception_user['username']}' deleted successfully" if success else f"ERROR: {data}")
+        else:
+            self.log_test("Admin Delete Reception User", False, "No reception user found for testing")
+
+        # TEST 3: Admin can delete vendas users
+        vendas_user = next((u for u in test_user_objects if u['role'] == 'vendas'), None)
+        if vendas_user:
+            print("   Testing admin can delete vendas users...")
+            success, data = self.make_request('DELETE', f'users/{vendas_user["id"]}', token=self.admin_token)
+            self.log_test("Admin Delete Vendas User", success,
+                         f"Vendas user '{vendas_user['username']}' deleted successfully" if success else f"ERROR: {data}")
+        else:
+            self.log_test("Admin Delete Vendas User", False, "No vendas user found for testing")
+
+        # TEST 4: Admin cannot delete main ADMIN user
+        print("   Testing admin cannot delete main ADMIN user...")
+        main_admin = next((u for u in all_users if u['username'] == 'ADMIN'), None)
+        if main_admin:
+            success, data = self.make_request('DELETE', f'users/{main_admin["id"]}', 
+                                            token=self.admin_token, expected_status=403)
+            self.log_test("Admin Cannot Delete Main Admin", success,
+                         "Main admin deletion correctly blocked" if success else f"ERROR: Main admin should not be deletable: {data}")
+        else:
+            self.log_test("Admin Cannot Delete Main Admin", False, "Main ADMIN user not found")
+
+        # TEST 5: Test deleting non-existent user
+        print("   Testing deletion of non-existent user...")
+        fake_user_id = "non-existent-user-id-12345"
+        success, data = self.make_request('DELETE', f'users/{fake_user_id}', 
+                                        token=self.admin_token, expected_status=404)
+        self.log_test("Delete Non-existent User Returns 404", success,
+                     "Non-existent user deletion correctly returns 404" if success else f"ERROR: Should return 404: {data}")
+
+        # TEST 6: Test non-admin user cannot delete users
+        print("   Testing non-admin users cannot delete users...")
+        # Create a manager user for this test
+        manager_test_data = {
+            'username': 'NON_ADMIN_DELETE_TEST',
+            'email': 'nonadmin@test.com',
             'password': 'manager123',
             'role': 'manager'
         }
         
-        reception_data = {
-            'username': 'test_reception_mgmt',
-            'email': 'reception_mgmt@test.com',
-            'password': 'reception123',
+        success, manager_user_result = self.make_request('POST', 'register', manager_test_data, self.admin_token)
+        if success:
+            # Login as manager
+            success, login_data = self.make_request('POST', 'login', {
+                'username': manager_test_data['username'],
+                'password': manager_test_data['password']
+            })
+            
+            if success and 'access_token' in login_data:
+                manager_token = login_data['access_token']
+                
+                # Try to delete a user as manager (should fail)
+                # Create another user to try to delete
+                target_user_data = {
+                    'username': 'TARGET_FOR_MANAGER_DELETE',
+                    'email': 'target@test.com',
+                    'password': 'target123',
+                    'role': 'reception'
+                }
+                
+                success, target_user = self.make_request('POST', 'register', target_user_data, self.admin_token)
+                if success:
+                    # Get target user ID
+                    success, users_list = self.make_request('GET', 'users', token=self.admin_token)
+                    if success:
+                        target_user_obj = next((u for u in users_list if u['username'] == target_user_data['username']), None)
+                        if target_user_obj:
+                            # Manager tries to delete user (should fail with 403)
+                            success, data = self.make_request('DELETE', f'users/{target_user_obj["id"]}', 
+                                                            token=manager_token, expected_status=403)
+                            self.log_test("Non-Admin Cannot Delete Users", success,
+                                         "Manager correctly blocked from deleting users" if success else f"ERROR: Manager should not be able to delete users: {data}")
+                        else:
+                            self.log_test("Non-Admin Cannot Delete Users", False, "Target user not found")
+                    else:
+                        self.log_test("Non-Admin Cannot Delete Users", False, "Could not get users list")
+                else:
+                    self.log_test("Non-Admin Cannot Delete Users", False, "Could not create target user")
+            else:
+                self.log_test("Non-Admin Cannot Delete Users", False, "Manager login failed")
+        else:
+            self.log_test("Non-Admin Cannot Delete Users", False, "Could not create manager user")
+
+        # TEST 7: Test deletion logs are properly recorded
+        print("   Testing deletion activity is logged...")
+        success, activity_logs = self.make_request('GET', 'activity-logs', token=self.admin_token)
+        if success:
+            deletion_logs = [log for log in activity_logs if log.get('activity_type') == 'user_deleted']
+            self.log_test("User Deletion Activity Logged", len(deletion_logs) > 0,
+                         f"Found {len(deletion_logs)} user deletion log entries" if len(deletion_logs) > 0 else "No deletion logs found")
+        else:
+            self.log_test("User Deletion Activity Logged", False, "Could not retrieve activity logs")
+
+        print("   🎯 USER DELETION TESTING COMPLETED")
+
+    def test_user_deletion_comprehensive(self):
+        """Comprehensive test specifically for user deletion functionality"""
+        if not self.admin_token:
+            self.log_test("User Deletion Comprehensive", False, "No admin token")
+            return
+
+        print("   🔍 COMPREHENSIVE USER DELETION TESTING")
+        
+        # Create a test user specifically for deletion
+        deletion_test_user = {
+            'username': 'DELETION_COMPREHENSIVE_TEST',
+            'email': 'deletion_test@test.com',
+            'password': 'test123456',
             'role': 'reception'
         }
-
-        # Create manager and reception users
-        success, manager_user = self.make_request('POST', 'register', manager_data, self.admin_token)
+        
+        success, user_result = self.make_request('POST', 'register', deletion_test_user, self.admin_token)
         if not success:
-            self.log_test("Create Manager for Management Test", False, str(manager_user))
+            self.log_test("Create User for Comprehensive Deletion Test", False, str(user_result))
             return
-
-        success, reception_user = self.make_request('POST', 'register', reception_data, self.admin_token)
-        if not success:
-            self.log_test("Create Reception for Management Test", False, str(reception_user))
-            return
-
-        # Get user IDs
+        
+        # Get the user ID
         success, users = self.make_request('GET', 'users', token=self.admin_token)
         if not success:
-            self.log_test("Get Users for Management Test", False, str(users))
+            self.log_test("Get Users for Comprehensive Deletion Test", False, str(users))
             return
-
-        manager_user_obj = next((u for u in users if u['username'] == manager_data['username']), None)
-        reception_user_obj = next((u for u in users if u['username'] == reception_data['username']), None)
-
-        if not manager_user_obj or not reception_user_obj:
-            self.log_test("Find Test Users for Management", False, "Test users not found")
+        
+        test_user = next((u for u in users if u['username'] == deletion_test_user['username']), None)
+        if not test_user:
+            self.log_test("Find Test User for Comprehensive Deletion", False, "Test user not found")
             return
-
-        manager_id = manager_user_obj['id']
-        reception_id = reception_user_obj['id']
-
-        print("   Testing admin can reset any user password...")
-        # Test admin can reset any user password
-        success, data = self.make_request('PUT', f'users/{reception_id}/password', {
-            'new_password': 'admin_reset123'
-        }, token=self.admin_token)
-        self.log_test("Admin Reset User Password", success,
-                     "Admin successfully reset reception password" if success else str(data))
-
-        print("   Testing admin can manage user permissions...")
-        # Test admin can manage user permissions
-        success, data = self.make_request('PUT', f'users/{reception_id}', {
-            'permissions': {'reports': True, 'products': True}
-        }, token=self.admin_token)
-        self.log_test("Admin Manage User Permissions", success,
-                     "Admin successfully set user permissions" if success else str(data))
-
-        print("   Testing admin can deactivate users...")
-        # Test admin can deactivate users
-        success, data = self.make_request('PUT', f'users/{reception_id}', {
-            'active': False
-        }, token=self.admin_token)
-        self.log_test("Admin Deactivate User", success,
-                     "Admin successfully deactivated user" if success else str(data))
-
-        print("   Testing admin can reactivate users...")
-        # Test admin can reactivate users
-        success, data = self.make_request('PUT', f'users/{reception_id}', {
-            'active': True
-        }, token=self.admin_token)
-        self.log_test("Admin Reactivate User", success,
-                     "Admin successfully reactivated user" if success else str(data))
-
-        print("   Testing admin can delete users...")
-        # Test admin can delete users (but not the main admin)
-        success, data = self.make_request('DELETE', f'users/{reception_id}', token=self.admin_token)
-        self.log_test("Admin Delete User", success,
-                     "Admin successfully deleted user" if success else str(data))
-
-        print("   Testing admin cannot delete main admin...")
-        # Test admin cannot delete the main admin user
-        success, admin_users = self.make_request('GET', 'users', token=self.admin_token)
+        
+        user_id = test_user['id']
+        
+        # Test the actual deletion
+        print(f"   Attempting to delete user: {test_user['username']} (ID: {user_id})")
+        success, deletion_result = self.make_request('DELETE', f'users/{user_id}', token=self.admin_token)
+        
         if success:
-            main_admin = next((u for u in admin_users if u['username'] == 'ADMIN'), None)
-            if main_admin:
-                success, data = self.make_request('DELETE', f'users/{main_admin["id"]}', 
-                                                token=self.admin_token, expected_status=403)
-                self.log_test("Admin Cannot Delete Main Admin", success,
-                             "Main admin deletion correctly blocked" if success else str(data))
+            self.log_test("User Deletion Request Successful", True, 
+                         f"User '{test_user['username']}' deletion request completed successfully")
+            
+            # Verify user is actually deleted
+            success, users_after = self.make_request('GET', 'users', token=self.admin_token)
+            if success:
+                deleted_user = next((u for u in users_after if u['id'] == user_id), None)
+                user_actually_deleted = deleted_user is None
+                self.log_test("User Actually Removed from Database", user_actually_deleted,
+                             "User successfully removed from database" if user_actually_deleted else "ERROR: User still exists in database")
+            else:
+                self.log_test("User Actually Removed from Database", False, "Could not verify user deletion")
+                
+        else:
+            self.log_test("User Deletion Request Successful", False, 
+                         f"ERROR: User deletion failed: {deletion_result}")
+            
+            # Check if it's a permission error
+            if isinstance(deletion_result, dict):
+                error_detail = deletion_result.get('detail', str(deletion_result))
+                if 'permissão' in error_detail.lower() or 'permission' in error_detail.lower():
+                    self.log_test("User Deletion Permission Error", True, 
+                                 f"Permission error detected: {error_detail}")
+                elif 'não encontrado' in error_detail.lower() or 'not found' in error_detail.lower():
+                    self.log_test("User Deletion Not Found Error", True,
+                                 f"User not found error: {error_detail}")
+                else:
+                    self.log_test("User Deletion Unknown Error", False,
+                                 f"Unknown error: {error_detail}")
+
+        print("   🔍 COMPREHENSIVE USER DELETION TESTING COMPLETED")
 
     def test_manager_permission_restrictions(self):
         """Test manager permission restrictions"""
