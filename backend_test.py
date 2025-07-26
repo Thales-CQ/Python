@@ -236,26 +236,349 @@ class CaixaAPITester:
         self.log_test("SAÍDA Restricted Payment Methods", saida_restricted_success == len(saida_restricted),
                      f"{saida_restricted_success}/{len(saida_restricted)} restricted methods correctly blocked")
 
+    def test_uppercase_conversion(self):
+        """Test automatic uppercase conversion in all forms"""
+        if not self.admin_token:
+            self.log_test("Uppercase Conversion", False, "No admin token")
+            return
+
+        print("   Testing uppercase conversion in user creation...")
+        # Test user creation with lowercase input
+        user_data = {
+            'username': 'lowercase_user',
+            'email': 'lowercase@test.com',
+            'password': 'test123',
+            'role': 'salesperson'
+        }
+        
+        success, data = self.make_request('POST', 'register', user_data, self.admin_token)
+        if success:
+            # Get the created user to verify uppercase conversion
+            success_get, users = self.make_request('GET', 'users', token=self.admin_token)
+            if success_get:
+                created_user = next((u for u in users if 'LOWERCASE_USER' in u['username']), None)
+                if created_user:
+                    uppercase_correct = (created_user['username'] == 'LOWERCASE_USER' and 
+                                       created_user['email'] == 'LOWERCASE@TEST.COM')
+                    self.log_test("User Fields Uppercase Conversion", uppercase_correct,
+                                 f"Username: {created_user['username']}, Email: {created_user['email']}")
+                else:
+                    self.log_test("User Fields Uppercase Conversion", False, "Created user not found")
+            else:
+                self.log_test("User Fields Uppercase Conversion", False, "Could not retrieve users")
+        else:
+            self.log_test("User Fields Uppercase Conversion", False, str(data))
+
+    def test_cpf_validation(self):
+        """Test CPF validation and formatting"""
+        if not self.admin_token:
+            self.log_test("CPF Validation", False, "No admin token")
+            return
+
+        print("   Testing valid CPF...")
+        # Test with valid CPF
+        valid_client_data = {
+            'name': 'Valid CPF Client',
+            'email': 'validcpf@test.com',
+            'phone': '11999999999',
+            'address': 'Test Address 123',
+            'cpf': '11144477735'  # Valid CPF
+        }
+
+        success, data = self.make_request('POST', 'clients', valid_client_data, self.admin_token)
+        if success:
+            # Check if CPF was formatted correctly
+            formatted_cpf = data.get('cpf', '')
+            expected_format = '111.444.777-35'
+            cpf_formatted_correctly = formatted_cpf == expected_format
+            self.log_test("Valid CPF Creation and Formatting", cpf_formatted_correctly,
+                         f"CPF formatted as: {formatted_cpf}")
+            if success:
+                self.test_clients['valid_cpf'] = data
+        else:
+            self.log_test("Valid CPF Creation and Formatting", False, str(data))
+
+        print("   Testing invalid CPF...")
+        # Test with invalid CPF
+        invalid_client_data = {
+            'name': 'Invalid CPF Client',
+            'email': 'invalidcpf@test.com',
+            'phone': '11999999999',
+            'address': 'Test Address 123',
+            'cpf': '12345678901'  # Invalid CPF
+        }
+
+        success, data = self.make_request('POST', 'clients', invalid_client_data, 
+                                        self.admin_token, expected_status=422)
+        self.log_test("Invalid CPF Rejection", success, 
+                     "Invalid CPF correctly rejected" if success else f"Should have been rejected: {data}")
+
+        print("   Testing duplicate CPF...")
+        # Test duplicate CPF
+        if 'valid_cpf' in self.test_clients:
+            duplicate_client_data = {
+                'name': 'Duplicate CPF Client',
+                'email': 'duplicate@test.com',
+                'phone': '11999999999',
+                'address': 'Test Address 456',
+                'cpf': '11144477735'  # Same CPF as before
+            }
+
+            success, data = self.make_request('POST', 'clients', duplicate_client_data, 
+                                            self.admin_token, expected_status=400)
+            self.log_test("Duplicate CPF Rejection", success,
+                         "Duplicate CPF correctly rejected" if success else f"Should have been rejected: {data}")
+
+    def test_product_system(self):
+        """Test product creation, search, and admin visibility"""
+        if not self.admin_token:
+            self.log_test("Product System", False, "No admin token")
+            return
+
+        print("   Testing product creation with unique code...")
+        # Create test product
+        product_data = {
+            'code': 'TEST001',
+            'name': 'Test Product One',
+            'price': 99.99,
+            'description': 'Test product description'
+        }
+
+        success, data = self.make_request('POST', 'products', product_data, self.admin_token)
+        if success:
+            self.log_test("Create Product with Unique Code", True, 
+                         f"Product created: {data.get('code', 'N/A')} - {data.get('name', 'N/A')}")
+            
+            # Verify uppercase conversion
+            uppercase_correct = (data.get('code') == 'TEST001' and 
+                               data.get('name') == 'TEST PRODUCT ONE' and
+                               data.get('description') == 'TEST PRODUCT DESCRIPTION')
+            self.log_test("Product Fields Uppercase Conversion", uppercase_correct,
+                         f"Code: {data.get('code')}, Name: {data.get('name')}")
+        else:
+            self.log_test("Create Product with Unique Code", False, str(data))
+
+        # Create second product for search testing
+        product_data2 = {
+            'code': 'TEST002',
+            'name': 'Another Test Product',
+            'price': 149.99,
+            'description': 'Another test product'
+        }
+
+        success, data = self.make_request('POST', 'products', product_data2, self.admin_token)
+        self.log_test("Create Second Product", success, 
+                     f"Second product created" if success else str(data))
+
+        print("   Testing duplicate product code rejection...")
+        # Test duplicate product code
+        duplicate_product = {
+            'code': 'TEST001',  # Same code as first product
+            'name': 'Duplicate Code Product',
+            'price': 199.99,
+            'description': 'Should not be created'
+        }
+
+        success, data = self.make_request('POST', 'products', duplicate_product, 
+                                        self.admin_token, expected_status=400)
+        self.log_test("Duplicate Product Code Rejection", success,
+                     "Duplicate code correctly rejected" if success else f"Should have been rejected: {data}")
+
+        print("   Testing product search by code...")
+        # Test product search by code
+        success, data = self.make_request('GET', 'products/search?q=TEST001', token=self.admin_token)
+        if success:
+            found_product = len(data) > 0 and any(p.get('code') == 'TEST001' for p in data)
+            self.log_test("Product Search by Code", found_product,
+                         f"Found {len(data)} products, TEST001 found: {found_product}")
+        else:
+            self.log_test("Product Search by Code", False, str(data))
+
+        print("   Testing product search by name...")
+        # Test product search by name
+        success, data = self.make_request('GET', 'products/search?q=ANOTHER', token=self.admin_token)
+        if success:
+            found_product = len(data) > 0 and any('ANOTHER' in p.get('name', '') for p in data)
+            self.log_test("Product Search by Name", found_product,
+                         f"Found {len(data)} products with 'ANOTHER' in name")
+        else:
+            self.log_test("Product Search by Name", False, str(data))
+
+        print("   Testing admin can see all products...")
+        # Test admin can see products
+        success, data = self.make_request('GET', 'products', token=self.admin_token)
+        self.log_test("Admin Can See Products", success,
+                     f"Admin can see {len(data) if isinstance(data, list) else 0} products" if success else str(data))
+
+    def test_transaction_filters(self):
+        """Test transaction filtering by various criteria"""
+        if not self.admin_token:
+            self.log_test("Transaction Filters", False, "No admin token")
+            return
+
+        # Create some test transactions first
+        test_transactions = [
+            {
+                'type': 'entrada',
+                'amount': 100.0,
+                'description': 'FILTER TEST ENTRADA',
+                'payment_method': 'dinheiro'
+            },
+            {
+                'type': 'saida',
+                'amount': 50.0,
+                'description': 'FILTER TEST SAIDA',
+                'payment_method': 'pix'
+            },
+            {
+                'type': 'entrada',
+                'amount': 200.0,
+                'description': 'CARTAO TEST TRANSACTION',
+                'payment_method': 'cartao'
+            }
+        ]
+
+        print("   Creating test transactions for filtering...")
+        for i, trans_data in enumerate(test_transactions):
+            success, data = self.make_request('POST', 'transactions', trans_data, self.admin_token)
+            if success:
+                print(f"      ✅ Created test transaction {i+1}")
+            else:
+                print(f"      ❌ Failed to create test transaction {i+1}: {data}")
+
+        print("   Testing filter by description/name...")
+        # Test filter by search term
+        success, data = self.make_request('GET', 'transactions?search=FILTER', token=self.admin_token)
+        if success:
+            filter_matches = [t for t in data if 'FILTER' in t.get('description', '')]
+            self.log_test("Filter by Description", len(filter_matches) >= 2,
+                         f"Found {len(filter_matches)} transactions with 'FILTER' in description")
+        else:
+            self.log_test("Filter by Description", False, str(data))
+
+        print("   Testing filter by transaction type...")
+        # Test filter by type
+        success, data = self.make_request('GET', 'transactions?transaction_type=entrada', token=self.admin_token)
+        if success:
+            entrada_only = all(t.get('type') == 'entrada' for t in data)
+            self.log_test("Filter by Type (ENTRADA)", entrada_only,
+                         f"All {len(data)} transactions are ENTRADA type: {entrada_only}")
+        else:
+            self.log_test("Filter by Type (ENTRADA)", False, str(data))
+
+        print("   Testing filter by payment method...")
+        # Test filter by payment method
+        success, data = self.make_request('GET', 'transactions?payment_method=cartao', token=self.admin_token)
+        if success:
+            cartao_only = all(t.get('payment_method') == 'cartao' for t in data)
+            self.log_test("Filter by Payment Method (CARTAO)", cartao_only,
+                         f"All {len(data)} transactions use CARTAO: {cartao_only}")
+        else:
+            self.log_test("Filter by Payment Method (CARTAO)", False, str(data))
+
+        print("   Testing filter by month/year...")
+        # Test filter by current month/year
+        current_date = datetime.now()
+        success, data = self.make_request('GET', 
+                                        f'transactions?month={current_date.month}&year={current_date.year}', 
+                                        token=self.admin_token)
+        self.log_test("Filter by Month/Year", success,
+                     f"Found {len(data) if isinstance(data, list) else 0} transactions for current month" if success else str(data))
+
+    def test_pdf_generation(self):
+        """Test PDF report generation"""
+        if not self.admin_token:
+            self.log_test("PDF Generation", False, "No admin token")
+            return
+
+        print("   Testing PDF generation for all transactions...")
+        # Test PDF generation for all transactions
+        success, response_data = self.make_request('GET', 'reports/transactions/pdf', token=self.admin_token)
+        
+        # For PDF, we expect binary data, so we need to check differently
+        if 'error' not in str(response_data):
+            self.log_test("Generate PDF Report (All Transactions)", True, "PDF generated successfully")
+        else:
+            self.log_test("Generate PDF Report (All Transactions)", False, str(response_data))
+
+        print("   Testing PDF generation for specific month...")
+        # Test PDF generation for specific month
+        current_date = datetime.now()
+        success, response_data = self.make_request('GET', 
+                                                 f'reports/transactions/pdf?month={current_date.month}&year={current_date.year}', 
+                                                 token=self.admin_token)
+        
+        if 'error' not in str(response_data):
+            self.log_test("Generate PDF Report (Current Month)", True, "Monthly PDF generated successfully")
+        else:
+            self.log_test("Generate PDF Report (Current Month)", False, str(response_data))
+
+    def test_cancellation_features(self):
+        """Test cancellation features for transactions, payments, and bills"""
+        if not self.admin_token:
+            self.log_test("Cancellation Features", False, "No admin token")
+            return
+
+        print("   Testing transaction cancellation...")
+        # Create a transaction to cancel
+        trans_data = {
+            'type': 'entrada',
+            'amount': 150.0,
+            'description': 'TRANSACTION TO CANCEL',
+            'payment_method': 'dinheiro'
+        }
+
+        success, transaction = self.make_request('POST', 'transactions', trans_data, self.admin_token)
+        if success:
+            transaction_id = transaction.get('id')
+            
+            # Cancel the transaction
+            success, data = self.make_request('DELETE', f'transactions/{transaction_id}', token=self.admin_token)
+            self.log_test("Cancel Transaction (Admin)", success,
+                         "Transaction cancelled successfully" if success else str(data))
+            
+            # Verify transaction appears as cancelled
+            success, transactions = self.make_request('GET', 'transactions', token=self.admin_token)
+            if success:
+                cancelled_transaction = next((t for t in transactions if t.get('id') == transaction_id), None)
+                if cancelled_transaction:
+                    is_cancelled = cancelled_transaction.get('cancelled', False)
+                    self.log_test("Transaction Shows as Cancelled", is_cancelled,
+                                 f"Transaction cancelled status: {is_cancelled}")
+                else:
+                    self.log_test("Transaction Shows as Cancelled", False, "Cancelled transaction not found")
+        else:
+            self.log_test("Create Transaction for Cancellation Test", False, str(transaction))
+
+        print("   Testing bill and payment cancellation...")
+        # Test bill cancellation if we have a test bill
+        if 'main' in self.test_bills:
+            bill_id = self.test_bills['main']['id']
+            
+            # Get installments
+            success, installments = self.make_request('GET', f'bills/{bill_id}/installments', token=self.admin_token)
+            if success and installments:
+                # Find a paid installment to cancel payment
+                paid_installment = next((inst for inst in installments if inst.get('status') == 'paid'), None)
+                
+                if paid_installment:
+                    print("      Testing payment cancellation...")
+                    success, data = self.make_request('DELETE', f'installments/{paid_installment["id"]}/cancel', 
+                                                    token=self.admin_token)
+                    self.log_test("Cancel Installment Payment (Manager)", success,
+                                 f"Payment cancelled for installment {paid_installment['installment_number']}" if success else str(data))
+                
+                print("      Testing entire bill cancellation...")
+                # Cancel entire bill
+                success, data = self.make_request('DELETE', f'bills/{bill_id}/cancel', token=self.admin_token)
+                self.log_test("Cancel Entire Bill (Manager)", success,
+                             "Entire bill cancelled successfully" if success else str(data))
+
     def test_client_management(self):
         """Test client creation and management"""
         if not self.admin_token:
             self.log_test("Client Management", False, "No admin token")
             return
-
-        # Create test client
-        client_data = {
-            'name': 'Test Client',
-            'email': 'client@test.com',
-            'phone': '11999999999',
-            'address': 'Test Address 123'
-        }
-
-        success, data = self.make_request('POST', 'clients', client_data, self.admin_token)
-        if success:
-            self.test_clients['main'] = data
-            self.log_test("Create Client", True, f"Client ID: {data.get('id', 'N/A')}")
-        else:
-            self.log_test("Create Client", False, str(data))
 
         # Get clients list
         success, data = self.make_request('GET', 'clients', token=self.admin_token)
